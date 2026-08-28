@@ -1,10 +1,11 @@
----
-title: "POST /sdk/session — Create a Short-Lived SDK Token"
+﻿---
+title: "POST /sdk/session â€” Create a Short-Lived SDK Token"
 sidebarTitle: "SDK Session"
-description: "POST /sdk/session — Exchange your private API key for a short-lived client token to initialize the Therius JS SDK in the browser safely."
+description: "POST /sdk/session â€” Exchange your private API key for a short-lived client token to initialize the Therius JS SDK in the browser safely."
+openapi: "POST /sdk/session"
 ---
 
-`POST /sdk/session` exchanges your merchant private API key for a short-lived JWT `clientToken` with a 30-minute TTL. Pass the `clientToken` to the browser to initialize `new TheriusSDK({ clientToken })`. Your private key never reaches the browser — it stays on your server where it belongs.
+`POST /sdk/session` exchanges your merchant private API key for a short-lived JWT `clientToken` with a 30-minute TTL. Pass the `clientToken` to the browser to initialize `new TheriusSDK({ clientToken })`. Your private key never reaches the browser â€” it stays on your server where it belongs.
 
 <Warning>
   Call this endpoint from your server only. Never call it from browser JavaScript or expose your private API key to the client side.
@@ -35,11 +36,11 @@ description: "POST /sdk/session — Exchange your private API key for a short-li
 </ParamField>
 
 <ParamField body="amount" type="integer">
-  Amount to lock for this session, in minor units (e.g. `4999` = \$49.99). Optional — if omitted, the JS SDK manages the amount dynamically.
+  Amount to lock for this session, in minor units (e.g. `4999` = \$49.99). Optional â€” if omitted, the JS SDK manages the amount dynamically.
 </ParamField>
 
 <ParamField body="currency" type="string">
-  ISO 4217 currency code, e.g. `"USD"`. Optional — if omitted, the JS SDK manages currency selection.
+  ISO 4217 currency code, e.g. `"USD"`. Optional â€” if omitted, the JS SDK manages currency selection.
 </ParamField>
 
 <ParamField body="checkoutConfigId" type="string">

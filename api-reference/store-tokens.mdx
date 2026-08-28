@@ -1,13 +1,14 @@
----
-title: "POST /token — Store Card Tokens for Future Payments"
+﻿---
+title: "POST /token â€” Store Card Tokens for Future Payments"
 sidebarTitle: "Store Tokens"
-description: "POST /token — Tokenize one or more cards without charging them. Each token is scoped to your merchant account and reusable for future payments."
+description: "POST /token â€” Tokenize one or more cards without charging them. Each token is scoped to your merchant account and reusable for future payments."
+openapi: "POST /token"
 ---
 
 `POST /token` lets you store card details as reusable tokens without processing a payment. Use it to pre-vault cards during account setup flows, or to migrate stored cards from another provider. Each token is scoped to your merchant account and stored with BIN data (brand, type, issuer).
 
 <Note>
-  To tokenize a card during a payment, add `card.cardData.tokenize: true` to your payment request instead — see [Tokenization concepts](/concepts/tokenization).
+  To tokenize a card during a payment, add `card.cardData.tokenize: true` to your payment request instead â€” see [Tokenization concepts](/concepts/tokenization).
 </Note>
 
 ## Request
@@ -141,7 +142,7 @@ A successful request returns `200 OK` with the merchant code, the echoed shopper
         </ResponseField>
 
         <ResponseField name="tokens[].card.cardData.type" type="string">
-          Card type — `"credit"` or `"debit"`.
+          Card type â€” `"credit"` or `"debit"`.
         </ResponseField>
 
         <ResponseField name="tokens[].card.cardData.issuerName" type="string">

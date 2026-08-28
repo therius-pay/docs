@@ -1,7 +1,8 @@
----
-title: "POST /payment/authorization — Place a Fund Reserve"
+﻿---
+title: "POST /payment/authorization â€” Place a Fund Reserve"
 sidebarTitle: "Authorize"
-description: "POST /payment/authorization — Reserve funds without capturing. Call capture later to settle, or cancel to release the hold. Ideal for physical goods."
+description: "POST /payment/authorization â€” Reserve funds without capturing. Call capture later to settle, or cancel to release the hold. Ideal for physical goods."
+openapi: "POST /payment/authorization"
 ---
 
 `POST /payment/authorization` reserves funds on the cardholder's account without settling them. The authorization hold is typically valid for 7 days, though the exact window depends on the acquirer and card network. Call [Capture](/api-reference/capture) to settle the funds when you're ready to fulfill, or [Cancel](/api-reference/cancel) to release the hold if you can't fulfill the order.
@@ -43,7 +44,7 @@ description: "POST /payment/authorization — Reserve funds without capturing. C
     </ParamField>
 
     <ParamField body="value" type="integer" required>
-      Amount in minor units. For USD, `4999` = \$49.99. For JPY, `5000` = ¥5000.
+      Amount in minor units. For USD, `4999` = \$49.99. For JPY, `5000` = Â¥5000.
     </ParamField>
 
     <ParamField body="exponent" type="integer" required>
@@ -129,15 +130,15 @@ description: "POST /payment/authorization — Reserve funds without capturing. C
 <ResponseField name="status" type="string">
   Authorization outcome. One of:
 
-  - `"authorized"` — funds are reserved successfully. Call [Capture](/api-reference/capture) to settle.
-  - `"declined"` — issuer declined. Check `refusalCode`.
-  - `"pending_3ds"` — cardholder must complete a 3DS challenge. Check `actionRequired`.
-  - `"pending_action"` — payment requires an external action. Check `actionRequired`.
-  - `"failed"` — processing error.
+  - `"authorized"` â€” funds are reserved successfully. Call [Capture](/api-reference/capture) to settle.
+  - `"declined"` â€” issuer declined. Check `refusalCode`.
+  - `"pending_3ds"` â€” cardholder must complete a 3DS challenge. Check `actionRequired`.
+  - `"pending_action"` â€” payment requires an external action. Check `actionRequired`.
+  - `"failed"` â€” processing error.
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">
-  Therius's unique receipt ID (e.g. `"PC-1234567890"`). Store this — you'll reference it in your subsequent [Capture](/api-reference/capture) or [Cancel](/api-reference/cancel) call.
+  Therius's unique receipt ID (e.g. `"PC-1234567890"`). Store this â€” you'll reference it in your subsequent [Capture](/api-reference/capture) or [Cancel](/api-reference/cancel) call.
 </ResponseField>
 
 <ResponseField name="orderCode" type="string">
@@ -216,5 +217,5 @@ curl -X POST https://api.therius.io/v1/payment/authorization \
 </Note>
 
 <Warning>
-  Authorization holds expire — typically after 7 days, but this varies by acquirer and card network. If you don't call [Capture](/api-reference/capture) before expiry, the hold is released and you'll need to re-authorize. Monitor hold age in your order management system.
+  Authorization holds expire â€” typically after 7 days, but this varies by acquirer and card network. If you don't call [Capture](/api-reference/capture) before expiry, the hold is released and you'll need to re-authorize. Monitor hold age in your order management system.
 </Warning>

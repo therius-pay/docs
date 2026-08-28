@@ -1,7 +1,8 @@
----
-title: "GET /payment/inquiry/{id} — Retrieve Payment Status"
+﻿---
+title: "GET /payment/inquiry/{id} â€” Retrieve Payment Status"
 sidebarTitle: "Inquiry"
-description: "GET /payment/inquiry/{id} — Retrieve the current status and full details of any payment using its paymentCode or internal payment UUID."
+description: "GET /payment/inquiry/{id} â€” Retrieve the current status and full details of any payment using its paymentCode or internal payment UUID."
+openapi: "GET /payment/inquiry/{id}"
 ---
 
 Use `GET /payment/inquiry/{id}` to retrieve the current status and details of any payment. Pass either the `paymentCode` that Therius returned when the payment was created (e.g. `PC-1234567890`) or the internal payment UUID. This endpoint is useful for polling pending payments, reconciliation, and debugging.
@@ -118,7 +119,7 @@ curl https://api-sandbox.therius.io/v1/payment/inquiry/PC-1234567890 \
 </Note>
 
 <Tip>
-  You can use this endpoint to poll for the final status of `pending_3ds` or `pending_action` payments if you prefer not to use webhooks. However, webhooks are recommended for production — they push the final status to your server as soon as it's available, without requiring polling.
+  You can use this endpoint to poll for the final status of `pending_3ds` or `pending_action` payments if you prefer not to use webhooks. However, webhooks are recommended for production â€” they push the final status to your server as soon as it's available, without requiring polling.
 </Tip>
 
 <RequestExample>

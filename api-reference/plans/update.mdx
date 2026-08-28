@@ -1,10 +1,11 @@
----
-title: "Update a Subscription Plan — PATCH /subscription/plan"
+﻿---
+title: "Update a Subscription Plan â€” PATCH /subscription/plan"
 sidebarTitle: "Update Plan"
-description: "PATCH /subscription/plan/{id} — Update a plan name, description, active status, or country availability. Amount and interval cannot be changed."
+description: "PATCH /subscription/plan/{id} â€” Update a plan name, description, active status, or country availability. Amount and interval cannot be changed."
+openapi: "PATCH /subscription/plan/{id}"
 ---
 
-`PATCH /subscription/plan/{id}` updates the mutable fields on an existing plan. You can rename it, update its description, toggle its active status to stop accepting new subscribers, or adjust the countries where it is available — all without affecting existing subscribers.
+`PATCH /subscription/plan/{id}` updates the mutable fields on an existing plan. You can rename it, update its description, toggle its active status to stop accepting new subscribers, or adjust the countries where it is available â€” all without affecting existing subscribers.
 
 <Note>
   `amount`, `interval`, `intervalCount`, and `currency` are immutable and cannot be changed via this endpoint. To change pricing or billing cadence, create a new plan using `POST /subscription/plan` and migrate subscribers using [change-plan](/api-reference/subscriptions/change-plan).
@@ -61,7 +62,7 @@ Returns `200 OK` with the full updated plan object.
 | Code | Meaning |
 | --- | --- |
 | `404` | Plan not found. |
-| `422` | Validation error — e.g. an unrecognised country code or an attempt to mutate an immutable field. |
+| `422` | Validation error â€” e.g. an unrecognised country code or an attempt to mutate an immutable field. |
 
 <RequestExample>
 

@@ -1,10 +1,11 @@
----
-title: "POST /subscription — Create and Activate a Subscription"
+﻿---
+title: "POST /subscription â€” Create and Activate a Subscription"
 sidebarTitle: "Create"
-description: "POST /subscription — Enroll a customer in a plan and charge the first billing cycle. Always requires a fresh SDK nonce for the initial CIT mandate."
+description: "POST /subscription â€” Enroll a customer in a plan and charge the first billing cycle. Always requires a fresh SDK nonce for the initial CIT mandate."
+openapi: "POST /subscription"
 ---
 
-`POST /subscription` enrolls a customer in a plan and performs the initial Cardholder Initiated Transaction (CIT). The customer must be present for this call — always pass a fresh SDK nonce (not a saved token) to establish the recurring mandate. Therius uses this CIT to register the mandate with the card network before any subsequent Merchant Initiated Transactions (MITs) can occur.
+`POST /subscription` enrolls a customer in a plan and performs the initial Cardholder Initiated Transaction (CIT). The customer must be present for this call â€” always pass a fresh SDK nonce (not a saved token) to establish the recurring mandate. Therius uses this CIT to register the mandate with the card network before any subsequent Merchant Initiated Transactions (MITs) can occur.
 
 <Warning>
   Never pass a saved vault token as the card for a new subscription. A fresh nonce from the JS SDK is required to establish the cardholder mandate. Passing a token will result in a `422` error.
@@ -45,7 +46,7 @@ description: "POST /subscription — Enroll a customer in a plan and charge the 
 </ParamField>
 
 <ParamField body="card" type="object" required>
-  Card details for the initial CIT. Must use `nonceData` from the JS SDK — raw card data and saved tokens are not accepted here.
+  Card details for the initial CIT. Must use `nonceData` from the JS SDK â€” raw card data and saved tokens are not accepted here.
 
   <Expandable title="card fields">
     <ParamField body="card.nonceData.nonce" type="string" required>
@@ -80,7 +81,7 @@ A successful request returns `201 Created` with the full subscription object, in
 | --- | --- |
 | `active` | Plan has no trial; first charge succeeded. |
 | `trialing` | Plan has a `trialPeriodDays` configured. |
-| `past_due` | Initial CIT failed. Rare — normally a `402` is returned on decline instead. |
+| `past_due` | Initial CIT failed. Rare â€” normally a `402` is returned on decline instead. |
 
 ## Errors
 
@@ -89,7 +90,7 @@ A successful request returns `201 Created` with the full subscription object, in
 | `400` | Plan not found or inactive. |
 | `402` | Initial card declined. |
 | `409` | Duplicate `Idempotency-Key` with a conflicting request body. |
-| `422` | Validation error — e.g. missing nonce or invalid plan. |
+| `422` | Validation error â€” e.g. missing nonce or invalid plan. |
 
 <RequestExample>
 

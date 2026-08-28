@@ -1,7 +1,8 @@
----
-title: "GET /subscription/{id}/invoice — List and Get Invoices"
+﻿---
+title: "GET /subscription/{id}/invoice â€” List and Get Invoices"
 sidebarTitle: "Invoices"
-description: "GET /subscription/{id}/invoice and GET /subscription/invoice/{id} — List invoices for a subscription or retrieve a single invoice by its UUID."
+description: "GET /subscription/{id}/invoice and GET /subscription/invoice/{id} â€” List invoices for a subscription or retrieve a single invoice by its UUID."
+openapi: "GET /subscription/{id}/invoice"
 ---
 
 Therius creates one invoice per billing cycle. Each invoice records the charge attempt or attempts for that cycle, the outcome, and the final amount collected. You can retrieve all invoices for a subscription, or look up a specific invoice directly by its UUID.
@@ -41,7 +42,7 @@ Returns an array of invoice objects for the subscription.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Invoice status — e.g. `paid`, `failed`, `pending`.
+  Invoice status â€” e.g. `paid`, `failed`, `pending`.
 </ResponseField>
 
 <ResponseField name="amount" type="integer">
