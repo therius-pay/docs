@@ -1,0 +1,87 @@
+---
+title: 'Checkout Widget: Drop-In PCI-Safe Payment Form Setup'
+sidebarTitle: 'Checkout Widget'
+description: 'Embed the Therius Checkout Widget for a ready-made card form with saved-card support. Drop it in with two lines of code — no form building required.'
+---
+
+The Checkout Widget is a fully rendered, PCI-safe payment form you drop into your page. It handles card inputs, saved-card display, and the "Save this card" consent checkbox — without you building any form HTML. If you want full control over layout and styling, use [Hosted Fields](/sdk/hosted-fields) instead.
+
+## Basic setup
+
+Call `sdk.checkout()` after initializing the SDK. The widget mounts itself into the DOM automatically.
+
+```javascript
+const checkout = sdk.checkout({
+  shopperId: sdk.sessionData().customerId,
+  vaultConsentEnabled: true,
+  onSavedMethodSelected: (token) => {
+    // A returning shopper picked a saved card
+    // Charge it directly using sdk.authorizeToken(token)
+  },
+})
+```
+
+To mount the widget into a specific element, pass a CSS selector:
+
+```javascript
+const checkout = sdk.checkout({
+  container: '#checkout-container',
+  vaultConsentEnabled: true,
+})
+```
+
+## Saved-card picker
+
+If the session was created with a `customerId` and that shopper has previously vaulted cards, the widget automatically renders a card picker above the new-card form. Cards are displayed as `brand / last 4 / expiry` — no PAN is ever returned to the browser.
+
+When the shopper selects a saved card, `onSavedMethodSelected` fires with the card's token. Charge it immediately without a nonce:
+
+```javascript
+const checkout = sdk.checkout({
+  onSavedMethodSelected: async (token) => {
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+```
+
+The saved-card list is backed by `GET /sdk/vaulted-methods` and is scoped to the session's own shopper — the browser cannot enumerate a different shopper's cards.
+
+<Tip>
+  Combine `vaultConsentEnabled: true` with a `customerId` in your `POST /sdk/session` call for the best returning-shopper experience. When a `shopperId` is present in the session, the "Save this card" checkbox appears automatically.
+</Tip>
+
+## Charging a new card from the widget
+
+For a new card entered through the widget, retrieve the nonce after the shopper submits the form and use it the same way as with hosted fields:
+
+```javascript
+checkout.on('submit', async ({ nonce }) => {
+  const result = await sdk.authorize(nonce)
+  if (result.actionRequired) {
+    const finalResult = await sdk.handleAction(result.actionRequired)
+  }
+})
+```
+
+Alternatively, call `sdk.authorize(nonce)` directly after widget submission to let the SDK manage the full authorize-and-action loop in one call.
+
+## Handling 3DS
+
+3DS is handled identically to hosted fields. If the charge result includes `actionRequired`, pass it to `sdk.handleAction`:
+
+```javascript
+if (result.actionRequired) {
+  const finalResult = await sdk.handleAction(result.actionRequired)
+}
+```
+
+`sdk.handleAction` opens the 3DS challenge iframe, waits for completion, and resolves with the final `PaymentResult`. You do not need to write separate logic for different challenge types.
+
+<Note>
+  `vaultConsentEnabled` only shows the "Save this card" checkbox when a `shopperId` is present in the session. If no `customerId` was passed to `POST /sdk/session`, the checkbox is hidden regardless of this setting.
+</Note>

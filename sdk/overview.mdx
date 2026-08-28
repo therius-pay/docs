@@ -1,0 +1,100 @@
+---
+title: 'Therius JS SDK Overview: Browser Payment Integration'
+sidebarTitle: 'Overview'
+description: 'The Therius JS SDK collects card data in hosted iframes so raw card numbers never touch your server. Supports hosted fields, wallet buttons, and APMs.'
+---
+
+The Therius JS SDK is the browser-side companion to the Therius payment API. It renders card fields inside Therius-hosted iframes, so a raw PAN never transits your server — you only ever receive a one-time nonce or a final `PaymentResult`. Your checkout page controls the layout and styling; Therius controls what happens inside each field.
+
+## When to use the SDK
+
+<CardGroup cols={2}>
+  <Card icon="credit-card" title="Hosted Fields">
+    Use hosted fields or the Checkout Widget when accepting cards directly from a browser. Your DOM never contains a raw card number.
+  </Card>
+  <Card icon="wallet" title="Wallet Buttons">
+    Use wallet buttons for Apple Pay and Google Pay. The native payment sheet handles authentication; Therius decrypts the result server-side.
+  </Card>
+  <Card icon="hand-pointer" title="Click to Pay">
+    Use Click to Pay for Visa and Mastercard network-level saved cards. Cardholders authenticate without re-entering details.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="APM Redirects">
+    Use `sdk.purchaseApm` for redirect-based alternative payment methods such as iDEAL, Klarna, and Pix.
+  </Card>
+</CardGroup>
+
+<Note>
+  For server-to-server integrations — backend services or mobile native apps — use the REST API directly. The JS SDK is browser-only.
+</Note>
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install @therius/sdk
+```
+```bash yarn
+yarn add @therius/sdk
+```
+</CodeGroup>
+
+Or load the SDK via CDN with no build step required:
+
+```html
+<script src="https://api.therius.io/v1/sdk/js"></script>
+```
+
+## Initialization
+
+Import and initialize the SDK with a `clientToken` obtained from your server. Your private API key never leaves the backend.
+
+```javascript
+import { TheriusSDK } from '@therius/sdk'
+
+// clientToken comes from POST /sdk/session on your server
+const sdk = new TheriusSDK({ clientToken })
+```
+
+<Warning>
+  `TheriusSDK` throws immediately if `clientToken` is missing — there is no silent half-initialized state. Always pass a valid token before calling any SDK method.
+</Warning>
+
+## Integration flow
+
+<Steps>
+  <Step title="Server creates SDK session">
+    Your server calls `POST /sdk/session` with your private API key and receives a short-lived `clientToken`.
+  </Step>
+  <Step title="Browser receives clientToken">
+    Pass the token to the browser — for example, as inline JSON in your HTML template or as a JSON response to an AJAX request.
+  </Step>
+  <Step title="SDK initializes">
+    The browser constructs `new TheriusSDK({ clientToken })`. The SDK is now ready to render fields and process payments.
+  </Step>
+  <Step title="SDK renders card fields in hosted iframes">
+    Each card field (number, expiry, CVV) is rendered inside a Therius-hosted iframe. Your JavaScript and DOM never see the PAN.
+  </Step>
+  <Step title="User fills in card — SDK creates a one-time nonce">
+    When the shopper submits the form, call `sdk.createNonce()`. The SDK returns a short-lived nonce that represents the card data.
+  </Step>
+  <Step title="Nonce sent to your server — server charges via API">
+    Your page posts the nonce to your backend. Your server then calls `POST /payment/purchase` with the nonce to complete the charge.
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card icon="key" title="Session Bootstrap" href="/sdk/session-bootstrap">
+    Learn how to exchange your private API key for a client token on your server.
+  </Card>
+  <Card icon="rectangle-list" title="Hosted Fields" href="/sdk/hosted-fields">
+    Build a fully custom card form while keeping raw card numbers out of your DOM.
+  </Card>
+  <Card icon="table-columns" title="Checkout Widget" href="/sdk/checkout-widget">
+    Drop in a ready-made payment form with saved-card support in two lines of code.
+  </Card>
+  <Card icon="mobile" title="Wallet Buttons" href="/sdk/wallet-buttons">
+    Add Apple Pay and Google Pay to your checkout with `createWalletButton`.
+  </Card>
+</CardGroup>

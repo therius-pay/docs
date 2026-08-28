@@ -1,0 +1,80 @@
+---
+title: 'Therius 3D Secure: Handling Challenges and Resumption'
+sidebarTitle: '3D Secure'
+description: 'How Therius handles 3DS2 challenges automatically — including the pending_3ds pause, device data collection, and the resume endpoint.'
+---
+
+3D Secure (3DS2) is an authentication protocol that many card issuers require before authorizing a payment — particularly in Europe under PSD2 Strong Customer Authentication (SCA) rules. When a 3DS challenge is triggered, the cardholder must verify their identity with their bank before the payment can proceed. Therius manages the full 3DS2 flow on your behalf: you send a normal purchase or authorization request and handle one of two possible pause states if the issuer requires additional authentication.
+
+## Two Pause States
+
+A payment request can pause at two points during the 3DS flow. Both are indicated by the `status` field in the response.
+
+### `pending_ddc` — Device Data Collection
+
+Device Data Collection (DDC) gathers browser fingerprint data that some processors (such as Cybersource) use to assess transaction risk before initiating the 3DS challenge. If your response has `status: "pending_ddc"`, resolve it by retrying the original `purchase` or `authorization` request with the `threeDsSetup.sessionId` field populated.
+
+<Note>
+  `pending_ddc` is **not** resolved by `POST /payment/resume`. Retry the original payment endpoint (`/purchase` or `/authorization`) with the session ID.
+</Note>
+
+### `pending_3ds` — Challenge Required
+
+If the issuer requires the cardholder to authenticate, the response has `status: "pending_3ds"` and includes an `actionRequired` object containing a `challengeUrl`. Direct the shopper to that URL to complete the challenge (typically a one-time password or biometric from their bank app). Once the shopper completes the challenge, call `POST /payment/resume` to continue.
+
+```json
+{
+  "status": "pending_3ds",
+  "sessionId": "3ds-session-abc123",
+  "actionRequired": {
+    "type": "redirect",
+    "challengeUrl": "https://acs.issuerbank.com/3ds/challenge?token=..."
+  }
+}
+```
+
+## Resuming After a 3DS Challenge
+
+Call `POST /payment/resume` with the `sessionId` from the paused response. No API key is required — the `sessionId` itself acts as the bearer credential for this call. The session expires after **15 minutes**, so the shopper must complete the challenge within that window.
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/resume \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "<sessionId from pending_3ds response>"
+  }'
+```
+
+A successful resume returns the final `PaymentResponse` with `status: "captured"` (for a purchase) or `status: "authorized"` (for an authorization).
+
+## Using the JS SDK for 3DS
+
+If you are collecting card data with the Therius JS SDK, you do not need to handle the `pending_3ds` pause manually. Call `sdk.handleAction(result.actionRequired)` and the SDK manages the challenge iframe or popup automatically. It resolves its promise with the final `PaymentResponse` once the shopper completes authentication.
+
+```javascript
+const result = await therius.payment(paymentRequest);
+
+if (result.actionRequired) {
+  const finalResult = await therius.handleAction(result.actionRequired);
+  console.log(finalResult.status); // "captured" or "authorized"
+} else {
+  console.log(result.status);
+}
+```
+
+This approach removes the need for any manual branching on `pending_3ds` in your frontend code.
+
+## Passing External 3DS Data
+
+If you run 3DS authentication outside of Therius — through your own Merchant Plug-In (MPI) — pass the authentication result directly in the payment request using the `threedsData` fields. Therius will use this data to bypass its own 3DS flow and submit the pre-authenticated transaction to the acquirer.
+
+| Field | Description |
+|---|---|
+| `threedsData.cavv` | Cardholder Authentication Verification Value |
+| `threedsData.eci` | Electronic Commerce Indicator |
+| `threedsData.dsTransId` | Directory Server Transaction ID |
+| `threedsData.version` | 3DS protocol version (e.g., `2.1.0`, `2.2.0`) |
+| `threedsData.xid` | Transaction identifier (3DS 1.x) |
+| `threedsData.authenticationStatus` | Authentication result code (e.g., `Y`, `A`, `U`) |
+
+Populate these fields only if your external MPI completed authentication. Do not send partial data — an incomplete `threedsData` object may cause the transaction to be declined by the acquirer.

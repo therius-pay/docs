@@ -1,0 +1,74 @@
+---
+title: 'APM Redirects: iDEAL, Klarna, and Pix with the SDK'
+sidebarTitle: 'APM Redirects'
+description: 'Use sdk.purchaseApm and sdk.handleAction to process redirect-based APMs like Pix, iDEAL, and Klarna with automatic redirect handling and result resolution.'
+---
+
+Redirect-based alternative payment methods (APMs) — like Pix, iDEAL, Boleto, and Klarna — return a `pending_action` status with a redirect URL. The JS SDK's `sdk.handleAction` manages the redirect automatically and resolves to the final `PaymentResult` once the shopper completes or cancels the out-of-band step. You write one code path; the SDK handles each method's specific flow.
+
+## Charge an APM from the browser
+
+Call `sdk.purchaseApm()` with the payment method name, amount, and return URLs. If the method requires a redirect, the result includes `actionRequired`.
+
+```javascript
+const result = await sdk.purchaseApm({
+  method: 'ideal',
+  amount: { currency: 'EUR', value: 5000, exponent: 2 },
+  returnUrl: 'https://yourshop.com/payment/return',
+  cancelUrl: 'https://yourshop.com/payment/cancel',
+})
+
+if (result.actionRequired) {
+  // Opens the redirect in a popup or iframe and waits for resolution
+  const finalResult = await sdk.handleAction(result.actionRequired)
+}
+```
+
+`handleAction` opens the APM's redirect in a managed popup or iframe, polls for completion, and resolves with the final `PaymentResult` — the same shape returned by every other Therius charge method.
+
+## `sdk.handleAction` — one entry point for all out-of-band steps
+
+`handleAction` is the single entry point for every action type the Therius API can return. You do not need separate code paths per action:
+
+<CardGroup cols={2}>
+  <Card icon="shield-halved" title="3DS Challenges">
+    Opens the 3DS challenge iframe and waits for the cardholder to complete authentication before resolving.
+  </Card>
+  <Card icon="arrow-up-right-from-square" title="APM Redirects">
+    Manages iDEAL, PayPal, Klarna, and other redirect-based methods in a popup or iframe.
+  </Card>
+  <Card icon="receipt" title="Vouchers">
+    Displays Boleto, Konbini, and Multibanco voucher instructions and waits for the payment event.
+  </Card>
+  <Card icon="circle-check" title="Final Resolution">
+    Always resolves with the same `PaymentResult` shape — your success/failure handler is the same regardless of action type.
+  </Card>
+</CardGroup>
+
+```javascript
+// The same pattern works for cards (3DS), APMs (redirect), and vouchers
+const finalResult = await sdk.handleAction(result.actionRequired)
+```
+
+## Supported APM methods
+
+Common methods you can pass to `sdk.purchaseApm`:
+
+| Method string | Payment method |
+|---|---|
+| `ideal` | iDEAL (Netherlands) |
+| `klarna` | Klarna (Pay Now / Pay Later) |
+| `paypal` | PayPal |
+| `pix` | Pix (Brazil) |
+| `boleto` | Boleto Bancário (Brazil) |
+| `multibanco` | Multibanco (Portugal) |
+
+Check the [Connections](/connections/overview) tab for the full list of supported methods and required fields per method.
+
+## Server-side APM integration (no SDK)
+
+If you're integrating from a server or a mobile native app rather than a browser, call `POST /payment/purchase` directly from your backend with the APM-specific fields. Your server handles the `actionRequired.url` redirect by forwarding the shopper to that URL in an in-app browser or redirect response.
+
+<Tip>
+  If you're building a mobile app, call `POST /payment/purchase` server-side and handle the redirect in your app's in-app browser. The SDK's `handleAction` is browser-only and relies on `window.open` and `postMessage` to track the redirect result.
+</Tip>

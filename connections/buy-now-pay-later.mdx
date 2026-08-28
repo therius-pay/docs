@@ -1,0 +1,76 @@
+---
+title: 'Buy Now, Pay Later Methods: Klarna, Afterpay, and More'
+sidebarTitle: 'Pay Later'
+description: 'Offer Klarna, Afterpay, Affirm, and Zip installment and deferred payment options through the Therius payment API. No extra integration required.'
+---
+
+Buy now, pay later (BNPL) methods let shoppers split or defer the cost of a purchase — paying in installments over weeks or months, or settling the full amount after a deferred period. Therius routes all BNPL methods through the same `POST /payment/purchase` endpoint with no extra integration work. Each method returns a redirect URL in `actionRequired.url` for the shopper to complete their BNPL application with the provider.
+
+<Tip>
+  Pass `apm.lineItems` with product names, SKUs, quantities, and unit prices whenever possible. BNPL providers use line item data for credit scoring, and including it typically improves approval rates.
+</Tip>
+
+<Note>
+  BNPL order limits vary by provider and market. Klarna and Afterpay may decline orders below or above certain thresholds — check the provider's current documentation for minimum and maximum order values in your target market.
+</Note>
+
+### Klarna — `klarna`
+
+Klarna offers three payment options in a single integration: pay later (30 days), pay in installments (3–36 months), and pay now. Klarna determines which options to show the shopper based on their account and order details. Supported currencies: USD, EUR, GBP, SEK, NOK, DKK, PLN, and more.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "klarna",
+  "apm": {
+    "method": "klarna",
+    "returnUrl": "https://yourshop.com/payment/return",
+    "cancelUrl": "https://yourshop.com/payment/cancel"
+  }
+}
+```
+
+### Afterpay / Clearpay — `afterpay_clearpay`
+
+Afterpay (known as Clearpay in the UK) splits the order into four equal fortnightly installments at no interest. Supported currencies: USD, GBP, AUD, NZD, CAD.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "afterpay_clearpay"
+}
+```
+
+### Affirm — `affirm`
+
+Affirm offers flexible monthly installment plans ranging from 3 to 36 months. It is available in the United States and Canada. Supported currencies: USD, CAD.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "affirm"
+}
+```
+
+### Zip — `zip`
+
+Zip (formerly Quadpay in the US) splits purchases into four installments paid over six weeks. Available in Australia, New Zealand, and the United States. Supported currencies: AUD, NZD, USD.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "AUD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "zip"
+}
+```

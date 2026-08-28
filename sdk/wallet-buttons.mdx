@@ -1,0 +1,87 @@
+---
+title: 'Wallet Buttons: Apple Pay and Google Pay Integration'
+sidebarTitle: 'Wallet Buttons'
+description: 'Add Apple Pay and Google Pay with the Therius SDK createWalletButton helper. The native payment sheet handles authentication and card selection for you.'
+---
+
+The Therius JS SDK provides `createWalletButton` to add Apple Pay and Google Pay to your checkout. When the shopper taps the button, the native payment sheet — handled entirely by Apple or Google — appears. The shopper selects their card and authenticates with Face ID, Touch ID, or their device PIN. Therius decrypts the resulting payment token server-side so you never touch the raw encrypted payload.
+
+## Basic usage
+
+Import `createWalletButton` and mount it into a container element. The `onToken` callback fires after the shopper completes the native payment sheet.
+
+```javascript
+import { createWalletButton } from '@therius/sdk'
+
+const button = createWalletButton({
+  type: 'applepay',        // or 'googlepay'
+  clientToken,
+  onToken: async (token) => {
+    const result = await sdk.purchaseWallet({ type: 'applepay', token })
+    // result is the same PaymentResult as the REST API
+
+    if (result.actionRequired) {
+      await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+
+button.mount('#wallet-button-container')
+```
+
+The button renders inside the container element and is **automatically hidden** if the device or browser does not support that wallet method. You do not need to write your own availability checks.
+
+## Google Pay
+
+Swap `type: 'googlepay'` to render a Google Pay button. The rest of the API is identical.
+
+```javascript
+const button = createWalletButton({
+  type: 'googlepay',
+  clientToken,
+  onToken: async (token) => {
+    const result = await sdk.purchaseWallet({ type: 'googlepay', token })
+    if (result.actionRequired) {
+      await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+
+button.mount('#wallet-button-container')
+```
+
+## Saving a wallet card for future use
+
+To vault the wallet card for future merchant-initiated transactions (MIT), include `walletData.tokenize: true` and a `shopper.id` on the server-side charge:
+
+```json
+{
+  "walletData": {
+    "tokenize": true
+  },
+  "shopper": {
+    "id": "customer-42"
+  }
+}
+```
+
+The vaulted token can be used for subsequent charges via `sdk.authorizeToken()` without requiring another wallet interaction. See [Saved Cards](/sdk/saved-cards) for details.
+
+## Prerequisites
+
+<CardGroup cols={2}>
+  <Card icon="apple" title="Apple Pay">
+    Requires a valid Apple Merchant ID and a domain verification file served at `/.well-known/apple-developer-merchantid-domain-association` on your domain. Configure this in your Therius dashboard under **Connections**.
+  </Card>
+  <Card icon="google" title="Google Pay">
+    Requires your Google Merchant ID, registered with Google Pay & Wallet Console. Configure this in your Therius dashboard under **Connections**.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Apple Pay will not render on non-HTTPS pages or on devices that do not have a compatible card added to Wallet. Always test on a real device with a supported card.
+</Warning>
+
+## Further reading
+
+See [Apple Pay — `applepay`](/connections/cards-wallets) and [Google Pay — `googlepay`](/connections/cards-wallets) in the Connections tab for the server-side request shape, including how to handle recurring billing agreements.

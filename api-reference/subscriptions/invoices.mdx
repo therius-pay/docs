@@ -1,0 +1,129 @@
+---
+title: "GET /subscription/{id}/invoice — List and Get Invoices"
+sidebarTitle: "Invoices"
+description: "GET /subscription/{id}/invoice and GET /subscription/invoice/{id} — List invoices for a subscription or retrieve a single invoice by its UUID."
+---
+
+Therius creates one invoice per billing cycle. Each invoice records the charge attempt or attempts for that cycle, the outcome, and the final amount collected. You can retrieve all invoices for a subscription, or look up a specific invoice directly by its UUID.
+
+## List Invoices for a Subscription
+
+`GET /subscription/{id}/invoice` returns all invoices for a given subscription in reverse-chronological order.
+
+### Request
+
+**Endpoint:** `GET /subscription/{id}/invoice`
+
+**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+
+<ParamField path="id" type="string" required>
+  The UUID of the subscription whose invoices you want to list.
+</ParamField>
+
+<ParamField query="key" type="string">
+  Your private API key. Required when not using the `Authorization: Bearer` header.
+</ParamField>
+
+<ParamField query="merchantCode" type="string">
+  Your merchant account identifier.
+</ParamField>
+
+### Response
+
+Returns an array of invoice objects for the subscription.
+
+<ResponseField name="id" type="string">
+  Invoice UUID.
+</ResponseField>
+
+<ResponseField name="subscriptionId" type="string">
+  UUID of the parent subscription.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Invoice status — e.g. `paid`, `failed`, `pending`.
+</ResponseField>
+
+<ResponseField name="amount" type="integer">
+  Charged amount in minor units.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code.
+</ResponseField>
+
+<ResponseField name="attemptCount" type="integer">
+  Number of charge attempts made for this invoice (including retries).
+</ResponseField>
+
+<ResponseField name="paidAt" type="string">
+  ISO 8601 timestamp of when the invoice was successfully paid. `null` if not yet paid.
+</ResponseField>
+
+<ResponseField name="periodStart" type="string">
+  Start of the billing period this invoice covers.
+</ResponseField>
+
+<ResponseField name="periodEnd" type="string">
+  End of the billing period this invoice covers.
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?key=sk_live_your_key_here"
+```
+
+---
+
+## Retrieve a Specific Invoice
+
+`GET /subscription/invoice/{id}` retrieves a single invoice by its UUID, regardless of which subscription it belongs to.
+
+### Request
+
+**Endpoint:** `GET /subscription/invoice/{id}`
+
+<ParamField path="id" type="string" required>
+  The UUID of the invoice to retrieve.
+</ParamField>
+
+<ParamField query="key" type="string">
+  Your private API key. Required when not using the `Authorization: Bearer` header.
+</ParamField>
+
+<ParamField query="merchantCode" type="string">
+  Your merchant account identifier.
+</ParamField>
+
+### Response
+
+Returns a single invoice object with the same fields as described above.
+
+### Errors
+
+| Code | Meaning |
+| --- | --- |
+| `404` | Invoice not found under your merchant account. |
+
+### Example
+
+```bash
+curl "https://api.therius.io/v1/subscription/invoice/inv_xyz789abc?key=sk_live_your_key_here"
+```
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?key=sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

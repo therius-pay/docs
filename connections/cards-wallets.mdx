@@ -1,0 +1,268 @@
+---
+title: 'Cards and Digital Wallets: Accepted Payment Methods'
+sidebarTitle: 'Cards & Wallets'
+description: 'Accept credit and debit cards, Apple Pay, Google Pay, Click to Pay, PayPal, Alipay, GrabPay, and more digital wallets through the Therius payment API.'
+---
+
+Card payments are the default method in Therius — omit `paymentMethod` entirely from your request and a card payment is assumed. Digital wallets use the same `POST /payment/purchase` endpoint, with a `paymentMethod` code and a wallet-specific payload added to the base request. All card and wallet methods support both one-time and recurring (subscription) charges unless noted otherwise.
+
+<Note>
+  Wallet methods such as Apple Pay and Google Pay require a connection configured in your Therius dashboard. Contact Therius to enable wallet decryption for your merchant account before going live.
+</Note>
+
+### Credit/Debit Card — `card`
+
+Cards are the universal default. Every currency and country is supported. You can omit `paymentMethod` entirely or set it to `"card"` — both are equivalent. Pass raw card data server-side during testing; for browser-based checkouts, use a nonce from the JS SDK's hosted fields instead of raw card data to keep your integration out of PCI scope.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+  "card": {
+    "cardData": {
+      "cardNumber": "4111111111111111",
+      "cardholderName": "Ada Lovelace",
+      "expiryMonth": "12",
+      "expiryYear": "2030",
+      "cvv": "123"
+    }
+  }
+}
+```
+
+### Apple Pay — `applepay`
+
+Apple Pay is supported across iOS, macOS, and Safari. Use the JS SDK's `createWalletButton` to render the Apple Pay button and launch the payment sheet. The raw payment token returned by `ApplePaySession` goes into `walletData.token`. Apple Pay supports recurring charges.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "applepay",
+  "walletData": {
+    "type": "applepay",
+    "token": "<base64 token from ApplePaySession>"
+  }
+}
+```
+
+### Google Pay — `googlepay`
+
+Google Pay works across Android, Chrome, and any browser where the shopper has a saved card. Use the JS SDK's `createWalletButton` to render the button and receive the `PaymentData` token. Google Pay supports recurring charges.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "googlepay",
+  "walletData": {
+    "type": "googlepay",
+    "token": "<token from Google PaymentData>"
+  }
+}
+```
+
+### Click to Pay — `click_to_pay`
+
+Click to Pay is the Visa/Mastercard network-level saved-card scheme, powered by CyberSource. The shopper selects a saved network card without entering card details. Use the JS SDK's `createClickToPayButton` to render the button and obtain a nonce.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "click_to_pay",
+  "card": {
+    "nonceData": {
+      "nonce": "<nonce from createClickToPayButton>"
+    }
+  }
+}
+```
+
+### PayPal — `paypal`
+
+PayPal supports USD, EUR, GBP, and many additional currencies. It is a redirect-based flow — the shopper is redirected to PayPal to log in and confirm. The response returns `status: "pending_action"` with `actionRequired.url`.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "paypal"
+}
+```
+
+### Venmo — `venmo`
+
+Venmo is available for USD transactions in the United States. It uses a redirect flow similar to PayPal.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "venmo"
+}
+```
+
+### Alipay — `alipay`
+
+Alipay supports CNY plus 13 additional currencies for cross-border transactions. Shoppers authenticate in the Alipay app or via QR code. The response returns a redirect URL or QR payload.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "CNY", "value": 5000, "exponent": 2 },
+  "paymentMethod": "alipay"
+}
+```
+
+### WeChat Pay — `wechat_pay`
+
+WeChat Pay supports CNY plus 9 additional currencies. Shoppers scan a QR code or complete payment inside the WeChat app.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "CNY", "value": 5000, "exponent": 2 },
+  "paymentMethod": "wechat_pay"
+}
+```
+
+### GrabPay — `grabpay`
+
+GrabPay is Southeast Asia's leading super-app wallet, available in Malaysia, Singapore, Philippines, Thailand, and Vietnam. Supported currencies: MYR, SGD, PHP, THB, VND.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "grabpay"
+}
+```
+
+### Amazon Pay — `amazon_pay`
+
+Amazon Pay lets shoppers use their Amazon account's stored payment and address details. Supported currencies: USD, EUR, GBP, JPY.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "amazon_pay"
+}
+```
+
+### Revolut Pay — `revolut_pay`
+
+Revolut Pay is available for EUR, GBP, and Central & Eastern European currencies. Shoppers authenticate via the Revolut app.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "revolut_pay"
+}
+```
+
+### TWINT — `twint`
+
+TWINT is Switzerland's national mobile payment app. CHF only.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "CHF", "value": 5000, "exponent": 2 },
+  "paymentMethod": "twint"
+}
+```
+
+### MobilePay — `mobilepay`
+
+MobilePay is widely used in Denmark and Finland. Supported currencies: DKK, EUR.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "DKK", "value": 5000, "exponent": 2 },
+  "paymentMethod": "mobilepay"
+}
+```
+
+### Cash App Pay — `cashapp`
+
+Cash App Pay is available for USD transactions in the United States. Shoppers authenticate via the Cash App on their mobile device.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "cashapp"
+}
+```
+
+### PicPay — `picpay_wallet`
+
+PicPay is a popular Brazilian digital wallet. BRL only.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "picpay_wallet"
+}
+```
+
+## Wallet Tokenization
+
+You can save a wallet payment method for future use — for example, to charge a shopper again without requiring them to re-authenticate. To tokenize a wallet transaction, set `walletData.tokenize: true` and include a `shopper.id` in your request. Therius stores the wallet token against that shopper and makes it available for subsequent charges.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "applepay",
+  "walletData": {
+    "type": "applepay",
+    "token": "<base64 token from ApplePaySession>",
+    "tokenize": true
+  },
+  "shopper": {
+    "id": "SHOPPER-001"
+  }
+}
+```
+
+<Note>
+  Wallet tokenization requires a `shopper.id`. Without it, the `tokenize` flag is ignored and no token is saved.
+</Note>

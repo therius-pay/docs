@@ -1,0 +1,148 @@
+---
+title: "GET /payment/inquiry/{id} — Retrieve Payment Status"
+sidebarTitle: "Inquiry"
+description: "GET /payment/inquiry/{id} — Retrieve the current status and full details of any payment using its paymentCode or internal payment UUID."
+---
+
+Use `GET /payment/inquiry/{id}` to retrieve the current status and details of any payment. Pass either the `paymentCode` that Therius returned when the payment was created (e.g. `PC-1234567890`) or the internal payment UUID. This endpoint is useful for polling pending payments, reconciliation, and debugging.
+
+## Request
+
+**Endpoint:** `GET https://api.therius.io/v1/payment/inquiry/{id}`
+
+<ParamField header="Authorization" type="string">
+  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox). Required for most requests.
+</ParamField>
+
+<ParamField header="X-Environment" type="string">
+  Set to `"sandbox"` when querying the sandbox environment without an API key. Useful for client-side status polling where you don't want to expose your secret key.
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  The `paymentCode` (e.g. `"PC-1234567890"`) or the internal payment UUID. Both uniquely identify a single payment.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  Internal Therius payment UUID.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current payment status. Possible values: `"authorized"`, `"captured"`, `"declined"`, `"cancelled"`, `"refunded"`, `"pending_3ds"`, `"pending_action"`, `"failed"`.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  Therius receipt ID for this payment (e.g. `"PC-1234567890"`).
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Your original order reference.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  The payment amount in `{ currency, value, exponent }` format.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code (also present at the top level for convenience).
+</ResponseField>
+
+<ResponseField name="merchantId" type="string">
+  Your merchant identifier.
+</ResponseField>
+
+<ResponseField name="authorizationCode" type="string">
+  Issuer authorization code. Present on `authorized` and `captured` payments.
+</ResponseField>
+
+<ResponseField name="refusalCode" type="object">
+  Present on `declined` payments.
+
+  <Expandable title="refusalCode fields">
+    <ResponseField name="reason" type="string">
+      Human-readable decline reason.
+    </ResponseField>
+
+    <ResponseField name="reasonCode" type="string">
+      Machine-readable decline code.
+    </ResponseField>
+
+    <ResponseField name="originalReason" type="string">
+      Raw reason string from the issuer or acquirer.
+    </ResponseField>
+
+    <ResponseField name="originalReasonCode" type="string">
+      Raw reason code from the issuer or acquirer.
+    </ResponseField>
+
+    <ResponseField name="recoveryAction" type="string">
+      Suggested next step: `"retry"`, `"switch_method"`, or `"terminal"`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Look up a declined payment
+
+```bash
+curl https://api.therius.io/v1/payment/inquiry/PC-9876543210 \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+```json
+{
+  "id": "f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+  "status": "declined",
+  "paymentCode": "PC-9876543210",
+  "orderCode": "ORDER-20240101-003",
+  "amount": { "currency": "USD", "value": 2500, "exponent": 2 },
+  "currency": "USD",
+  "merchantId": "MERCHANT_001",
+  "refusalCode": {
+    "reason": "Do not honor",
+    "reasonCode": "DO_NOT_HONOR",
+    "recoveryAction": "switch_method"
+  }
+}
+```
+
+### Query sandbox without an API key
+
+```bash
+curl https://api-sandbox.therius.io/v1/payment/inquiry/PC-1234567890 \
+  -H "X-Environment: sandbox"
+```
+
+<Note>
+  If no payment exists for the provided `id`, the API returns `404 Not Found`. Verify the `paymentCode` or UUID and ensure you're querying the correct environment (production vs. sandbox).
+</Note>
+
+<Tip>
+  You can use this endpoint to poll for the final status of `pending_3ds` or `pending_action` payments if you prefer not to use webhooks. However, webhooks are recommended for production — they push the final status to your server as soon as it's available, without requiring polling.
+</Tip>
+
+<RequestExample>
+
+```bash cURL
+curl https://api.therius.io/v1/payment/inquiry/PC-1234567890 \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+  "currency": "USD",
+  "merchantId": "MERCHANT_001",
+  "authorizationCode": "AUTH-789"
+}
+```
+
+</ResponseExample>

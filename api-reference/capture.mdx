@@ -1,0 +1,156 @@
+---
+title: "POST /payment/capture — Settle a Prior Authorization"
+sidebarTitle: "Capture"
+description: "POST /payment/capture — Settle a previously authorized payment. Supports partial capture. Must be called within the acquirer authorization window."
+---
+
+Call `POST /payment/capture` to settle funds from an earlier `POST /payment/authorization`. You can capture less than the full authorized amount — a partial capture — and the remaining hold is released automatically. You must call this endpoint within the acquirer's authorization window (typically 7 days) or the hold will expire and you'll need to re-authorize.
+
+## Request
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/capture`
+
+<ParamField header="Authorization" type="string">
+  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Required in production. Retrying with the same key returns the original response without creating a duplicate settlement.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`.
+</ParamField>
+
+<ParamField body="key" type="string">
+  Your merchant private API key. Alternatively, use the `Authorization` header.
+</ParamField>
+
+<ParamField body="merchantCode" type="string" required>
+  Your merchant identifier.
+</ParamField>
+
+<ParamField body="orderCode" type="string">
+  Your original order reference. Either `orderCode` or `paymentCode` is required to identify the payment.
+</ParamField>
+
+<ParamField body="paymentCode" type="string">
+  The Therius payment receipt ID returned when the authorization was created (e.g. `"PC-1234567890"`). Either `paymentCode` or `orderCode` is required.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  An optional internal reference for this capture operation.
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  The amount to capture. May be less than or equal to the authorized amount.
+
+  <Expandable title="amount fields">
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code. Must match the currency of the original authorization.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Amount in minor units. Must not exceed the originally authorized value.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Number of decimal places for the currency.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Result of the capture. One of:
+
+  - `"captured"` — funds settled successfully.
+  - `"failed"` — capture could not be processed. Check `connectionCode` and retry or contact support.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  Therius receipt ID for this payment.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Your original `orderCode`.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Your `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  The amount actually captured, in `{ currency, value, exponent }` format.
+</ResponseField>
+
+## Example
+
+### Full capture
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/capture \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "paymentCode": "PC-1234567890",
+    "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+### Partial capture
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/capture \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "paymentCode": "PC-1234567890",
+    "amount": { "currency": "USD", "value": 7500, "exponent": 2 }
+  }'
+```
+
+```json
+{
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 7500, "exponent": 2 }
+}
+```
+
+<Note>
+  When you perform a partial capture, Therius automatically releases the remaining hold (\$24.00 in the example above). You do not need to send a separate cancel request for the uncaptured portion.
+</Note>
+
+<Warning>
+  You can only capture an authorized payment once. If you need to capture a different amount after a partial capture has already been processed, you'll need to create a new authorization.
+</Warning>
+
+<Tip>
+  Always pass an `Idempotency-Key` on capture. If your server times out and you retry, the same key guarantees you won't double-settle the same authorization.
+</Tip>

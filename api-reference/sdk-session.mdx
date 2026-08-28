@@ -1,0 +1,121 @@
+---
+title: "POST /sdk/session — Create a Short-Lived SDK Token"
+sidebarTitle: "SDK Session"
+description: "POST /sdk/session — Exchange your private API key for a short-lived client token to initialize the Therius JS SDK in the browser safely."
+---
+
+`POST /sdk/session` exchanges your merchant private API key for a short-lived JWT `clientToken` with a 30-minute TTL. Pass the `clientToken` to the browser to initialize `new TheriusSDK({ clientToken })`. Your private key never reaches the browser — it stays on your server where it belongs.
+
+<Warning>
+  Call this endpoint from your server only. Never call it from browser JavaScript or expose your private API key to the client side.
+</Warning>
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /sdk/session`
+
+**Authentication:** `Authorization: Bearer sk_live_your_key_here` header.
+
+<ParamField body="country" type="string">
+  ISO 3166-1 alpha-2 country code, e.g. `"US"`. Required to create a full checkout session. When provided, the response includes a `sessionId` that binds the browser SDK to a specific checkout flow.
+</ParamField>
+
+<ParamField body="customerId" type="string">
+  Your merchant-side customer identifier. Becomes the shopper identity for the session.
+</ParamField>
+
+<ParamField body="orderCode" type="string">
+  Your merchant order reference, used to correlate this session with an order in your system.
+</ParamField>
+
+<ParamField body="paymentCode" type="string">
+  A pre-assigned payment code to bind to this session.
+</ParamField>
+
+<ParamField body="amount" type="integer">
+  Amount to lock for this session, in minor units (e.g. `4999` = \$49.99). Optional — if omitted, the JS SDK manages the amount dynamically.
+</ParamField>
+
+<ParamField body="currency" type="string">
+  ISO 4217 currency code, e.g. `"USD"`. Optional — if omitted, the JS SDK manages currency selection.
+</ParamField>
+
+<ParamField body="checkoutConfigId" type="string">
+  UUID of the checkout configuration to bind to this session. Controls which payment methods and UI options are presented.
+</ParamField>
+
+<ParamField body="installments" default="1" type="integer">
+  Number of installments. Defaults to `1` for a single full charge.
+</ParamField>
+
+<ParamField body="installmentConfig" type="object">
+  Inline override for installment options. Use this to configure installment plans without creating a separate checkout config.
+</ParamField>
+
+## Response
+
+<ResponseField name="clientToken" type="string">
+  The short-lived JWT to pass to the browser SDK. Initialize the SDK with `new TheriusSDK({ clientToken })`.
+</ResponseField>
+
+<ResponseField name="expiresIn" type="integer">
+  Token TTL in seconds. Always `1800` (30 minutes).
+</ResponseField>
+
+<ResponseField name="sessionId" type="string">
+  Present when `country` was supplied in the request. Identifies the checkout session and must be kept alongside the `clientToken` for session-specific SDK calls.
+</ResponseField>
+
+<ResponseField name="country" type="string">
+  Echoed back from the request when provided.
+</ResponseField>
+
+<ResponseField name="amount" type="integer">
+  Echoed back from the request when provided.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  Echoed back from the request when provided.
+</ResponseField>
+
+<ResponseField name="defaultCheckoutConfigId" type="string">
+  The checkout configuration UUID that will be applied to this session (either the one you specified or your account default).
+</ResponseField>
+
+<ResponseField name="sdkIntegrity" type="string">
+  Integrity hash for the Therius JS bundle. Use this for Subresource Integrity (SRI) verification when loading the SDK script tag.
+</ResponseField>
+
+<Note>
+  The `clientToken` embeds an HMAC-SHA256 hash of your public key. Your raw private key is never present in the token payload and never reaches the browser.
+</Note>
+
+See [Session Bootstrap](/sdk/session-bootstrap) in the JS SDK tab for how to use the `clientToken` on the client side.
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/sdk/session \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "customerId": "customer-42", "country": "US", "currency": "USD", "amount": 4999 }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "clientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 1800,
+  "sessionId": "sess_abc123",
+  "country": "US",
+  "amount": 4999,
+  "currency": "USD"
+}
+```
+
+</ResponseExample>

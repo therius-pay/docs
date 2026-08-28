@@ -1,0 +1,95 @@
+---
+title: "POST /subscription/{id}/payment-method — Update Card"
+sidebarTitle: "Update Payment Method"
+description: "POST /subscription/{id}/payment-method — Replace the card on a subscription. Requires a fresh SDK nonce. Also reactivates a suspended subscription."
+---
+
+`POST /subscription/{id}/payment-method` replaces the card on a subscription and establishes a new Cardholder Initiated Transaction (CIT) mandate. This is also the only way to reactivate a `suspended` subscription — one where dunning retries have been exhausted and billing has stopped entirely.
+
+<Warning>
+  Always pass a fresh SDK nonce from the Therius JS SDK. This endpoint requires the customer to be present, because it performs a new CIT to register the updated mandate with the card network. A saved vault token (`vt_...`) is not accepted here.
+</Warning>
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/{id}/payment-method`
+
+**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass `key` in the request body.
+
+**Idempotency:** You may pass an `Idempotency-Key` header.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the subscription to update.
+</ParamField>
+
+### Request Body
+
+<ParamField body="key" type="string">
+  Your private API key.
+</ParamField>
+
+<ParamField body="merchantCode" type="string">
+  Your merchant account identifier.
+</ParamField>
+
+<ParamField body="card" type="object" required>
+  The new card details. Must use a fresh SDK nonce.
+
+  <Expandable title="card fields">
+    <ParamField body="card.nonceData.nonce" type="string" required>
+      A fresh one-time nonce returned by the Therius JS SDK after the customer enters their new card details.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+Returns `200 OK` with the updated subscription object. The response includes the new masked card details under `paymentMethod`.
+
+### Webhook events fired
+
+| Event | When |
+| --- | --- |
+| `subscription.payment_method_updated` | Always, on success. |
+| `subscription.reactivated` | Additionally fired if the subscription was `suspended` and the new CIT succeeded. |
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `404` | Subscription not found. |
+| `422` | No nonce provided, nonce already used, or the CIT was declined by the card network. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "card": {
+      "nonceData": {
+        "nonce": "<fresh nonce from JS SDK>"
+      }
+    }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>
+
+<Tip>
+  Build a card-update flow in your customer portal by creating a new SDK session (`POST /sdk/session`) server-side, passing the `clientToken` to the browser, collecting the new card via the JS SDK, and then calling this endpoint with the resulting nonce.
+</Tip>

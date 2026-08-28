@@ -1,0 +1,50 @@
+---
+title: 'Therius: Unified Payment API for Cards and Wallets'
+sidebarTitle: 'Introduction'
+description: 'Therius is a unified payment API for cards, wallets, and 40+ alternative methods. Learn what Therius does and how it fits your integration.'
+---
+
+Therius is a payment API that consolidates every major payment method behind a single REST endpoint. Whether you need to accept Visa, Mastercard, and Amex cards, digital wallets like Apple Pay and Google Pay, or regional alternatives such as Pix, ACH, iDEAL, and Klarna — you send one request to Therius and it handles the routing, authentication, and settlement for you.
+
+## Key Capabilities
+
+<CardGroup cols={2}>
+  <Card icon="arrow-right-arrow-left" title="Single Unified Endpoint">
+    Send all payment methods — cards, wallets, and 40+ APMs — through one `POST /payment/purchase` request. No per-method SDK juggling.
+  </Card>
+  <Card icon="rotate" title="Full Payment Lifecycle">
+    Authorize, capture, refund, and cancel from the same API. Two-step authorize-then-capture is supported for physical goods and delayed fulfillment.
+  </Card>
+  <Card icon="vault" title="Card Tokenization">
+    Tokenize a card during the first payment or via the standalone token endpoint. Charge returning shoppers without collecting card details again.
+  </Card>
+  <Card icon="shield-check" title="3D Secure (3DS2)">
+    Therius handles the full 3DS2 flow — device data collection, challenge redirects, and result verification — automatically. You only need to handle the `pending_3ds` pause.
+  </Card>
+  <Card icon="calendar-days" title="Subscriptions">
+    Create plans with billing intervals, trials, and dunning rules. Therius retries failed subscription payments and notifies you via webhooks.
+  </Card>
+  <Card icon="browser" title="JS SDK">
+    Collect card details in the browser using the Therius JS SDK. Card data is encrypted client-side and sent directly to Therius — your server never sees a raw PAN.
+  </Card>
+</CardGroup>
+
+<Note>
+  Raw card numbers must never travel through your server from the browser. Use the Therius JS SDK to collect card data client-side. The SDK encrypts the card and exchanges it for a nonce that your server passes to the API instead of the card number.
+</Note>
+
+## Where to Go Next
+
+Start with the quick start if you want to fire a real (sandbox) payment in under five minutes. Read the authentication guide to understand how API keys and the JS SDK session token work. Browse the SDK overview once you are ready to embed a payment form.
+
+<CardGroup cols={3}>
+  <Card icon="bolt" title="Quick Start" href="/quickstart">
+    Make your first test payment with a single curl command.
+  </Card>
+  <Card icon="key" title="Authentication" href="/authentication">
+    Understand API keys, environments, and the SDK client token.
+  </Card>
+  <Card icon="code" title="SDK Overview" href="/sdk/overview">
+    Embed a PCI-safe payment form in your frontend.
+  </Card>
+</CardGroup>

@@ -1,0 +1,59 @@
+---
+title: "List All Subscription Plans — GET /subscription/plan"
+sidebarTitle: "List Plans"
+description: "GET /subscription/plan — List all billing plans for your merchant account, with optional country filter. Includes subscriber count and archive state."
+---
+
+`GET /subscription/plan` returns all billing plans for your merchant account, including the current subscriber count and archive status for each plan. Use the `country` filter to see only plans available in a specific market — global plans (those without country restrictions) are always included in filtered results.
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `GET /subscription/plan`
+
+**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+
+<ParamField query="key" type="string" required>
+  Your private API key.
+</ParamField>
+
+<ParamField query="merchantCode" type="string">
+  Your merchant account identifier. Required if your key is associated with multiple merchant accounts.
+</ParamField>
+
+<ParamField query="country" type="string">
+  ISO 3166-1 alpha-2 country code to filter plans by availability, e.g. `"BR"`. Returns plans where `availableCountries` includes the given code, plus all globally available plans. Omit to return all plans regardless of country restrictions.
+</ParamField>
+
+## Response
+
+Returns an array of plan objects. Each object includes all fields set at creation time plus the following computed fields:
+
+<ResponseField name="id" type="integer">
+  The plan's unique integer ID.
+</ResponseField>
+
+<ResponseField name="subscriberCount" type="integer">
+  Number of currently active or trialing subscribers on this plan.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Whether the plan is accepting new subscribers. Set to `false` via [Update Plan](/api-reference/plans/update) to soft-deactivate.
+</ResponseField>
+
+<ResponseField name="deletedAt" type="string">
+  ISO 8601 timestamp of when the plan was archived, or `null` if not archived. Archived plans still appear in list results.
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/plan?key=sk_live_your_key_here&country=US"
+```
+
+</RequestExample>
+
+<Tip>
+  Archived plans are included in the response with a non-null `deletedAt`. Filter them out client-side if you only want plans currently open for enrollment.
+</Tip>

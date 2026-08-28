@@ -1,0 +1,220 @@
+---
+title: "POST /payment/authorization — Place a Fund Reserve"
+sidebarTitle: "Authorize"
+description: "POST /payment/authorization — Reserve funds without capturing. Call capture later to settle, or cancel to release the hold. Ideal for physical goods."
+---
+
+`POST /payment/authorization` reserves funds on the cardholder's account without settling them. The authorization hold is typically valid for 7 days, though the exact window depends on the acquirer and card network. Call [Capture](/api-reference/capture) to settle the funds when you're ready to fulfill, or [Cancel](/api-reference/cancel) to release the hold if you can't fulfill the order.
+
+## Request
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/authorization`
+
+<ParamField header="Authorization" type="string">
+  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox). Required unless you pass `key` in the request body.
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Required in production. Retrying with the same key returns the original response without creating a duplicate hold.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`.
+</ParamField>
+
+<ParamField body="key" type="string">
+  Your merchant private API key. You can pass this in the body instead of the `Authorization` header, but the header is preferred.
+</ParamField>
+
+<ParamField body="merchantCode" type="string" required>
+  Your merchant identifier, issued when your account is created.
+</ParamField>
+
+<ParamField body="orderCode" type="string" required>
+  Your internal order reference. Must be unique per merchant.
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  The amount to reserve.
+
+  <Expandable title="amount fields">
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code, e.g. `"USD"`, `"EUR"`, `"JPY"`.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Amount in minor units. For USD, `4999` = \$49.99. For JPY, `5000` = ¥5000.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Number of decimal places for the currency. `2` for USD/EUR, `0` for JPY.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="card" type="object">
+  Card payment data. Provide exactly one of `cardData`, `nonceData`, or `tokenData`. Omit this field when using an APM. See the [Purchase](/api-reference/purchase) reference for the full `card` schema.
+
+  <Expandable title="card fields">
+    <ParamField body="cardData" type="object">
+      Raw card details (`cardNumber`, `cardholderName`, `expiryMonth`, `expiryYear`, `cvv`, `tokenize`, `cardAddress`, `documentNumber`, `typeOverride`).
+    </ParamField>
+
+    <ParamField body="nonceData" type="object">
+      SDK-generated nonce (`nonce`, `cardholderName`, `cardAddress`, `tokenize`, `typeOverride`).
+    </ParamField>
+
+    <ParamField body="tokenData" type="object">
+      Saved token (`token`, `cvv`, `cardAddress`).
+    </ParamField>
+
+    <ParamField body="instalments" type="integer">
+      Number of instalments, if supported by the acquirer.
+    </ParamField>
+
+    <ParamField body="networkTransactionId" type="string">
+      Original network transaction ID for MIT flows.
+    </ParamField>
+
+    <ParamField body="networkReferenceId" type="string">
+      Original network reference ID for recurring flows.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="apm" type="object">
+  Alternative payment method data. Use this instead of `card` for APMs. Structure varies by payment method.
+</ParamField>
+
+<ParamField body="paymentMethod" type="string">
+  Payment method code. Omit for card payments. For APMs, use `"pix"`, `"ach"`, etc.
+</ParamField>
+
+<ParamField body="shopper" type="object">
+  Shopper information. Required when tokenizing.
+
+  <Expandable title="shopper fields">
+    <ParamField body="id" type="string">
+      Your internal shopper ID.
+    </ParamField>
+
+    <ParamField body="email" type="string">
+      Shopper's email address.
+    </ParamField>
+
+    <ParamField body="name" type="string">
+      Shopper's full name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  Per-payment webhook URL override (HTTPS only).
+</ParamField>
+
+<ParamField body="connectionCode" type="string">
+  Pin this payment to a specific gateway connection.
+</ParamField>
+
+<ParamField body="ipAddress" type="string">
+  Cardholder's IP address for fraud scoring.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key/value string pairs, returned in webhooks.
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Authorization outcome. One of:
+
+  - `"authorized"` — funds are reserved successfully. Call [Capture](/api-reference/capture) to settle.
+  - `"declined"` — issuer declined. Check `refusalCode`.
+  - `"pending_3ds"` — cardholder must complete a 3DS challenge. Check `actionRequired`.
+  - `"pending_action"` — payment requires an external action. Check `actionRequired`.
+  - `"failed"` — processing error.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  Therius's unique receipt ID (e.g. `"PC-1234567890"`). Store this — you'll reference it in your subsequent [Capture](/api-reference/capture) or [Cancel](/api-reference/cancel) call.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Your `orderCode`, echoed back.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Your `merchantCode`, echoed back.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  The reserved amount in `{ currency, value, exponent }` format.
+</ResponseField>
+
+<ResponseField name="card" type="object">
+  Card response including masked PAN, brand, type, and network transaction IDs.
+</ResponseField>
+
+<ResponseField name="token" type="object">
+  Present if `tokenize: true` was requested. Contains `id` and `expirationDate`.
+</ResponseField>
+
+<ResponseField name="actionRequired" type="object">
+  Present when `status` is `"pending_3ds"` or `"pending_action"`. Contains `type`, `url`, `paymentCode`, `barcode`, and `params`.
+</ResponseField>
+
+<ResponseField name="refusalCode" type="object">
+  Present on decline. Contains `reason`, `reasonCode`, `originalReason`, `originalReasonCode`, and `recoveryAction` (`"retry"`, `"switch_method"`, or `"terminal"`).
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/authorization \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "orderCode": "ORDER-20240101-002",
+    "amount": { "currency": "USD", "value": 9900, "exponent": 2 },
+    "card": {
+      "cardData": {
+        "cardNumber": "4111111111111111",
+        "cardholderName": "Ada Lovelace",
+        "expiryMonth": "12",
+        "expiryYear": "2030",
+        "cvv": "123"
+      }
+    }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "status": "authorized",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 },
+  "card": {
+    "cardData": { "brand": "visa", "cardNumber": "411111****1111", "type": "credit" },
+    "networkTransactionId": "txn_def456"
+  }
+}
+```
+
+</ResponseExample>
+
+<Note>
+  Partial capture is supported. When you call [Capture](/api-reference/capture), you can pass an `amount` less than or equal to the authorized amount. For example, if you authorized $$99.00 but only shipped $$75.00 worth of goods, capture \$75.00 and the remaining hold is released automatically.
+</Note>
+
+<Warning>
+  Authorization holds expire — typically after 7 days, but this varies by acquirer and card network. If you don't call [Capture](/api-reference/capture) before expiry, the hold is released and you'll need to re-authorize. Monitor hold age in your order management system.
+</Warning>

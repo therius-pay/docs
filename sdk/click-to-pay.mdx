@@ -1,0 +1,66 @@
+---
+title: 'Click to Pay: Visa and Mastercard Network Saved Cards'
+sidebarTitle: 'Click to Pay'
+description: 'Add Click to Pay to your checkout with the Therius SDK. Supports Visa and Mastercard network-level saved cards via CyberSource with no card re-entry.'
+---
+
+Click to Pay is Visa and Mastercard's network-level saved-card scheme. Cardholders who have enrolled with their issuer can authenticate and pay without entering card details — the payment sheet is provided by the card network, not your page. Therius supports Click to Pay via CyberSource.
+
+## Add Click to Pay to your page
+
+Import `createClickToPayButton` and point it at a container element. The SDK renders the Click to Pay button and manages the authentication flow entirely.
+
+```javascript
+import { createClickToPayButton } from '@therius/sdk'
+
+createClickToPayButton({
+  clientToken,
+  container: '#ctp-button',
+})
+```
+
+When the shopper completes the Click to Pay authentication flow, the SDK returns a nonce. Pass that nonce to your server to complete the charge.
+
+## Charge the nonce on your server
+
+Send the nonce as `card.nonceData.nonce` on `POST /payment/purchase`, exactly as you would with a hosted-fields nonce:
+
+```json
+{
+  "paymentMethod": "click_to_pay",
+  "card": {
+    "nonceData": {
+      "nonce": "<nonce from createClickToPayButton>"
+    }
+  }
+}
+```
+
+Your server submits this to `POST /v1/payment/purchase` with your private API key. The response is the standard `PaymentResult` shape.
+
+## Handling the result
+
+If the charge returns `actionRequired`, handle it with `sdk.handleAction` in the browser:
+
+```javascript
+createClickToPayButton({
+  clientToken,
+  container: '#ctp-button',
+  onNonce: async (nonce) => {
+    const result = await sdk.authorize(nonce)
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+```
+
+`sdk.handleAction` handles any out-of-band step — including 3DS challenges that Click to Pay networks may trigger — and resolves to the final `PaymentResult`.
+
+## Availability and prerequisites
+
+<Note>
+  Click to Pay availability depends on the cardholder's issuer enrollment and your configured CyberSource connection. If the shopper has not enrolled their card with the Click to Pay scheme, the button will not appear for that shopper.
+</Note>
+
+Check the [Connections](/connections/cards-wallets) page for details on enabling the CyberSource connection that powers Click to Pay in your Therius account.

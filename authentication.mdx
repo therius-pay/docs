@@ -1,0 +1,93 @@
+---
+title: 'Therius API Authentication — Keys and Environments'
+sidebarTitle: 'Authentication'
+description: 'Learn how Therius API keys work, how to pass them in requests, the difference between live and sandbox credentials, and how to mint SDK session tokens.'
+---
+
+Every Therius API endpoint requires a credential. You can provide it in one of two ways: as a `Bearer` token in the `Authorization` header (preferred for server-to-server calls), or as a `key` field in the JSON request body. Both methods are equivalent — choose whichever fits your integration style. What you must never do is expose a private API key in frontend code or pass it through an untrusted client.
+
+## API Key Types
+
+Therius issues four kinds of credentials. The prefix on every key tells you exactly what it is and which environment it targets.
+
+| Key prefix | Type | Used by | Environment |
+|---|---|---|---|
+| `sk_live_xxx` | Private key | Your server | Production |
+| `sk_sandbox_xxx` | Private key | Your server | Sandbox |
+| `pub_live_xxx` | Public key | JS SDK (client token JWT) | Production |
+| `pub_sandbox_xxx` | Public key | JS SDK (client token JWT) | Sandbox |
+
+**Private keys** (`sk_live_xxx`, `sk_sandbox_xxx`) authenticate all payment endpoints. Keep these on your server only — in environment variables, not in source code.
+
+**Public keys** (`pub_live_xxx`, `pub_sandbox_xxx`) are embedded inside the short-lived client token JWT that your server mints and passes to the browser. The browser never sees a raw private key.
+
+**SDK client token (JWT)** — a short-lived token (valid for 30 minutes) that your server creates by calling `POST /sdk/session` with your private key. This is the only credential the browser ever holds. If the token expires, your server mints a fresh one.
+
+## How to Pass Credentials
+
+Use the `Authorization` header on server-side requests. The `key` body field is a convenience for quick testing.
+
+```bash
+# Authorization header (preferred for server-side calls)
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+
+# Alternatively, pass the key in the request body
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "sk_live_your_key_here",
+    ...
+  }'
+```
+
+<Note>
+  The key prefix determines the environment automatically. A key starting with `sk_sandbox_` always routes to the sandbox — you do not need a separate environment flag or a different code path.
+</Note>
+
+## SDK Session Token Flow
+
+The JS SDK requires a client token JWT, not a raw API key. Here is the flow:
+
+1. Your browser requests a payment session from your server.
+2. Your server calls `POST /sdk/session` with your private key and receives a short-lived `clientToken` JWT.
+3. Your server passes the `clientToken` to the browser.
+4. The browser initialises the Therius JS SDK with the `clientToken`.
+
+Your private key never leaves your server. If you ever need to refresh the session (for example, after 30 minutes), your server mints a new token.
+
+```bash
+# Your server mints a client token
+curl -X POST https://api.therius.io/v1/sdk/session \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```json
+{
+  "clientToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+Pass `clientToken` to the JS SDK initialiser — never log it or store it beyond the current browser session.
+
+## Common Authentication Errors
+
+| Status | Code | Meaning |
+|---|---|---|
+| `401 Unauthorized` | `AUTH_MISSING` / `AUTH_INVALID` | The key is missing, malformed, or has been revoked. Check that you are sending the correct key for the target environment. |
+| `403 Forbidden` | `AUTH_INSUFFICIENT_SCOPE` | The key is valid but does not have permission for this operation. For example, using a public key on a server-side payment endpoint. |
+
+## Security Tips
+
+<Warning>
+  Never embed a private key (`sk_live_xxx` or `sk_sandbox_xxx`) in frontend JavaScript, a mobile app binary, or a public repository. Treat private keys the same way you treat database passwords.
+</Warning>
+
+- Store keys in environment variables or a secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).
+- Rotate keys immediately if you suspect a leak — generate a new key in the Therius dashboard and deprecate the old one.
+- Use the minimum-privilege key for each integration: the JS SDK only ever needs the client token; your server handles everything else.
+- Audit key usage in the Therius dashboard to detect unexpected call patterns early.

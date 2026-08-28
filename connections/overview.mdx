@@ -1,0 +1,115 @@
+---
+title: 'Therius Payment Methods: 40+ Options, One Endpoint'
+sidebarTitle: 'Overview'
+description: 'Every payment method Therius supports routes through POST /payment/purchase. Browse by category or find a specific method for a code example.'
+---
+
+Every payment method in Therius routes through the same `POST /payment/purchase` endpoint. You switch between methods by setting the `paymentMethod` field in your request body — or omit it entirely when charging a card. This page is your starting point for the full payment method catalog: browse by category below, or use the quick-lookup table to jump straight to a specific method.
+
+## Browse by Category
+
+<CardGroup cols={2}>
+  <Card title="Cards & Wallets" icon="credit-card" href="/connections/cards-wallets">
+    Visa, Mastercard, Apple Pay, Google Pay, PayPal, Alipay, GrabPay, and more.
+  </Card>
+  <Card title="Bank Transfers" icon="building-columns" href="/connections/bank-transfers">
+    Pix, ACH, SEPA, iDEAL, BLIK, PSE, SPEI, Przelewy24, and more.
+  </Card>
+  <Card title="Vouchers & Cash" icon="receipt" href="/connections/vouchers-cash">
+    Boleto (Brazil), OXXO (Mexico), and Konbini (Japan).
+  </Card>
+  <Card title="Buy Now, Pay Later" icon="calendar-days" href="/connections/buy-now-pay-later">
+    Klarna, Afterpay, Affirm, and Zip installment options.
+  </Card>
+  <Card title="Asia-Pacific Methods" icon="globe" href="/connections/apac-methods">
+    UPI, QRIS, FPX, PayNow, PromptPay, and GrabPay across APAC.
+  </Card>
+  <Card title="Latin America Methods" icon="map-pin" href="/connections/latam-methods">
+    Efecty, Rapipago, PagoFácil, Khipu, Transbank, and more.
+  </Card>
+</CardGroup>
+
+## How Redirects Work
+
+Most alternative payment methods (APMs) return a `status` of `"pending_action"` along with an `actionRequired.url`. Your integration must redirect the shopper to that URL so they can complete authentication or payment on their bank or wallet's page. After the shopper finishes, Therius redirects them back to your `apm.returnUrl`.
+
+If you're using the Therius JS SDK, you don't need to handle this manually — call `sdk.handleAction(result.actionRequired)` and the SDK manages the redirect, waits for the result, and resolves the promise for you.
+
+<Note>
+  Some redirect methods require additional fields in the request — such as `apm.returnUrl`, `apm.cancelUrl`, or shopper details like name and email. These requirements are noted on each method's page.
+</Note>
+
+## Base Request Shape
+
+Every request to `POST /payment/purchase` shares the same base structure. You add a `paymentMethod` code and a method-specific object (`card`, `apm`, or `walletData`) on top of it.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": {
+    "currency": "USD",
+    "value": 5000,
+    "exponent": 2
+  },
+  "paymentMethod": "<code>"
+}
+```
+
+Amounts are always in minor units. For USD, `value: 1999` with `exponent: 2` equals $19.99. For zero-decimal currencies like JPY or CLP, use `exponent: 0` and pass the full integer amount.
+
+## Quick Method Lookup
+
+| Method | Code | Currency | Category |
+|---|---|---|---|
+| Credit/Debit Card | `card` | Any | Cards |
+| Apple Pay | `applepay` | Any | Wallets |
+| Google Pay | `googlepay` | Any | Wallets |
+| Click to Pay | `click_to_pay` | Any | Wallets |
+| PayPal | `paypal` | USD/EUR/GBP | Wallets |
+| Alipay | `alipay` | CNY+ | Wallets |
+| WeChat Pay | `wechat_pay` | CNY+ | Wallets |
+| GrabPay | `grabpay` | SGD/MYR/PHP/THB/VND | Wallets |
+| Amazon Pay | `amazon_pay` | USD/EUR/GBP/JPY | Wallets |
+| Revolut Pay | `revolut_pay` | EUR/GBP+ | Wallets |
+| TWINT | `twint` | CHF | Wallets |
+| MobilePay | `mobilepay` | DKK/EUR | Wallets |
+| Cash App Pay | `cashapp` | USD | Wallets |
+| Venmo | `venmo` | USD | Wallets |
+| PicPay | `picpay_wallet` | BRL | Wallets |
+| Pix | `pix` | BRL | Bank Transfer |
+| ACH | `ach` | USD | Bank Transfer |
+| SEPA Direct Debit | `sepa_debit` | EUR | Bank Transfer |
+| BECS Direct Debit | `au_becs_debit` | AUD | Bank Transfer |
+| Bacs Direct Debit | `bacs_debit` | GBP | Bank Transfer |
+| iDEAL | `ideal` | EUR | Bank Transfer |
+| Bancontact | `bancontact` | EUR | Bank Transfer |
+| Przelewy24 | `p24` | PLN/EUR | Bank Transfer |
+| EPS | `eps` | EUR | Bank Transfer |
+| Multibanco | `multibanco` | EUR | Bank Transfer |
+| BLIK | `blik` | PLN | Bank Transfer |
+| PSE | `pse` | COP | Bank Transfer |
+| SPEI | `spei` | MXN | Bank Transfer |
+| Klarna | `klarna` | USD/EUR/GBP+ | BNPL |
+| Afterpay / Clearpay | `afterpay_clearpay` | USD/GBP/AUD/NZD/CAD | BNPL |
+| Affirm | `affirm` | USD/CAD | BNPL |
+| Zip | `zip` | AUD/NZD/USD | BNPL |
+| Boleto | `boleto` | BRL | Voucher |
+| OXXO | `oxxo` | MXN | Voucher |
+| Konbini | `konbini` | JPY | Voucher |
+| UPI | `upi` | INR | APAC |
+| QRIS | `qris` | IDR | APAC |
+| FPX | `fpx` | MYR | APAC |
+| PayNow | `paynow` | SGD | APAC |
+| PromptPay | `promptpay` | THB | APAC |
+| Efecty | `efecty` | COP | LATAM |
+| Rapipago | `rapipago` | ARS | LATAM |
+| PagoFácil | `pagofacil` | ARS | LATAM |
+| Cobro Express | `cobro_express` | ARS | LATAM |
+| PagoEfectivo | `pagoefectivo` | PEN | LATAM |
+| Nequi | `nequi` | COP | LATAM |
+| Yape | `yape` | PEN | LATAM |
+| Khipu | `khipu` | CLP | LATAM |
+| Transbank Debit | `transbank_debit` | CLP | LATAM |
+| Bancolombia Button | `bancolombia_button` | COP | LATAM |

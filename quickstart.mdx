@@ -1,0 +1,139 @@
+---
+title: 'Therius Quickstart: Your First Payment in 5 Minutes'
+sidebarTitle: 'Quick Start'
+description: 'Send a real sandbox payment with the Therius API in under five minutes — no SDK needed, no frontend setup. Just a key and a curl command.'
+---
+
+The Therius sandbox is a fully isolated test environment — requests hit a test-provider stub, no real money moves, and no card network is involved. Your sandbox key starts with `sk_sandbox_...` and every Therius account includes one by default. Everything you build here works identically in production; you only swap the key and base URL when you are ready to go live.
+
+<Warning>
+  The `Idempotency-Key` header is mandatory in production. Retrying a network timeout without it can double-charge a customer. The examples below include it so you build the habit from the start.
+</Warning>
+
+## Steps
+
+<Steps>
+  <Step title="Get a sandbox key">
+    Log in to your Therius dashboard and copy the key labeled **Sandbox Secret Key**. It looks like `sk_sandbox_xxxxxxxxxxxx`.
+
+    Every request to `https://api-sandbox.therius.io/v1` must include this key either in the `Authorization` header or in the `key` field of the request body. The key prefix (`sk_sandbox_`) tells Therius to route the request to the sandbox environment automatically — no extra configuration needed.
+  </Step>
+
+  <Step title="Fire your first purchase">
+    Paste the following command into your terminal, replacing `sk_sandbox_your_key_here` with your actual sandbox key.
+
+    ```bash
+    curl -X POST https://api-sandbox.therius.io/v1/payment/purchase \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{
+        "key": "sk_sandbox_your_key_here",
+        "merchantCode": "MERCHANT_001",
+        "orderCode": "QUICKSTART-001",
+        "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
+        "card": {
+          "cardData": {
+            "cardNumber": "4111111111111111",
+            "cardholderName": "Ada Lovelace",
+            "expiryMonth": "12",
+            "expiryYear": "2030",
+            "cvv": "123"
+          }
+        }
+      }'
+    ```
+
+    A few things to note about this request:
+
+    - **Test cards** — `4111111111111111` always results in a sandbox approval. Use `4000000000000002` to simulate a decline.
+    - **`amount.value`** is always in minor units. `1999` means $19.99 in USD. For zero-decimal currencies like JPY or CLP, `1999` means ¥1999.
+    - **`amount.exponent`** is the number of decimal places: `2` for USD/EUR, `0` for JPY/CLP.
+
+    A successful response looks like this:
+
+    ```json
+    {
+      "status": "captured",
+      "paymentCode": "PAY-abc123xyz",
+      "orderCode": "QUICKSTART-001",
+      "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
+    }
+    ```
+
+    Save the `paymentCode` — it is Therius's receipt ID for this payment and you will need it for refunds, cancellations, and lookups.
+  </Step>
+
+  <Step title="Look up the payment">
+    Retrieve any payment by passing its `paymentCode` (Therius's receipt ID, returned in the purchase response) to `GET /payment/inquiry/{id}`.
+
+    ```bash
+    curl https://api-sandbox.therius.io/v1/payment/inquiry/PAY-abc123xyz \
+      -H "Authorization: Bearer sk_sandbox_your_key_here"
+    ```
+
+    The response returns the same `PaymentResponse` shape as the original purchase, including the current `status` and full amount details.
+  </Step>
+
+  <Step title="Tokenize a card">
+    To save a card for a returning shopper, add `"tokenize": true` and a `shopper.id` to your purchase request. Therius stores the card in its vault and returns a token in the response.
+
+    ```json
+    {
+      "key": "sk_sandbox_your_key_here",
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "QUICKSTART-002",
+      "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
+      "shopper": { "id": "shopper-42" },
+      "card": {
+        "cardData": {
+          "cardNumber": "4111111111111111",
+          "cardholderName": "Ada Lovelace",
+          "expiryMonth": "12",
+          "expiryYear": "2030",
+          "cvv": "123",
+          "tokenize": true
+        }
+      }
+    }
+    ```
+
+    The response includes a `token` field (e.g., `vt_abc123`). On future requests for this shopper, pass `card.tokenData.token` instead of `card.cardData` — no card number needed.
+
+    ```json
+    {
+      "card": {
+        "tokenData": {
+          "token": "vt_abc123"
+        }
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Go live">
+    When you are ready to accept real payments, make two changes:
+
+    1. Replace `sk_sandbox_...` with your production key `sk_live_...`.
+    2. Point your requests at `https://api.therius.io/v1` instead of `https://api-sandbox.therius.io/v1`.
+
+    No other code changes are required. The key prefix selects the environment automatically.
+
+    <Warning>
+      Confirm that every mutating request in your production code sends an `Idempotency-Key` header before going live.
+    </Warning>
+  </Step>
+</Steps>
+
+## What's Next
+
+<CardGroup cols={3}>
+  <Card icon="book" title="API Reference" href="/api-reference">
+    Explore every endpoint — purchase, authorize, capture, refund, cancel, subscriptions, and more.
+  </Card>
+  <Card icon="code" title="JS SDK" href="/sdk/overview">
+    Embed a PCI-safe card form in your frontend without raw card data touching your server.
+  </Card>
+  <Card icon="plug" title="Connections" href="/connections">
+    Connect acquirers, processors, and alternative payment providers to your Therius account.
+  </Card>
+</CardGroup>

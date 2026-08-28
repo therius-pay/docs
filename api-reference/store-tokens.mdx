@@ -1,0 +1,208 @@
+---
+title: "POST /token — Store Card Tokens for Future Payments"
+sidebarTitle: "Store Tokens"
+description: "POST /token — Tokenize one or more cards without charging them. Each token is scoped to your merchant account and reusable for future payments."
+---
+
+`POST /token` lets you store card details as reusable tokens without processing a payment. Use it to pre-vault cards during account setup flows, or to migrate stored cards from another provider. Each token is scoped to your merchant account and stored with BIN data (brand, type, issuer).
+
+<Note>
+  To tokenize a card during a payment, add `card.cardData.tokenize: true` to your payment request instead — see [Tokenization concepts](/concepts/tokenization).
+</Note>
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /token`
+
+**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass your private key as the `key` field in the request body.
+
+<ParamField body="key" type="string">
+  Your private API key. Use this instead of the `Authorization` header if you prefer body-based authentication.
+</ParamField>
+
+<ParamField body="merchantCode" type="string">
+  Your unique merchant account identifier.
+</ParamField>
+
+<ParamField body="shopper" type="object">
+  The customer to associate the stored tokens with.
+
+  <Expandable title="shopper fields">
+    <ParamField body="shopper.id" type="string">
+      Your internal customer identifier.
+    </ParamField>
+
+    <ParamField body="shopper.email" type="string">
+      Customer email address.
+    </ParamField>
+
+    <ParamField body="shopper.name" type="string">
+      Customer full name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="tokens" type="array" required>
+  An array of token entries to store. Each entry must include either `card.cardData` (raw card fields) or `card.nonceData` (an SDK-generated nonce).
+
+  <Expandable title="token entry fields">
+    <ParamField body="tokens[].card.cardData" type="object">
+      Raw card data. Use this only in server-side or PCI-compliant environments. For browser flows, prefer `card.nonceData`.
+
+      <Expandable title="cardData fields">
+        <ParamField body="tokens[].card.cardData.cardNumber" type="string">
+          Full card number (PAN).
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.cardholderName" type="string">
+          Name as it appears on the card.
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.expiryMonth" type="string">
+          Two-digit expiry month, e.g. `"12"`.
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.expiryYear" type="string">
+          Four-digit expiry year, e.g. `"2030"`.
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.cvv" type="string">
+          Card security code.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="tokens[].card.nonceData" type="object">
+      SDK-generated nonce in place of raw card data. Recommended for browser flows where card details are collected via the Therius JS SDK.
+
+      <Expandable title="nonceData fields">
+        <ParamField body="tokens[].card.nonceData.nonce" type="string">
+          The one-time nonce string returned by the JS SDK after the customer enters their card.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="tokens[].expirationDate" type="string">
+      Optional override for the token's effective expiry date. Format: `YYYY-MM`. If omitted, the card's own expiry is used.
+    </ParamField>
+
+    <ParamField body="tokens[].tokenCreationReference" type="string">
+      Your own reference string for this token entry. Echoed back in the response for reconciliation.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+A successful request returns `200 OK` with the merchant code, the echoed shopper object, and an array of created token entries.
+
+<ResponseField name="merchantCode" type="string">
+  Your merchant account identifier, echoed from the request.
+</ResponseField>
+
+<ResponseField name="shopper" type="object">
+  The shopper object echoed back from the request.
+
+  <Expandable title="shopper fields">
+    <ResponseField name="shopper.id" type="string">
+      Your internal customer identifier.
+    </ResponseField>
+
+    <ResponseField name="shopper.email" type="string">
+      Customer email address.
+    </ResponseField>
+
+    <ResponseField name="shopper.name" type="string">
+      Customer full name.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="tokens" type="array">
+  Array of created token objects, in the same order as the request.
+
+  <Expandable title="token fields">
+    <ResponseField name="tokens[].id" type="string">
+      The reusable token ID (prefixed `vt_`). Pass this as `card.tokenData.token` on future payment requests.
+    </ResponseField>
+
+    <ResponseField name="tokens[].card.cardData" type="object">
+      Masked card information stored alongside the token.
+
+      <Expandable title="masked cardData fields">
+        <ResponseField name="tokens[].card.cardData.brand" type="string">
+          Card network brand, e.g. `"visa"`, `"mastercard"`.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.cardNumber" type="string">
+          Masked card number, e.g. `"411111****1111"`.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.type" type="string">
+          Card type — `"credit"` or `"debit"`.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.issuerName" type="string">
+          Name of the card-issuing bank.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.issuingCountry" type="string">
+          ISO 3166-1 alpha-2 country code of the issuing bank.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="tokens[].expirationDate" type="string">
+      Effective expiry date for the token in `YYYY-MM` format.
+    </ResponseField>
+
+    <ResponseField name="tokens[].tokenCreationReference" type="string">
+      Your reference string, echoed back from the request.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/token \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "shopper": { "id": "customer-42", "email": "ada@example.com" },
+    "tokens": [{
+      "card": {
+        "cardData": {
+          "cardNumber": "4111111111111111",
+          "cardholderName": "Ada Lovelace",
+          "expiryMonth": "12",
+          "expiryYear": "2030",
+          "cvv": "123"
+        }
+      }
+    }]
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "merchantCode": "MERCHANT_001",
+  "shopper": { "id": "customer-42", "email": "ada@example.com" },
+  "tokens": [{
+    "id": "vt_abc123xyz",
+    "card": {
+      "cardData": { "brand": "visa", "cardNumber": "411111****1111", "type": "credit" }
+    },
+    "expirationDate": "2030-12"
+  }]
+}
+```
+
+</ResponseExample>

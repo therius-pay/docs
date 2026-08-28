@@ -1,0 +1,92 @@
+---
+title: 'Saved Cards: Returning Shopper One-Click Checkout Flow'
+sidebarTitle: 'Saved Cards'
+description: 'Let returning shoppers pay with a saved card. Set customerId on the SDK session to enable the vault picker and charge saved tokens without re-entry.'
+---
+
+Therius lets you offer returning shoppers a one-click checkout by vaulting their card during the first payment and presenting it on subsequent visits. The saved-card flow is entirely session-scoped — one session can never access another shopper's cards. Vaulting and retrieval are tied to the `customerId` you supply when creating the SDK session on your server.
+
+## How it works
+
+<Steps>
+  <Step title="First visit — vault the card">
+    Pass `customerId` to `POST /sdk/session` when the shopper reaches checkout. When they complete payment, include `card.nonceData.tokenize: true` and `shopper.id` in your server-side charge request. Therius vaults the card under that shopper ID.
+
+    ```json
+    {
+      "card": {
+        "nonceData": {
+          "nonce": "<nonce>",
+          "tokenize": true
+        }
+      },
+      "shopper": {
+        "id": "customer-42"
+      }
+    }
+    ```
+
+    The charge response includes a `token` you can store against the shopper in your own database for reference.
+  </Step>
+  <Step title="Returning visit — retrieve saved cards">
+    Pass the same `customerId` to `POST /sdk/session`. The Checkout Widget automatically shows the shopper's saved cards. To retrieve them programmatically, call `sdk.getSavedMethods()`:
+
+    ```javascript
+    // The session JWT scopes this call to the session's own shopper
+    // — no client-supplied shopper ID needed
+    const savedMethods = await sdk.getSavedMethods()
+    ```
+
+    Each saved method is returned as:
+
+    ```json
+    {
+      "brand": "visa",
+      "last4": "4242",
+      "expiryMonth": "12",
+      "expiryYear": "2027",
+      "token": "tok_..."
+    }
+    ```
+
+    A raw PAN is never returned to the browser.
+  </Step>
+  <Step title="Charge the saved card">
+    Pass the token to `sdk.authorizeToken()` with the payment amount. No card re-entry is required.
+
+    ```javascript
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+    ```
+  </Step>
+</Steps>
+
+## Token scope and security
+
+- **Saved cards are returned as `{ brand, last4, expiryMonth, expiryYear, token }`** — never a usable PAN. Your UI can display card details safely.
+- **Cards are scoped to the merchant** — a token created under one merchant account cannot be used at another.
+- **Vaulted-methods retrieval is resolved purely from the session JWT** — the browser cannot enumerate a different shopper's cards by supplying a different ID. The scope is enforced server-side by Therius.
+
+## Using saved cards with the Checkout Widget
+
+When a `customerId` is set in the session, the [Checkout Widget](/sdk/checkout-widget) handles saved-card display and selection automatically. Pass `onSavedMethodSelected` to receive the token when a returning shopper picks a card:
+
+```javascript
+const checkout = sdk.checkout({
+  vaultConsentEnabled: true,
+  onSavedMethodSelected: async (token) => {
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+  },
+})
+```
+
+<Note>
+  The `GET /sdk/vaulted-methods` endpoint that backs saved-card retrieval is also accessible directly if you prefer to call it from your own front-end code. The session JWT in the `Authorization` header scopes results to the session's shopper automatically.
+</Note>

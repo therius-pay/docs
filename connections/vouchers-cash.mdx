@@ -1,0 +1,63 @@
+---
+title: 'Voucher and Cash Payment Methods: Boleto, OXXO, Konbini'
+sidebarTitle: 'Vouchers & Cash'
+description: 'Accept cash voucher payments with Boleto (Brazil), OXXO (Mexico), and Konbini (Japan) through the Therius API. These methods settle asynchronously.'
+---
+
+Voucher and cash payment methods generate a printable reference — a barcode, voucher number, or QR code — that the shopper takes to a bank branch, ATM, or convenience store to pay in cash. Settlement is asynchronous: you receive a webhook notification when the payment is confirmed, which can take anywhere from a few hours to several business days depending on the method. Do not fulfill orders immediately after the initial API response for these methods.
+
+The initial response for all voucher methods returns `status: "pending_action"` with an `actionRequired` payload containing the barcode or voucher reference your UI needs to display.
+
+<Tip>
+  Set an `apm.expirationSeconds` value in your request to control how long the voucher remains valid before it expires. This limits your exposure window for unfulfilled orders.
+</Tip>
+
+<Warning>
+  Voucher payments are not reversible once the shopper has paid at the point of sale. Avoid using them for time-sensitive goods or services unless your fulfillment flow can handle late or missing payments gracefully.
+</Warning>
+
+### Boleto — `boleto`
+
+Boleto Bancário is Brazil's legacy printable bank voucher. The shopper receives a barcode they can pay at any bank branch, ATM, lottery house, or via internet banking. Settlement typically takes 1–3 business days after payment. The response resolves via the `boleto_voucher` action type. Currency: BRL, Brazil.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "boleto"
+}
+```
+
+### OXXO — `oxxo`
+
+OXXO is Mexico's largest convenience store chain, with over 20,000 locations. The shopper receives a voucher reference they present to the cashier and pay in cash. Settlement is confirmed within 24–48 hours of payment. Currency: MXN, Mexico.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MXN", "value": 10000, "exponent": 2 },
+  "paymentMethod": "oxxo"
+}
+```
+
+### Konbini — `konbini`
+
+Konbini is Japan's convenience-store cash payment network, covering 7-Eleven, Lawson, FamilyMart, and other major chains. The shopper receives a confirmation number they present at the store's payment terminal. The response resolves via the `konbini_voucher` action type. Currency: JPY, Japan.
+
+<Note>
+  JPY is a zero-decimal currency and uses `exponent: 0`. A `value` of `5000` equals ¥5,000 — there are no decimal places.
+</Note>
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "JPY", "value": 5000, "exponent": 0 },
+  "paymentMethod": "konbini"
+}
+```

@@ -1,0 +1,99 @@
+---
+title: 'Asia-Pacific Local Payment Methods: UPI, QRIS, and More'
+sidebarTitle: 'APAC Methods'
+description: 'Accept UPI (India), QRIS (Indonesia), FPX (Malaysia), PayNow (Singapore), PromptPay (Thailand), and GrabPay across Southeast Asia via Therius.'
+---
+
+Therius supports the leading local payment methods across Asia-Pacific, from India's UPI to Indonesia's QRIS and Singapore's PayNow. All of these methods route through `POST /payment/purchase` with a `paymentMethod` code. Most return a redirect URL or a QR code payload for the shopper to complete payment in their banking app or digital wallet.
+
+<Note>
+  Many APAC methods return a QR code in the `apm.qrCode` or `apm.qrCodeImage` response field. If you're using the Therius JS SDK, call `sdk.handleAction(result.actionRequired)` — it renders the QR code automatically without any additional work on your end.
+</Note>
+
+### UPI — `upi`
+
+UPI (Unified Payments Interface) is India's real-time bank transfer system, operated by the National Payments Corporation of India (NPCI). The shopper enters their UPI ID or scans a QR code to complete payment via their UPI-enabled app (PhonePe, Google Pay, Paytm, etc.). Settlement is near-instant. Currency: INR, India.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "INR", "value": 500000, "exponent": 2 },
+  "paymentMethod": "upi"
+}
+```
+
+### QRIS — `qris`
+
+QRIS (Quick Response Code Indonesian Standard) is Indonesia's national unified QR code scheme, mandated by Bank Indonesia. Shoppers scan the QR code with any QRIS-compatible banking or e-wallet app. Currency: IDR, Indonesia.
+
+<Note>
+  IDR is a zero-decimal currency and uses `exponent: 0`. A `value` of `100000` equals Rp 100,000 — there are no decimal places.
+</Note>
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "IDR", "value": 100000, "exponent": 0 },
+  "paymentMethod": "qris"
+}
+```
+
+### FPX — `fpx`
+
+FPX (Financial Process Exchange) is Malaysia's online bank transfer system, connecting over 50 Malaysian banks. The shopper is redirected to their bank's online portal to authorize the transfer. Settlement is same-day. Currency: MYR, Malaysia.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MYR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "fpx"
+}
+```
+
+### PayNow — `paynow`
+
+PayNow is Singapore's real-time QR-based payment system, operated by the Association of Banks in Singapore (ABS). The shopper scans the QR code with their banking app to complete payment instantly. Currency: SGD, Singapore.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "paynow"
+}
+```
+
+### PromptPay — `promptpay`
+
+PromptPay is Thailand's national QR-based instant bank transfer system, linked to the Thai national ID or mobile number. The shopper scans the QR code within their banking app. Currency: THB, Thailand.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "THB", "value": 5000, "exponent": 2 },
+  "paymentMethod": "promptpay"
+}
+```
+
+### GrabPay — `grabpay`
+
+GrabPay is the digital wallet embedded in the Grab super-app, covering Southeast Asia. Shoppers authenticate via the Grab app. Available in Malaysia, Singapore, Philippines, Thailand, and Vietnam. Supported currencies: MYR, SGD, PHP, THB, VND.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "grabpay"
+}
+```

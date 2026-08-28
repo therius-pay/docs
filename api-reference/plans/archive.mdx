@@ -1,0 +1,62 @@
+---
+title: "Archive a Subscription Plan — DELETE /subscription/plan"
+sidebarTitle: "Archive Plan"
+description: "DELETE /subscription/plan/{id} — Soft-archive a plan so no new subscriptions can enroll. Existing subscribers continue until their next renewal."
+---
+
+`DELETE /subscription/plan/{id}` soft-archives a plan by setting its `deletedAt` timestamp. Existing subscriptions on the archived plan continue billing normally. At each subscriber's next renewal date, Therius will cancel those subscriptions rather than renewing them. No new subscribers can enroll in an archived plan.
+
+<Note>
+  This is a soft-delete — the plan is not permanently removed. It remains visible in list results with its `deletedAt` timestamp populated, so you retain a complete audit trail.
+</Note>
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `DELETE /subscription/plan/{id}`
+
+**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+
+### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The integer ID of the plan to archive.
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="key" type="string" required>
+  Your private API key.
+</ParamField>
+
+## Response
+
+Returns `200 OK` with a confirmation object.
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `404` | Plan not found. |
+| `409` | Plan is already archived. |
+
+<Warning>
+  Once a plan is archived, existing subscribers will be automatically cancelled at their next renewal. Migrate subscribers to a new plan using [change-plan](/api-reference/subscriptions/change-plan) before archiving if you want them to continue billing uninterrupted.
+</Warning>
+
+<RequestExample>
+
+```bash cURL
+curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?key=sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{ "archived": true }
+```
+
+</ResponseExample>

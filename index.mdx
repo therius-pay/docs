@@ -1,0 +1,70 @@
+---
+title: "Therius Payment API — Developer Documentation Home"
+sidebarTitle: "Home"
+description: "Accept cards, wallets, and 40+ alternative payment methods globally with a single unified API. Get your first payment through in minutes."
+---
+
+Therius is a payment API that lets you accept cards, digital wallets, and over 40 alternative payment methods — Pix, ACH, iDEAL, Klarna, Apple Pay, and more — through a single endpoint. This documentation covers everything from your first sandbox call to managing subscriptions, handling 3D Secure challenges, and integrating the JS SDK for browser-safe card collection.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Fire your first payment in under 5 minutes with nothing but a sandbox key and a terminal.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how API keys work, which key to use where, and how to pass credentials correctly.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/purchase">
+    Complete reference for every endpoint — purchase, authorize, capture, refund, and more.
+  </Card>
+  <Card title="JS SDK" icon="browser" href="/sdk/overview">
+    Collect card details safely in the browser using hosted fields or the drop-in Checkout Widget.
+  </Card>
+  <Card title="Connections" icon="globe" href="/connections/overview">
+    Browse the full catalog of payment methods — with working code examples for each.
+  </Card>
+  <Card title="Subscriptions" icon="rotate" href="/guides/subscriptions">
+    Build recurring billing with plans, trials, dunning, pause/resume, and plan changes.
+  </Card>
+</CardGroup>
+
+## How Therius Works
+
+Every payment — card, wallet, or alternative method — flows through the same `/payment/purchase` endpoint. You choose the payment method by passing a `paymentMethod` field (or omitting it for cards). The response always has the same shape, so your backend doesn't need separate code paths per method.
+
+<Steps>
+  <Step title="Get a sandbox key">
+    Your Therius account includes a sandbox key (`sk_sandbox_...`) out of the box. It routes to a test-provider stub — nothing touches a real card network.
+  </Step>
+  <Step title="Make your first API call">
+    Pass the key in `Authorization: Bearer` (or in the request body as `key`) and fire a `POST /payment/purchase`. See the [Quick Start](/quickstart) for a ready-to-run curl command.
+  </Step>
+  <Step title="Integrate the JS SDK (if browser-based)">
+    If you're accepting cards from a browser, use the [JS SDK](/sdk/overview) so raw card numbers never transit your server. The SDK issues a one-time nonce; your server charges the nonce.
+  </Step>
+  <Step title="Go live">
+    Swap `sk_sandbox_...` for `sk_live_...` and point at `api.therius.io`. No other code changes required.
+  </Step>
+</Steps>
+
+## Key Concepts
+
+<CardGroup cols={3}>
+  <Card title="Payment Lifecycle" icon="arrows-spin" href="/concepts/payment-lifecycle">
+    Understand authorize, capture, refund, and cancel flows.
+  </Card>
+  <Card title="Tokenization" icon="vault" href="/concepts/tokenization">
+    Store cards as reusable tokens for returning shoppers.
+  </Card>
+  <Card title="3D Secure" icon="shield-check" href="/concepts/3d-secure">
+    Handle 3DS2 challenges without complex branching logic.
+  </Card>
+  <Card title="Idempotency" icon="copy" href="/idempotency">
+    Safely retry failed requests without double-charging customers.
+  </Card>
+  <Card title="Environments" icon="flask" href="/concepts/environments">
+    Switch between sandbox and production with a single key prefix.
+  </Card>
+  <Card title="Alternative Methods" icon="money-bill-transfer" href="/guides/alternative-payment-methods">
+    Add Pix, ACH, Klarna, and more with minimal extra code.
+  </Card>
+</CardGroup>

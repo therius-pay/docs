@@ -1,0 +1,97 @@
+---
+title: "GET /subscription/{id} — Retrieve Subscription Details"
+sidebarTitle: "Get"
+description: "GET /subscription/{id} — Retrieve full details for a subscription including its event timeline, invoice history, and current dunning state."
+---
+
+`GET /subscription/{id}` returns the full subscription record for a given UUID, including the event timeline, invoice history, and current dunning state. Use this endpoint to inspect everything about a subscription in a single call — from the original CIT details through every renewal and status change.
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `GET /subscription/{id}`
+
+**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the subscription to retrieve.
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="key" type="string">
+  Your private API key. Required when not using the `Authorization: Bearer` header.
+</ParamField>
+
+<ParamField query="merchantCode" type="string">
+  Your merchant account identifier. Required if your key is scoped to multiple merchant accounts.
+</ParamField>
+
+## Response
+
+Returns the full subscription object on success. Key fields include:
+
+<ResponseField name="id" type="string">
+  Subscription UUID.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current subscription status. One of: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused`, or `completed`.
+</ResponseField>
+
+<ResponseField name="planId" type="integer">
+  ID of the plan this subscription is enrolled in.
+</ResponseField>
+
+<ResponseField name="customerEmail" type="string">
+  Email address of the subscriber.
+</ResponseField>
+
+<ResponseField name="currentPeriodStart" type="string">
+  ISO 8601 timestamp for the start of the current billing period.
+</ResponseField>
+
+<ResponseField name="currentPeriodEnd" type="string">
+  ISO 8601 timestamp for the end of the current billing period (next scheduled renewal).
+</ResponseField>
+
+<ResponseField name="dunningState" type="object">
+  Current dunning state, including retry count and next retry timestamp. Present when `status` is `past_due` or `suspended`.
+</ResponseField>
+
+<ResponseField name="invoices" type="array">
+  Array of invoice objects for every billing cycle attempted on this subscription.
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  Chronological timeline of lifecycle events (e.g. `created`, `trialing`, `activated`, `past_due`, `payment_method_updated`).
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Arbitrary key/value pairs attached at creation or via updates.
+</ResponseField>
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `404` | No subscription found for the given `id` under your merchant account. |
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/sub_abc123def456?key=sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

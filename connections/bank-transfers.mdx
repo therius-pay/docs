@@ -1,0 +1,191 @@
+---
+title: 'Bank Transfers and Direct Debit Payment Methods Guide'
+sidebarTitle: 'Bank Transfers'
+description: 'Accept Pix, ACH, SEPA, iDEAL, BLIK, Przelewy24, EPS, Multibanco, SPEI, PSE, and other bank transfer methods through the Therius payment API.'
+---
+
+Therius supports a wide range of bank transfer and direct debit methods across the Americas, Europe, and beyond. Most are redirect-based and return `status: "pending_action"` with a redirect URL or QR code for the shopper to complete. Settlement timelines vary significantly by method — from near-instant (Pix) to several business days (ACH, Bacs). Use the method-specific notes below to set accurate expectations with your shoppers.
+
+### Pix — `pix`
+
+Pix is Brazil's instant payment system and the country's dominant payment method. The shopper receives a QR code or copy-paste key and completes payment through their banking app. Settlement is near-instant, 24/7. Currency: BRL.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "pix"
+}
+```
+
+### ACH — `ach`
+
+ACH is the standard US bank-to-bank transfer network. Settlement takes 1–4 business days. Currency: USD, United States.
+
+ACH also supports tokenization — set `apm.tokenize: true` and include `shopper.id` in your request to save the bank account for future use without requiring the shopper to re-enter their details.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "ach"
+}
+```
+
+### SEPA Direct Debit — `sepa_debit`
+
+SEPA Direct Debit covers the Eurozone plus the UK, Switzerland, and Norway. The shopper authorizes a mandate, and funds are pulled from their account. Settlement typically takes 2–5 business days. Currency: EUR.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "sepa_debit"
+}
+```
+
+### BECS Direct Debit — `au_becs_debit`
+
+BECS is Australia's Bulk Electronic Clearing System for direct debit. Currency: AUD, Australia.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "AUD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "au_becs_debit"
+}
+```
+
+### Bacs Direct Debit — `bacs_debit`
+
+Bacs is the UK's standard direct debit scheme. Settlement takes 3 business days. Currency: GBP, United Kingdom.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "GBP", "value": 5000, "exponent": 2 },
+  "paymentMethod": "bacs_debit"
+}
+```
+
+### iDEAL — `ideal`
+
+iDEAL is the single most-used payment method in the Netherlands, covering over 60% of Dutch online transactions. The shopper is redirected to their own bank's online banking environment to approve payment. Settlement is same-day. Currency: EUR, Netherlands.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "ideal"
+}
+```
+
+### Bancontact — `bancontact`
+
+Bancontact is Belgium's most popular online payment method, used by nearly all Belgian cardholders. It is redirect-based. Currency: EUR, Belgium.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "bancontact"
+}
+```
+
+### Przelewy24 — `p24`
+
+Przelewy24 (P24) is Poland's leading online bank transfer aggregator, connecting over 165 Polish banks. Currencies: PLN, EUR.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "PLN", "value": 5000, "exponent": 2 },
+  "paymentMethod": "p24"
+}
+```
+
+### EPS — `eps`
+
+EPS (Electronic Payment Standard) is Austria's national online bank transfer scheme. Currency: EUR, Austria.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "eps"
+}
+```
+
+### Multibanco — `multibanco`
+
+Multibanco is Portugal's bank payment network. Rather than a redirect, the shopper receives a reference number and entity code to enter at any Multibanco ATM or via their bank's online portal. The response resolves via the `multibanco_voucher` action type. Currency: EUR, Portugal.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "multibanco"
+}
+```
+
+### BLIK — `blik`
+
+BLIK is Poland's mobile payment standard, used directly within banking apps. The shopper generates a 6-digit one-time code and enters it at checkout. Currency: PLN, Poland.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "PLN", "value": 5000, "exponent": 2 },
+  "paymentMethod": "blik"
+}
+```
+
+### PSE — `pse`
+
+PSE (Pagos Seguros en Línea) is Colombia's primary online bank transfer method. The shopper is redirected to their bank to authorize the transfer. Currency: COP, Colombia.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "COP", "value": 500000, "exponent": 2 },
+  "paymentMethod": "pse"
+}
+```
+
+### SPEI — `spei`
+
+SPEI is Mexico's real-time interbank transfer system. The shopper receives a CLABE reference number to complete the transfer from their bank. Settlement is typically same-day. Currency: MXN, Mexico.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MXN", "value": 10000, "exponent": 2 },
+  "paymentMethod": "spei"
+}
+```

@@ -1,0 +1,83 @@
+---
+title: 'Idempotency: Safely Retry Payments Without Duplicates'
+sidebarTitle: 'Idempotency'
+description: 'Prevent duplicate charges by using the Idempotency-Key header on all mutating Therius API calls. Learn how idempotency works and best practices.'
+---
+
+When you send a payment request over the network, you can encounter a situation where your connection drops before you receive a response. At that point you cannot know whether the server processed the payment or not. If you retry the request without an idempotency key, you risk charging the customer twice. The `Idempotency-Key` header solves this: it lets you retry a request any number of times with the guarantee that Therius will process it exactly once.
+
+## How It Works
+
+All mutating endpoints accept an `Idempotency-Key` request header:
+
+- `POST /payment/purchase`
+- `POST /payment/authorization`
+- `POST /payment/capture`
+- `POST /payment/refund`
+- `POST /payment/cancel`
+- `POST /payment/cancel_or_refund`
+- `POST /payment/resume`
+- `POST /subscription`
+
+The value must be a **UUID v4** that you generate per logical operation (one UUID per purchase, one per refund, and so on). Here is how Therius handles the key across retries:
+
+1. **First request** — Therius reserves the key, processes the payment, and stores the `2xx` response against the key.
+2. **Retry with the same key** — Therius detects the duplicate, skips processing, and returns the cached response immediately.
+3. **Concurrent request with the same key** — If a second request with the same key arrives while the first is still in flight, Therius returns `409 Conflict` with a `Retry-After: 1` header. Wait one second and retry.
+4. **Wrong endpoint, same key** — Reusing a key on a different endpoint returns `422 Unprocessable Entity`.
+
+<Note>
+  Only `2xx` responses are cached. If a request fails with a `4xx` or `5xx` status, the key is not stored — you can retry with a new key (or the same key, if the error was transient and you want to re-attempt the same operation).
+</Note>
+
+Keys expire after **24 hours**. After expiry, the same UUID can be reused freely, but you should generate a fresh UUID for any new operation regardless.
+
+## Code Examples
+
+### Bash / cURL
+
+```bash
+# Generate a UUID per request
+IDEM_KEY=$(uuidgen)
+
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $IDEM_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+If the command times out, re-run it with the same `$IDEM_KEY` value. Therius will return the cached result if the original request succeeded.
+
+### JavaScript
+
+```javascript
+import { v4 as uuidv4 } from 'uuid';
+
+const response = await fetch('https://api.therius.io/v1/payment/purchase', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer sk_live_your_key_here',
+    'Idempotency-Key': uuidv4(),
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ /* ... */ }),
+});
+```
+
+Store the UUID alongside the order in your database before sending the request. If the `fetch` call throws a network error, retrieve the stored UUID and retry with it — do not generate a new one.
+
+## Best Practices
+
+<Warning>
+  In production the `Idempotency-Key` header is not optional. Always send one on every mutating call. Omitting it on a payment endpoint in a live environment is a configuration error, not a minor oversight.
+</Warning>
+
+<Tip>
+  When retrying after a timeout, reuse the exact same UUID you sent originally. Therius returns the cached result without re-processing the payment, so your customer is charged exactly once.
+</Tip>
+
+- **Generate the key before the request, not after.** Store it with the order record so you can retrieve it if you need to retry.
+- **One UUID per logical operation.** A purchase and its subsequent refund are two separate operations — each gets its own UUID.
+- **Do not reuse keys across endpoints.** A key used for `POST /payment/purchase` cannot be used for `POST /payment/refund`.
+- **Do not share keys across customers or orders.** Each key must be globally unique to a single operation.

@@ -1,0 +1,159 @@
+---
+title: "POST /payment/refund — Issue a Full or Partial Refund"
+sidebarTitle: "Refund"
+description: "POST /payment/refund — Refund a captured payment in full or partially. Multiple partial refunds are allowed up to the total captured amount."
+---
+
+Use `POST /payment/refund` to return funds to a cardholder after a payment has been captured and settled. You can issue a single full refund or multiple partial refunds — as long as the cumulative refunded amount doesn't exceed the originally captured total. Refunds typically appear on the cardholder's statement within 5–10 business days, depending on their bank.
+
+## Request
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/refund`
+
+<ParamField header="Authorization" type="string">
+  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Required in production — retrying with the same key returns the original response without issuing a duplicate refund.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`.
+</ParamField>
+
+<ParamField body="key" type="string">
+  Your merchant private API key. Alternatively, use the `Authorization` header.
+</ParamField>
+
+<ParamField body="merchantCode" type="string" required>
+  Your merchant identifier.
+</ParamField>
+
+<ParamField body="orderCode" type="string">
+  Your original order reference. Either `orderCode` or `paymentCode` is required to identify the payment to refund.
+</ParamField>
+
+<ParamField body="paymentCode" type="string">
+  The Therius payment receipt ID (e.g. `"PC-1234567890"`). Either `paymentCode` or `orderCode` is required.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  An optional internal reference for this refund operation (e.g. your RMA or support ticket number).
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  The amount to refund.
+
+  <Expandable title="amount fields">
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code. Must match the currency of the original captured payment.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Refund amount in minor units. The cumulative total of all refunds against this payment must not exceed the captured amount.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Number of decimal places for the currency.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Result of the refund. One of:
+
+  - `"refunded"` — funds successfully returned to the cardholder.
+  - `"failed"` — refund could not be processed. Retry with a new `Idempotency-Key` or contact support.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  Therius receipt ID for the original payment.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Your original `orderCode`.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Your `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  The amount refunded in this operation, in `{ currency, value, exponent }` format.
+</ResponseField>
+
+## Examples
+
+### Full refund
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/refund \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "paymentCode": "PC-1234567890",
+    "amount": { "currency": "USD", "value": 4999, "exponent": 2 }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "status": "refunded",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+### Partial refund
+
+Refunding only part of an order — for example, a single returned item from a multi-item purchase:
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/refund \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "paymentCode": "PC-1234567890",
+    "reference": "RETURN-98765",
+    "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
+  }'
+```
+
+```json
+{
+  "status": "refunded",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
+}
+```
+
+<Warning>
+  You cannot refund a payment that is in the `authorized` (not yet captured) state. To release an authorization that hasn't been captured, use [Cancel](/api-reference/cancel) instead. Attempting to refund an uncaptured payment returns an error.
+</Warning>
+
+<Note>
+  Multiple partial refunds are allowed. You can call this endpoint several times against the same `paymentCode`, provided the cumulative refund amount doesn't exceed the original captured amount. Each call should use a distinct `Idempotency-Key`.
+</Note>
+
+<Tip>
+  If you're unsure whether a payment is in `authorized` or `captured` state, use [Cancel or Refund](/api-reference/cancel-or-refund) instead — it detects the state automatically and takes the appropriate action.
+</Tip>

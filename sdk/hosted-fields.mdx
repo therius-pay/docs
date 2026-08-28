@@ -1,0 +1,110 @@
+---
+title: 'Hosted Fields: Custom PCI-Safe Card Form Integration'
+sidebarTitle: 'Hosted Fields'
+description: 'Use Therius hosted fields to render card inputs inside iframes your page controls. Get a one-time nonce to charge on your server — no PAN in your DOM.'
+---
+
+Hosted fields let you build a completely custom card form while keeping raw card numbers out of your DOM. Each field — card number, expiry, and CVV — renders inside a Therius-hosted iframe. Your JavaScript never sees the PAN; it only receives a one-time nonce that your server uses to complete the charge.
+
+## Set up the field containers
+
+Add empty container elements to your form. Therius replaces each container with a secure iframe at runtime.
+
+```html
+<form id="payment-form">
+  <div id="card-number"></div>  <!-- Therius iframe rendered here -->
+  <div id="expiry"></div>
+  <div id="cvv"></div>
+  <button type="submit">Pay</button>
+</form>
+```
+
+## Initialize hosted fields
+
+After the SDK is initialized, call `sdk.hostedFields()` with a map of field names to CSS selectors.
+
+```javascript
+const fields = sdk.hostedFields({
+  card_number: '#card-number',   // CSS selector for the container element
+  expiry: '#expiry',
+  cvv: '#cvv',
+})
+```
+
+Each selector points to one of the container `<div>` elements above. The SDK injects an iframe into each container and the shopper types directly into it.
+
+## Collect a nonce on form submit
+
+When the shopper submits the form, call `sdk.createNonce()` to tokenize the card data held in the iframes. The SDK returns a short-lived nonce — not the card number.
+
+```javascript
+document.getElementById('payment-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+
+  const { nonce } = await sdk.createNonce({
+    cardholderName: 'Ada Lovelace',
+  })
+
+  // Send nonce to your server — never log or store it
+  const response = await fetch('/api/charge', {
+    method: 'POST',
+    body: JSON.stringify({ nonce }),
+  })
+})
+```
+
+<Note>
+  The nonce is single-use and expires after a short period. Create a new nonce for each payment attempt — do not reuse nonces from failed or abandoned attempts.
+</Note>
+
+## Charge the nonce on your server
+
+Your server passes the nonce as `card.nonceData.nonce` when calling `POST /payment/purchase`.
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "orderCode": "ORDER-123",
+    "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+    "card": { "nonceData": { "nonce": "<nonce>" } }
+  }'
+```
+
+## Save the card for future payments
+
+To vault the card during payment, add `tokenize: true` and a `shopper.id` to the server-side charge request:
+
+```json
+{
+  "card": {
+    "nonceData": {
+      "nonce": "<nonce>",
+      "tokenize": true
+    }
+  },
+  "shopper": {
+    "id": "customer-42"
+  }
+}
+```
+
+The response includes a `token` the shopper can use for future one-click checkouts. See [Saved Cards](/sdk/saved-cards) for the full returning-shopper flow.
+
+## Handle 3DS challenges
+
+Some cards require a 3DS challenge before the payment can be authorized. Call `sdk.authorize(nonce)` in the browser instead of sending the nonce directly to your server, then handle any required action:
+
+```javascript
+const result = await sdk.authorize(nonce)
+
+if (result.actionRequired) {
+  // sdk.handleAction opens the 3DS iframe and waits for completion
+  const finalResult = await sdk.handleAction(result.actionRequired)
+  // finalResult is the same PaymentResult shape as the REST API
+}
+```
+
+`sdk.handleAction` is the single entry point for all out-of-band steps — 3DS challenges, redirects, and voucher displays. You do not need separate code paths for different action types.

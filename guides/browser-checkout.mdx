@@ -1,0 +1,167 @@
+---
+title: 'Build a PCI-Safe Browser Checkout with Therius JS SDK'
+sidebarTitle: 'Browser Checkout'
+description: 'Step-by-step guide to building a PCI-safe browser checkout with Therius hosted fields or the drop-in widget — card numbers never touch your server.'
+---
+
+When a customer types a card number into your checkout page, that number must never travel through your own server. Routing raw card data through your backend dramatically expands your PCI DSS compliance scope and creates a direct liability if your server is ever compromised. Therius's JavaScript SDK eliminates this risk by rendering sensitive fields inside isolated iframes hosted on Therius infrastructure. Your page never sees the raw card number — instead, the SDK returns a short-lived, single-use **nonce** that your server exchanges for a charge. The nonce is useless outside the context of your merchant account and expires after 15 minutes.
+
+## Choose Your Integration Style
+
+Therius gives you two ways to collect card details in the browser:
+
+<CardGroup cols={2}>
+  <Card icon="code" title="Option A — Hosted Fields">
+    Mount individual iframe inputs (card number, expiry, CVV) into your own form. You control 100 % of the layout and styling while Therius handles the sensitive data.
+  </Card>
+  <Card icon="window" title="Option B — Checkout Widget">
+    Drop in a fully pre-built payment form with saved-card support, 3DS handling, and wallet buttons. Fastest path to a production checkout.
+  </Card>
+</CardGroup>
+
+## Integration Steps
+
+<Steps>
+
+  ### Install the SDK
+
+  Install via npm for bundler-based projects:
+
+  ```bash
+  npm install @therius/sdk
+  ```
+
+  Or load the SDK directly from the Therius CDN — no build step required:
+
+  ```html
+  <script src="https://api.therius.io/v1/sdk/js"></script>
+  ```
+
+  ### Create a Session (Server-Side)
+
+  Before initialising the SDK in the browser, your server must request a **client token** from the Therius API. This token is scoped to a single customer session and expires after 30 minutes. Your private API key never leaves your server.
+
+  ```bash
+  curl -X POST https://api.therius.io/v1/sdk/session \
+    -H "Authorization: Bearer sk_live_your_key_here" \
+    -H "Content-Type: application/json" \
+    -d '{ "customerId": "customer-42", "country": "US" }'
+  ```
+
+  **Response:**
+
+  ```json
+  {
+    "clientToken": "eyJ...",
+    "expiresIn": 1800
+  }
+  ```
+
+  Return the `clientToken` to your frontend — for example, embed it in your page's server-rendered HTML or deliver it via a lightweight API route.
+
+  <Note>
+    The `clientToken` contains an HMAC of your public key. Your raw private key is never exposed to the browser at any point in this flow.
+  </Note>
+
+  ### Initialize the SDK (Browser)
+
+  Pass the `clientToken` you received from your server to `TheriusSDK`:
+
+  ```javascript
+  import { TheriusSDK } from '@therius/sdk'
+
+  const sdk = new TheriusSDK({ clientToken })
+  ```
+
+  If you loaded the SDK via CDN, `TheriusSDK` is available on the global `window` object — no import needed.
+
+  ### Mount Your Payment UI
+
+  Choose the approach that fits your integration. Steps 4a and 4b are mutually exclusive.
+
+  <Tabs>
+    <Tab title="Option A — Hosted Fields">
+
+      Call `sdk.hostedFields()` with a map of CSS selector strings pointing to the wrapper elements in your HTML. Therius injects a secure iframe into each wrapper.
+
+      ```javascript
+      const fields = sdk.hostedFields({
+        card_number: '#card-number',
+        expiry:      '#expiry',
+        cvv:         '#cvv',
+      })
+      ```
+
+      When your customer submits the form, call `sdk.createNonce()` to tokenise the card data. Pass the resulting nonce to your server — never log it or store it in `localStorage`.
+
+      ```javascript
+      document.querySelector('#pay-button').addEventListener('click', async () => {
+        const { nonce } = await sdk.createNonce({ cardholderName: 'Ada Lovelace' })
+        // POST the nonce to your server
+        await fetch('/api/checkout', {
+          method: 'POST',
+          body: JSON.stringify({ nonce }),
+        })
+      })
+      ```
+
+      On your server, exchange the nonce for a charge by passing it under `card.nonceData`:
+
+      ```bash
+      curl -X POST https://api.therius.io/v1/payment/purchase \
+        -H "Authorization: Bearer sk_live_your_key_here" \
+        -H "Idempotency-Key: <uuid>" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "merchantCode": "MERCHANT_001",
+          "orderCode": "ORDER-123",
+          "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
+          "card": { "nonceData": { "nonce": "<nonce>" } }
+        }'
+      ```
+
+    </Tab>
+    <Tab title="Option B — Checkout Widget">
+
+      Call `sdk.checkout()` to render the full drop-in form. Pass `vaultConsentEnabled: true` together with a `customerId` (set when you created the SDK session) to show a **Save this card** checkbox and a saved-card picker for returning shoppers.
+
+      ```javascript
+      const checkout = sdk.checkout({
+        shopperId: sdk.sessionData().customerId,
+        vaultConsentEnabled: true,
+        onSavedMethodSelected: (token) => {
+          // The shopper picked a previously saved card.
+          // Charge it server-side using the vault token.
+          sdk.authorizeToken(token)
+        },
+      })
+      ```
+
+      <Tip>
+        If `vaultConsentEnabled` is `true` and `customerId` is set in the session, the widget automatically shows a **Save this card** checkbox on first use and a saved-card picker for returning shoppers — no extra code required.
+      </Tip>
+
+    </Tab>
+  </Tabs>
+
+  ### Handle 3DS / Action Required
+
+  Some card issuers require 3D Secure authentication. When your server calls `/payment/purchase` with the nonce, Therius may return `status: "pending_action"` along with an `actionRequired` object. Return that object to your frontend and pass it to `sdk.handleAction()` — the SDK manages the 3DS redirect or challenge window and resolves the promise with the final `PaymentResult` automatically.
+
+  ```javascript
+  // After your server responds with actionRequired, pass it to the SDK:
+  const finalResult = await sdk.handleAction(result.actionRequired)
+  // finalResult contains the completed payment status
+  ```
+
+</Steps>
+
+## Security Reminders
+
+<Warning>
+  Never pass raw card numbers from the browser to your own server and then forward them to Therius. Always collect card data through hosted fields or the checkout widget, and send only the resulting nonce to your backend. Passing raw card data through your server brings your entire infrastructure into PCI DSS scope.
+</Warning>
+
+<Note>
+  Nonces are single-use and expire after 15 minutes. If the customer takes longer than that to complete checkout (for example, they stepped away), call `sdk.createNonce()` again before submitting to your server.
+</Note>

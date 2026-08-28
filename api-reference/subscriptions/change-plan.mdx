@@ -1,0 +1,89 @@
+---
+title: "POST /subscription/{id}/change-plan — Upgrade or Downgrade"
+sidebarTitle: "Change Plan"
+description: "POST /subscription/{id}/change-plan — Move a subscriber to a different plan immediately (with proration) or at next billing cycle."
+---
+
+Use `POST /subscription/{id}/change-plan` to move a subscriber to a different plan — either upgrading to a higher-priced tier or downgrading to a lower one. You control whether the change takes effect immediately (with proration charged or absorbed today) or is scheduled for the next billing cycle.
+
+<Note>
+  A plan's `amount`, `interval`, and `intervalCount` are immutable once it has active subscribers. To change pricing or cadence, create a new plan and use this endpoint to migrate subscribers to it.
+</Note>
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/{id}/change-plan`
+
+**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass `key` in the request body.
+
+**Idempotency:** You may pass an `Idempotency-Key` header.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the subscription to update.
+</ParamField>
+
+### Request Body
+
+<ParamField body="key" type="string">
+  Your private API key.
+</ParamField>
+
+<ParamField body="merchantCode" type="string">
+  Your merchant account identifier.
+</ParamField>
+
+<ParamField body="planId" type="integer" required>
+  ID of the target plan to move the subscriber to. The plan must be active and available in the subscriber's country.
+</ParamField>
+
+<ParamField body="applyAt" default="next_billing" type="string">
+  Controls when the plan change takes effect. Accepted values:
+
+  - `"now"` — applies immediately. For upgrades, the prorated difference for the remainder of the current billing period is charged as a Merchant Initiated Transaction (MIT) right away. For downgrades, no refund is issued; the lower price takes effect from the next cycle.
+  - `"next_billing"` — the new plan is scheduled for the subscriber's next renewal date. The current billing period completes at the existing rate.
+</ParamField>
+
+## Response
+
+Returns `200 OK` with the updated subscription object. When `applyAt` is `"next_billing"`, the response includes a `scheduledPlanChange` object with the `planId` and `effectiveAt` timestamp.
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `400` | Target plan not found, inactive, or not available in the subscriber's country. |
+| `402` | Immediate proration charge declined (only when `applyAt: "now"`). |
+| `404` | Subscription not found. |
+| `422` | Validation error. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/change-plan \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "planId": 99,
+    "applyAt": "now"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>
+
+<Tip>
+  If you want to offer a discounted intro period on the new plan, create the new plan with `introAmount` and `introBillingCycles` set before running `change-plan`. The subscriber will receive the intro pricing from their first cycle on the new plan.
+</Tip>

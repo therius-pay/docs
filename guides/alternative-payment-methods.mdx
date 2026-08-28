@@ -1,0 +1,205 @@
+---
+title: 'Accept Alternative Payment Methods (APMs) with Therius'
+sidebarTitle: 'Alternative Methods'
+description: 'Add Pix, ACH, iDEAL, Klarna, and 40+ more payment methods through the same purchase endpoint — just change the paymentMethod field.'
+---
+
+Every alternative payment method (APM) in the Therius catalog flows through the same `POST /payment/purchase` endpoint as a standard card charge. You don't need a different integration per method — you switch payment methods by setting the `paymentMethod` field and providing a method-specific payload under `apm`. This means you can add Pix in Brazil, ACH in the US, and Klarna in Europe without touching your core checkout logic.
+
+## Base Request Shape
+
+All APM requests share the same top-level structure. The only things that change between methods are `paymentMethod`, `amount.currency`, and the fields inside `apm`.
+
+```json
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": {
+    "currency": "<see method table>",
+    "value": 5000,
+    "exponent": 2
+  },
+  "paymentMethod": "<code>",
+  "apm": {
+    /* method-specific fields */
+  }
+}
+```
+
+---
+
+## Redirect vs. Direct-Debit Methods
+
+APMs fall into two broad categories depending on how the customer authorises the payment.
+
+<CardGroup cols={2}>
+  <Card icon="arrow-up-right-from-square" title="Redirect Methods">
+    The customer is redirected to a third-party page (for example, their bank or PayPal) to authorise the payment. Include `apm.returnUrl` and `apm.cancelUrl` in your request. The API responds with `status: "pending_action"` and `actionRequired.url`.
+  </Card>
+  <Card icon="building-columns" title="Direct-Debit Methods">
+    Bank account details are collected upfront — no redirect. Pass account fields such as `bankAccountNumber` and `bankRoutingNumber` (ACH) or IBAN (SEPA) directly inside the `apm` object.
+  </Card>
+</CardGroup>
+
+### Handling the Redirect
+
+When a method returns `status: "pending_action"`, you must send your customer to `actionRequired.url` to complete authorisation.
+
+<Tabs>
+  <Tab title="JS SDK">
+    Pass the `actionRequired` object directly to `sdk.handleAction()`. The SDK manages the redirect lifecycle and resolves the promise with the final `PaymentResult` once the customer returns.
+
+    ```javascript
+    const result = await sdk.purchase(payload)
+
+    if (result.status === 'pending_action') {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+      // finalResult.status will be 'approved' or 'declined'
+    }
+    ```
+  </Tab>
+  <Tab title="Server-Side Redirect">
+    Redirect the customer's browser to `actionRequired.url`. After authorisation, the customer is forwarded to your `apm.returnUrl` with `orderId` and `status` query parameters. Verify the final status by calling `GET /payment/inquiry/{orderId}`.
+
+    ```bash
+    # Include return and cancel URLs in your purchase request
+    curl -X POST https://api.therius.io/v1/payment/purchase \
+      -H "Authorization: Bearer sk_live_your_key_here" \
+      -H "Idempotency-Key: <uuid>" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "merchantCode": "MERCHANT_001",
+        "orderCode": "ORDER-001",
+        "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+        "paymentMethod": "ideal",
+        "apm": {
+          "returnUrl": "https://yoursite.com/checkout/return",
+          "cancelUrl": "https://yoursite.com/checkout/cancel"
+        }
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Supported Methods
+
+| Method | Code | Currency | Notes |
+|---|---|---|---|
+| Pix | `pix` | BRL | Instant QR code; Brazil only |
+| ACH | `ach` | USD | Bank transfer; 1–4 day settlement |
+| iDEAL | `ideal` | EUR | Most-used online method in the Netherlands |
+| SEPA Direct Debit | `sepa_debit` | EUR | Eurozone, plus GB, CH, and NO |
+| Klarna | `klarna` | USD / EUR / GBP | Buy now, pay later |
+| Boleto | `boleto` | BRL | Bank voucher; Brazil only |
+| OXXO | `oxxo` | MXN | Cash voucher; Mexico only |
+| PayPal | `paypal` | USD / EUR / GBP | |
+| Alipay | `alipay` | CNY + 13 currencies | |
+| GrabPay | `grabpay` | MYR / SGD / PHP | Southeast Asia |
+
+<Tip>
+  Open the **Connections** tab in your Therius dashboard to browse the full catalog of 40+ methods. Each entry includes the required `apm` fields and a ready-to-run example request you can copy directly.
+</Tip>
+
+---
+
+## Method-Specific Examples
+
+<Tabs>
+  <Tab title="Pix">
+    Pix generates an instant-payment QR code. The response includes a QR code image URL and a copy-paste code string under `actionRequired`. Settlement is immediate.
+
+    ```json
+    {
+      "key": "sk_live_...",
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-PIX-001",
+      "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+      "paymentMethod": "pix",
+      "apm": {
+        "returnUrl": "https://yoursite.com/checkout/return"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="ACH">
+    ACH collects the customer's bank account details directly — no redirect. Include `apm.tokenize: true` with a `shopper.id` to save the account for future use.
+
+    ```json
+    {
+      "key": "sk_live_...",
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-ACH-001",
+      "amount": { "currency": "USD", "value": 10000, "exponent": 2 },
+      "paymentMethod": "ach",
+      "shopper": { "id": "customer-42" },
+      "apm": {
+        "bankAccountNumber": "000123456789",
+        "bankRoutingNumber": "021000021",
+        "accountType": "checking",
+        "accountHolderName": "Ada Lovelace",
+        "tokenize": true
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="iDEAL">
+    iDEAL redirects the customer to their Dutch bank to authorise. Optionally pass `apm.issuerId` to pre-select a bank and skip the bank-selection screen.
+
+    ```json
+    {
+      "key": "sk_live_...",
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-IDEAL-001",
+      "amount": { "currency": "EUR", "value": 2500, "exponent": 2 },
+      "paymentMethod": "ideal",
+      "apm": {
+        "returnUrl": "https://yoursite.com/checkout/return",
+        "cancelUrl": "https://yoursite.com/checkout/cancel"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Klarna">
+    Klarna supports pay-later and pay-in-instalments flows. Pass the customer's locale to ensure the correct Klarna product is offered.
+
+    ```json
+    {
+      "key": "sk_live_...",
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-KLARNA-001",
+      "amount": { "currency": "USD", "value": 7500, "exponent": 2 },
+      "paymentMethod": "klarna",
+      "apm": {
+        "locale": "en-US",
+        "returnUrl": "https://yoursite.com/checkout/return",
+        "cancelUrl": "https://yoursite.com/checkout/cancel"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## ACH Tokenization
+
+For ACH payments you can save the bank account for future use by passing `apm.tokenize: true` alongside a `shopper.id`. Therius returns a vault token in the response that you can pass to subsequent ACH charges without asking the customer to re-enter their account details.
+
+```json
+{
+  "shopper": { "id": "customer-42" },
+  "apm": {
+    "bankAccountNumber": "000123456789",
+    "bankRoutingNumber": "021000021",
+    "accountHolderName": "Ada Lovelace",
+    "tokenize": true
+  }
+}
+```
+
+<Note>
+  ACH tokenization is subject to NACHA rules. Ensure you display the required bank-account authorisation mandate to the customer before submitting the request.
+</Note>

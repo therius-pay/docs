@@ -1,0 +1,183 @@
+{
+  "projectType": "api-service",
+  "projectName": "Therius",
+  "projectDescription": "Therius is a payment API that lets merchants accept cards, wallets, and 40+ alternative payment methods globally — with a unified endpoint for the full payment lifecycle, card tokenization, subscriptions, and a browser-side JS SDK for PCI-safe checkout.",
+  "theme": "luma",
+  "primaryColor": "#ef7025",
+  "lightColor": "#eec9bc",
+  "darkColor": "#4fa1ab",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication",
+              "idempotency"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/payment-lifecycle",
+              "concepts/tokenization",
+              "concepts/3d-secure",
+              "concepts/environments"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/browser-checkout",
+              "guides/subscriptions",
+              "guides/alternative-payment-methods",
+              "guides/stored-credentials"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Payments",
+            "pages": [
+              "api-reference/purchase",
+              "api-reference/authorize",
+              "api-reference/capture",
+              "api-reference/refund",
+              "api-reference/cancel",
+              "api-reference/cancel-or-refund",
+              "api-reference/resume",
+              "api-reference/inquiry"
+            ]
+          },
+          {
+            "group": "Tokenization",
+            "pages": [
+              "api-reference/store-tokens"
+            ]
+          },
+          {
+            "group": "Subscriptions",
+            "pages": [
+              "api-reference/subscriptions/create",
+              "api-reference/subscriptions/list",
+              "api-reference/subscriptions/get",
+              "api-reference/subscriptions/cancel",
+              "api-reference/subscriptions/pause-resume",
+              "api-reference/subscriptions/change-plan",
+              "api-reference/subscriptions/update-payment-method",
+              "api-reference/subscriptions/invoices"
+            ]
+          },
+          {
+            "group": "Plans",
+            "pages": [
+              "api-reference/plans/create",
+              "api-reference/plans/list",
+              "api-reference/plans/update",
+              "api-reference/plans/archive"
+            ]
+          },
+          {
+            "group": "SDK Session",
+            "pages": [
+              "api-reference/sdk-session"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "JS SDK",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "sdk/overview",
+              "sdk/session-bootstrap"
+            ]
+          },
+          {
+            "group": "Card Collection",
+            "pages": [
+              "sdk/hosted-fields",
+              "sdk/checkout-widget",
+              "sdk/saved-cards"
+            ]
+          },
+          {
+            "group": "Wallets & More",
+            "pages": [
+              "sdk/wallet-buttons",
+              "sdk/click-to-pay",
+              "sdk/apm-redirects"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Connections",
+        "groups": [
+          {
+            "group": "Payment Methods",
+            "pages": [
+              "connections/overview",
+              "connections/cards-wallets",
+              "connections/bank-transfers",
+              "connections/vouchers-cash",
+              "connections/buy-now-pay-later",
+              "connections/apac-methods",
+              "connections/latam-methods"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Single-endpoint payment API for purchase, authorize, capture, refund, and cancel",
+    "Card tokenization and vault for recurring and returning-shopper payments",
+    "3D Secure (3DS2) challenge handling with automatic resume flow",
+    "Subscriptions with plans, trials, dunning, pause/resume, and plan changes",
+    "Browser-side JS SDK with hosted fields and drop-in Checkout Widget (PCI-safe)",
+    "Apple Pay and Google Pay wallet buttons via the JS SDK",
+    "40+ alternative payment methods (Pix, ACH, iDEAL, Klarna, and more) through one endpoint",
+    "Idempotency-Key support on all mutating endpoints to prevent duplicate charges",
+    "Sandbox environment with test cards for development and testing",
+    "Airline data / level-3 data support for card payments"
+  ],
+  "publicApiSurface": [
+    "POST /payment/purchase",
+    "POST /payment/authorization",
+    "POST /payment/capture",
+    "POST /payment/refund",
+    "POST /payment/cancel",
+    "POST /payment/cancel_or_refund",
+    "POST /payment/resume",
+    "GET /payment/inquiry/{id}",
+    "POST /token",
+    "POST /sdk/session",
+    "POST /subscription",
+    "GET /subscription",
+    "GET /subscription/{id}",
+    "POST /subscription/{id}/cancel",
+    "POST /subscription/{id}/pause",
+    "POST /subscription/{id}/resume",
+    "POST /subscription/{id}/change-plan",
+    "POST /subscription/{id}/update-billing-day",
+    "POST /subscription/{id}/payment-method",
+    "POST /subscription/{id}/retry-payment",
+    "GET /subscription/{id}/invoice",
+    "GET /subscription/invoice/{id}",
+    "GET /subscription/plan",
+    "POST /subscription/plan",
+    "GET /subscription/plan/{id}",
+    "PATCH /subscription/plan/{id}",
+    "DELETE /subscription/plan/{id}"
+  ]
+}

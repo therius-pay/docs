@@ -1,0 +1,165 @@
+---
+title: 'Build Recurring Billing with Therius Subscriptions'
+sidebarTitle: 'Subscriptions'
+description: 'Create plans, enroll customers in subscriptions, handle dunning, and manage plan changes, pauses, and cancellations with the Therius subscription API.'
+---
+
+Therius subscriptions give you a complete recurring billing engine out of the box. Plans define the billing amount, currency, and interval. Subscriptions enroll individual customers into a plan and store their payment method securely. From there, Therius handles automatic renewals on schedule, trial period logic, dunning retries when a payment fails, and lifecycle events you can listen to via webhooks — so you can focus on your product instead of billing edge cases.
+
+## Subscription Statuses
+
+Every subscription moves through a defined set of statuses over its lifetime:
+
+| Status | Meaning |
+|---|---|
+| `pending` | Created but the first payment has not yet been collected |
+| `trialing` | Within the free trial period; no charge has been made |
+| `active` | Billing normally; last payment succeeded |
+| `past_due` | Last renewal failed; Therius is retrying according to the dunning schedule |
+| `suspended` | All dunning retries exhausted; subscription is inactive until payment method is updated |
+| `paused` | Manually paused; no renewals attempted |
+| `cancelled` | Permanently cancelled; cannot be reactivated |
+| `completed` | Reached a fixed number of billing cycles and finished naturally |
+
+---
+
+## Plans
+
+A plan is the template that defines what you charge and how often. Create a plan once and attach as many subscriptions to it as you need.
+
+```json
+POST /subscription/plan
+
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "name": "Pro Monthly",
+  "amount": 2900,
+  "currency": "USD",
+  "exponent": 2,
+  "interval": "month",
+  "intervalCount": 1,
+  "trialPeriodDays": 14
+}
+```
+
+The response includes a plan `id` that you pass when enrolling a customer.
+
+<Warning>
+  The `amount` and `interval` fields are **immutable** after a plan is created. If you need to change pricing or billing frequency, create a new plan and migrate existing subscribers using the change-plan endpoint described below.
+</Warning>
+
+---
+
+## Creating a Subscription
+
+Enrolling a customer always requires the customer to be actively present during checkout. Collect a fresh card nonce from the Therius JS SDK first — see the [Browser Checkout](/guides/browser-checkout) guide — then submit it with the subscription request.
+
+```json
+POST /subscription
+
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "planId": 42,
+  "customerEmail": "ada@example.com",
+  "customerName": "Ada Lovelace",
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce>" }
+  }
+}
+```
+
+The response includes the subscription `id`, its initial `status` (`trialing` if the plan has a trial, otherwise `pending` until the first payment clears), the current period start and end dates, and the first invoice object.
+
+<Info>
+  Always use a fresh SDK nonce when creating a subscription or updating the payment method. Card scheme rules require the customer to be actively present when their card is first saved for future charges. You cannot reuse a nonce from a previous session.
+</Info>
+
+---
+
+## Lifecycle Management
+
+After a subscription is active, use the following endpoints to manage it. All endpoints accept `POST` and require your API key.
+
+<CardGroup cols={2}>
+  <Card icon="pause" title="Pause">
+    `POST /subscription/{id}/pause`
+
+    Suspends renewals immediately. No charges are attempted while the subscription is paused. The billing date is recalculated when you resume.
+  </Card>
+  <Card icon="play" title="Resume">
+    `POST /subscription/{id}/resume`
+
+    Restores a paused subscription (recalculates the next billing date) or re-charges a suspended subscription immediately to bring it back to active.
+  </Card>
+  <Card icon="x" title="Cancel">
+    `POST /subscription/{id}/cancel`
+
+    Permanently cancels the subscription. Therius fires the `subscription.cancelled` webhook event. Cancelled subscriptions cannot be reactivated.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="Change Plan">
+    `POST /subscription/{id}/change-plan`
+
+    Migrates the subscriber to a different plan. Pass `"applyAt": "now"` for a prorated immediate switch, or `"applyAt": "next_billing"` to change at the end of the current period.
+  </Card>
+  <Card icon="credit-card" title="Update Payment Method">
+    `POST /subscription/{id}/payment-method`
+
+    Replaces the stored card with a new one. Requires a fresh nonce collected while the customer is present. This is also the only way to reactivate a `suspended` subscription.
+  </Card>
+  <Card icon="rotate" title="Retry Payment">
+    `POST /subscription/{id}/retry-payment`
+
+    Queues an immediate dunning attempt for a `past_due` subscription without waiting for the next scheduled retry.
+  </Card>
+  <Card icon="calendar" title="Move Billing Day">
+    `POST /subscription/{id}/update-billing-day`
+
+    Sets the day-of-month on which renewals are charged. Accepts values 1–28.
+  </Card>
+</CardGroup>
+
+---
+
+## Dunning
+
+When a scheduled renewal fails — for example due to insufficient funds or an expired card — Therius automatically moves the subscription to `past_due` and begins the dunning sequence. Retries are spaced according to card scheme retry caps and your merchant configuration.
+
+Once all retries are exhausted, the subscription moves to `suspended` and Therius fires a `subscription.suspended` webhook. To reactivate a suspended subscription, the customer must provide a new payment method:
+
+```json
+POST /subscription/{id}/payment-method
+
+{
+  "key": "sk_live_...",
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce from customer>" }
+  }
+}
+```
+
+Therius immediately attempts a recovery charge. If it succeeds, the subscription returns to `active`.
+
+---
+
+## Parent / Child Subscriptions
+
+You can link subscriptions together by passing `parentSubscriptionId` when creating a child. This is useful for add-ons, seat expansions, or any billing model where multiple line items should share a lifecycle.
+
+```json
+POST /subscription
+
+{
+  "key": "sk_live_...",
+  "merchantCode": "MERCHANT_001",
+  "planId": 99,
+  "parentSubscriptionId": "sub_abc123",
+  "propagateLifecycle": true,
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce>" }
+  }
+}
+```
+
+Set `propagateLifecycle: true` to cascade status changes — pause, resume, and cancel — from the parent subscription to all its children automatically. When `propagateLifecycle` is `false` (the default), each subscription manages its lifecycle independently.

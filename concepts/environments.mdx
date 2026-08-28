@@ -1,0 +1,75 @@
+---
+title: 'Therius Test and Production Environment Configuration'
+sidebarTitle: 'Environments'
+description: 'Therius has two environments — sandbox and production. The API key prefix selects the environment automatically, with no extra configuration needed.'
+---
+
+Therius routes every request to either the sandbox or the production environment based solely on the prefix of the API key you send. There is no environment flag, no separate SDK initialisation option, and no configuration file to change. When you are ready to go live, you swap the key prefix and update the base URL — nothing else.
+
+## Sandbox
+
+The sandbox environment is a fully isolated test environment backed by a test-provider stub. No real card networks are involved, no real money moves, and no real accounts are charged. Use it freely during development and for automated testing pipelines.
+
+| Property | Value |
+|---|---|
+| **Base URL** | `https://api-sandbox.therius.io/v1` |
+| **Private key prefix** | `sk_sandbox_xxx` |
+| **Public key prefix** | `pub_sandbox_xxx` |
+| **Charges** | None — test stub only |
+| **Idempotency-Key** | Optional (but build the habit now) |
+
+### Sandbox Test Cards
+
+| Card number | Result |
+|---|---|
+| `4111111111111111` | Always approved |
+| `4000000000000002` | Always declined |
+
+Use any future expiry date, any cardholder name, and any 3-digit CVV with these card numbers.
+
+## Production
+
+The production environment processes real payments over live card networks. Every charge is real, every refund affects real accounts, and every declined transaction is a real issuer decision.
+
+| Property | Value |
+|---|---|
+| **Base URL** | `https://api.therius.io/v1` |
+| **Private key prefix** | `sk_live_xxx` |
+| **Public key prefix** | `pub_live_xxx` |
+| **Charges** | Real — live card networks |
+| **Idempotency-Key** | Mandatory on all mutating calls |
+
+## Sandbox vs Production at a Glance
+
+| | Sandbox | Production |
+|---|---|---|
+| **Base URL** | `api-sandbox.therius.io/v1` | `api.therius.io/v1` |
+| **Key prefix** | `sk_sandbox_` / `pub_sandbox_` | `sk_live_` / `pub_live_` |
+| **Real charges** | No | Yes |
+| **Idempotency-Key** | Recommended | Mandatory |
+| **Test cards** | `4111111111111111`, `4000000000000002` | Real cards only |
+
+## Switching Environments
+
+To move from sandbox to production, make two changes in your configuration:
+
+1. Replace `sk_sandbox_...` with `sk_live_...` (and `pub_sandbox_...` with `pub_live_...`).
+2. Update the base URL from `https://api-sandbox.therius.io/v1` to `https://api.therius.io/v1`.
+
+No other code changes are required. The same request bodies, the same response shapes, and the same endpoint paths work in both environments.
+
+<Warning>
+  Before switching to production, verify that every mutating request in your code sends an `Idempotency-Key` header. In the sandbox this is optional; in production it is required to prevent duplicate charges on network retries.
+</Warning>
+
+## The `X-Environment` Header
+
+Most API calls authenticate via a key, and the key prefix determines the environment. However, some flows — such as `GET /payment/inquiry/{id}` reached from the `pending_3ds` resume flow — may be called without a key. In those cases, pass the `X-Environment` header to tell Therius which environment to route the request to.
+
+```bash
+# Query sandbox payment status without a key
+curl https://api-sandbox.therius.io/v1/payment/inquiry/QUICKSTART-001 \
+  -H "X-Environment: sandbox"
+```
+
+Valid values are `sandbox` and `production`. When you include an API key, you do not need this header — the key prefix takes precedence.

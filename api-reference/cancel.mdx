@@ -1,0 +1,109 @@
+---
+title: "POST /payment/cancel — Release an Authorization Hold"
+sidebarTitle: "Cancel"
+description: "POST /payment/cancel — Void a payment that is still in the authorized state. Funds are released immediately. Cannot cancel a captured payment."
+---
+
+`POST /payment/cancel` voids an authorization before it is captured, releasing the hold on the cardholder's funds immediately. Use this when an order is cancelled or cannot be fulfilled after the authorization was placed. If the payment has already been captured and settled, use [Refund](/api-reference/refund) instead — you cannot cancel a captured payment.
+
+## Request
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/cancel`
+
+<ParamField header="Authorization" type="string">
+  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Required in production to prevent duplicate cancellation attempts.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`.
+</ParamField>
+
+<ParamField body="key" type="string">
+  Your merchant private API key. Alternatively, use the `Authorization` header.
+</ParamField>
+
+<ParamField body="merchantCode" type="string" required>
+  Your merchant identifier.
+</ParamField>
+
+<ParamField body="orderCode" type="string">
+  Your original order reference. Either `orderCode` or `paymentCode` is required to identify the authorization to void.
+</ParamField>
+
+<ParamField body="paymentCode" type="string">
+  The Therius payment receipt ID (e.g. `"PC-1234567890"`). Either `paymentCode` or `orderCode` is required.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  An optional internal reference for this cancellation (e.g. your cancellation or support ticket ID).
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Result of the cancellation. One of:
+
+  - `"cancelled"` — authorization voided and hold released.
+  - `"failed"` — cancellation could not be processed. The authorization may have already expired or been captured.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  Therius receipt ID for the original payment.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Your original `orderCode`.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Your `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  The amount that was held and is now released, in `{ currency, value, exponent }` format.
+</ResponseField>
+
+## Example
+
+### Cancel an authorization
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/cancel \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "paymentCode": "PC-1234567890"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "status": "cancelled",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+<Warning>
+  This endpoint only works for payments in the `authorized` state. If the payment has already been captured, this call will return an error. Use [Refund](/api-reference/refund) to return funds on a captured payment, or [Cancel or Refund](/api-reference/cancel-or-refund) if you don't know the current state.
+</Warning>
+
+<Note>
+  When you cancel an authorization, the cardholder's available balance is restored immediately on Therius's side. The reflected timing on the cardholder's bank statement varies by issuer — it's typically instant to a few hours, but can take up to 3–5 business days for some issuers.
+</Note>

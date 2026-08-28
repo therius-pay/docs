@@ -1,0 +1,118 @@
+---
+title: "POST /subscription — Create and Activate a Subscription"
+sidebarTitle: "Create"
+description: "POST /subscription — Enroll a customer in a plan and charge the first billing cycle. Always requires a fresh SDK nonce for the initial CIT mandate."
+---
+
+`POST /subscription` enrolls a customer in a plan and performs the initial Cardholder Initiated Transaction (CIT). The customer must be present for this call — always pass a fresh SDK nonce (not a saved token) to establish the recurring mandate. Therius uses this CIT to register the mandate with the card network before any subsequent Merchant Initiated Transactions (MITs) can occur.
+
+<Warning>
+  Never pass a saved vault token as the card for a new subscription. A fresh nonce from the JS SDK is required to establish the cardholder mandate. Passing a token will result in a `422` error.
+</Warning>
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription`
+
+**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass the `key` field in the request body.
+
+**Idempotency:** Pass an `Idempotency-Key` header (UUID recommended) to safely retry on network failures.
+
+<ParamField body="key" type="string">
+  Your private API key. Use this as an alternative to the `Authorization` header.
+</ParamField>
+
+<ParamField body="merchantCode" type="string">
+  Your unique merchant account identifier.
+</ParamField>
+
+<ParamField body="planId" type="integer" required>
+  The ID of an active billing plan. The plan determines the amount, currency, interval, and trial configuration.
+</ParamField>
+
+<ParamField body="customerEmail" type="string">
+  Customer's email address. Used for billing notifications and dunning communications.
+</ParamField>
+
+<ParamField body="customerName" type="string">
+  Customer's full name as it should appear on invoices.
+</ParamField>
+
+<ParamField body="customerDocument" type="string">
+  Customer's national ID or tax document number. Required in some countries (e.g. Brazil CPF/CNPJ). Check the plan's `availableCountries` configuration for local requirements.
+</ParamField>
+
+<ParamField body="card" type="object" required>
+  Card details for the initial CIT. Must use `nonceData` from the JS SDK — raw card data and saved tokens are not accepted here.
+
+  <Expandable title="card fields">
+    <ParamField body="card.nonceData.nonce" type="string" required>
+      A fresh one-time nonce returned by the Therius JS SDK after the customer enters their card details. Nonces are single-use and expire after a short window.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key/value pairs you want to attach to the subscription. Values must be strings. Returned in all subscription responses and webhook payloads.
+</ParamField>
+
+<ParamField body="startAt" type="string">
+  RFC 3339 timestamp for a future date to delay the first charge, e.g. `"2025-09-01T00:00:00Z"`. If omitted, the subscription activates and is charged immediately (or at the end of a trial if the plan has one).
+</ParamField>
+
+<ParamField body="parentSubscriptionId" type="string">
+  UUID of an existing subscription to designate as the parent. Used to model subscription hierarchies (e.g. a base plan and add-ons).
+</ParamField>
+
+<ParamField body="propagateLifecycle" type="boolean">
+  When `true`, pause and cancel events on the parent subscription automatically cascade to this child subscription. Requires `parentSubscriptionId`.
+</ParamField>
+
+## Response
+
+A successful request returns `201 Created` with the full subscription object, including the subscription `id`, initial `status`, current period start and end dates, and the first invoice.
+
+### Status on creation
+
+| Status | When it occurs |
+| --- | --- |
+| `active` | Plan has no trial; first charge succeeded. |
+| `trialing` | Plan has a `trialPeriodDays` configured. |
+| `past_due` | Initial CIT failed. Rare — normally a `402` is returned on decline instead. |
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `400` | Plan not found or inactive. |
+| `402` | Initial card declined. |
+| `409` | Duplicate `Idempotency-Key` with a conflicting request body. |
+| `422` | Validation error — e.g. missing nonce or invalid plan. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "planId": 42,
+    "customerEmail": "ada@example.com",
+    "customerName": "Ada Lovelace",
+    "card": { "nonceData": { "nonce": "<fresh nonce from JS SDK>" } }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201 Created
+{}
+```
+
+</ResponseExample>
