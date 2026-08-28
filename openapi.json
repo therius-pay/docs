@@ -1,0 +1,1662 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Therius API",
+        "description": "REST API for payments, subscriptions, and billing plans.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://api.therius.io/v1",
+            "description": "Production"
+        },
+        {
+            "url": "https://sandbox.therius.io/v1",
+            "description": "Sandbox"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "Your secret API key: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox)."
+            }
+        },
+        "parameters": {
+            "IdempotencyKey": {
+                "name": "Idempotency-Key",
+                "in": "header",
+                "description": "A UUID you generate per operation. Required in production. Retrying with the same key returns the original response.",
+                "schema": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        },
+        "schemas": {
+            "Amount": {
+                "type": "object",
+                "required": [
+                    "currency",
+                    "value",
+                    "exponent"
+                ],
+                "properties": {
+                    "currency": {
+                        "type": "string",
+                        "example": "USD"
+                    },
+                    "value": {
+                        "type": "integer",
+                        "example": 4999
+                    },
+                    "exponent": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                }
+            },
+            "CardAddress": {
+                "type": "object",
+                "properties": {
+                    "line1": {
+                        "type": "string"
+                    },
+                    "line2": {
+                        "type": "string"
+                    },
+                    "city": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "postalCode": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CardData": {
+                "type": "object",
+                "properties": {
+                    "cardNumber": {
+                        "type": "string",
+                        "example": "4111111111111111"
+                    },
+                    "cardholderName": {
+                        "type": "string",
+                        "example": "Ada Lovelace"
+                    },
+                    "expiryMonth": {
+                        "type": "string",
+                        "example": "12"
+                    },
+                    "expiryYear": {
+                        "type": "string",
+                        "example": "2030"
+                    },
+                    "cvv": {
+                        "type": "string",
+                        "example": "123"
+                    },
+                    "tokenize": {
+                        "type": "boolean"
+                    },
+                    "cardAddress": {
+                        "$ref": "#/components/schemas/CardAddress"
+                    },
+                    "documentNumber": {
+                        "type": "string"
+                    },
+                    "typeOverride": {
+                        "type": "string"
+                    }
+                }
+            },
+            "NonceData": {
+                "type": "object",
+                "properties": {
+                    "nonce": {
+                        "type": "string"
+                    },
+                    "cardholderName": {
+                        "type": "string"
+                    },
+                    "cardAddress": {
+                        "$ref": "#/components/schemas/CardAddress"
+                    },
+                    "tokenize": {
+                        "type": "boolean"
+                    },
+                    "typeOverride": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TokenData": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "cvv": {
+                        "type": "string"
+                    },
+                    "cardAddress": {
+                        "$ref": "#/components/schemas/CardAddress"
+                    }
+                }
+            },
+            "Card": {
+                "type": "object",
+                "properties": {
+                    "cardData": {
+                        "$ref": "#/components/schemas/CardData"
+                    },
+                    "nonceData": {
+                        "$ref": "#/components/schemas/NonceData"
+                    },
+                    "tokenData": {
+                        "$ref": "#/components/schemas/TokenData"
+                    },
+                    "cardOnFile": {
+                        "type": "object"
+                    },
+                    "instalments": {
+                        "type": "integer"
+                    },
+                    "networkTransactionId": {
+                        "type": "string"
+                    },
+                    "networkReferenceId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Shopper": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ActionRequired": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "paymentCode": {
+                        "type": "string"
+                    },
+                    "barcode": {
+                        "type": "string"
+                    },
+                    "params": {
+                        "type": "object"
+                    }
+                }
+            },
+            "RefusalCode": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    },
+                    "reasonCode": {
+                        "type": "string"
+                    },
+                    "originalReason": {
+                        "type": "string"
+                    },
+                    "originalReasonCode": {
+                        "type": "string"
+                    },
+                    "recoveryAction": {
+                        "type": "string",
+                        "enum": [
+                            "retry",
+                            "switch_method",
+                            "terminal"
+                        ]
+                    }
+                }
+            },
+            "PaymentResponse": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "captured",
+                            "authorized",
+                            "declined",
+                            "pending_3ds",
+                            "pending_action",
+                            "failed",
+                            "cancelled",
+                            "refunded"
+                        ]
+                    },
+                    "paymentCode": {
+                        "type": "string",
+                        "example": "PC-1234567890"
+                    },
+                    "orderCode": {
+                        "type": "string"
+                    },
+                    "merchantCode": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "card": {
+                        "type": "object"
+                    },
+                    "token": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "expirationDate": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "actionRequired": {
+                        "$ref": "#/components/schemas/ActionRequired"
+                    },
+                    "refusalCode": {
+                        "$ref": "#/components/schemas/RefusalCode"
+                    }
+                }
+            },
+            "Plan": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "interval": {
+                        "type": "string",
+                        "enum": [
+                            "day",
+                            "week",
+                            "month",
+                            "year"
+                        ]
+                    },
+                    "intervalCount": {
+                        "type": "integer"
+                    },
+                    "trialDays": {
+                        "type": "integer"
+                    },
+                    "countries": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "archived": {
+                        "type": "boolean"
+                    },
+                    "subscriberCount": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "Subscription": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "planId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "trialing",
+                            "past_due",
+                            "paused",
+                            "suspended",
+                            "cancelled"
+                        ]
+                    },
+                    "shopper": {
+                        "$ref": "#/components/schemas/Shopper"
+                    },
+                    "card": {
+                        "type": "object"
+                    },
+                    "currentPeriodStart": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "currentPeriodEnd": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "Invoice": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "subscriptionId": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "paid",
+                            "open",
+                            "failed",
+                            "void"
+                        ]
+                    },
+                    "paymentCode": {
+                        "type": "string"
+                    },
+                    "periodStart": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "periodEnd": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/payment/purchase": {
+            "post": {
+                "operationId": "purchasePayment",
+                "summary": "Charge a card in one step",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "orderCode",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "orderCode": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "$ref": "#/components/schemas/Amount"
+                                    },
+                                    "card": {
+                                        "$ref": "#/components/schemas/Card"
+                                    },
+                                    "apm": {
+                                        "type": "object"
+                                    },
+                                    "paymentMethod": {
+                                        "type": "string"
+                                    },
+                                    "shopper": {
+                                        "$ref": "#/components/schemas/Shopper"
+                                    },
+                                    "webhookUrl": {
+                                        "type": "string"
+                                    },
+                                    "connectionCode": {
+                                        "type": "string"
+                                    },
+                                    "ipAddress": {
+                                        "type": "string"
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment processed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/authorization": {
+            "post": {
+                "operationId": "authorizePayment",
+                "summary": "Place a fund reserve",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "orderCode",
+                                    "amount"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "orderCode": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "$ref": "#/components/schemas/Amount"
+                                    },
+                                    "card": {
+                                        "$ref": "#/components/schemas/Card"
+                                    },
+                                    "apm": {
+                                        "type": "object"
+                                    },
+                                    "paymentMethod": {
+                                        "type": "string"
+                                    },
+                                    "shopper": {
+                                        "$ref": "#/components/schemas/Shopper"
+                                    },
+                                    "webhookUrl": {
+                                        "type": "string"
+                                    },
+                                    "connectionCode": {
+                                        "type": "string"
+                                    },
+                                    "ipAddress": {
+                                        "type": "string"
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authorization result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/capture": {
+            "post": {
+                "operationId": "capturePayment",
+                "summary": "Settle a prior authorization",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "paymentCode"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "paymentCode": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "$ref": "#/components/schemas/Amount"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Capture result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/cancel": {
+            "post": {
+                "operationId": "cancelPayment",
+                "summary": "Release an authorization hold",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "paymentCode"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "paymentCode": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cancellation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/refund": {
+            "post": {
+                "operationId": "refundPayment",
+                "summary": "Issue a full or partial refund",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "paymentCode"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "paymentCode": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "$ref": "#/components/schemas/Amount"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Refund result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/cancel_or_refund": {
+            "post": {
+                "operationId": "cancelOrRefundPayment",
+                "summary": "Reverse a payment",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "paymentCode"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "paymentCode": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "$ref": "#/components/schemas/Amount"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reverse result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/resume": {
+            "post": {
+                "operationId": "resumePayment",
+                "summary": "Continue after 3DS challenge",
+                "tags": [
+                    "Payments"
+                ],
+                "security": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "sessionId"
+                                ],
+                                "properties": {
+                                    "sessionId": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resumed payment result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/inquiry/{id}": {
+            "get": {
+                "operationId": "inquiryPayment",
+                "summary": "Retrieve payment status",
+                "tags": [
+                    "Payments"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sdk/session": {
+            "post": {
+                "operationId": "createSdkSession",
+                "summary": "Create a short-lived SDK token",
+                "tags": [
+                    "SDK"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "SDK session token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sessionToken": {
+                                            "type": "string"
+                                        },
+                                        "expiresAt": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/token": {
+            "post": {
+                "operationId": "storeTokens",
+                "summary": "Store card tokens for future payments",
+                "tags": [
+                    "Tokens"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "shopper",
+                                    "cards"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "shopper": {
+                                        "$ref": "#/components/schemas/Shopper"
+                                    },
+                                    "cards": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/CardData"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tokens created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "tokens": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "expirationDate": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/plan": {
+            "post": {
+                "operationId": "createPlan",
+                "summary": "Create a subscription plan",
+                "tags": [
+                    "Plans"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "name",
+                                    "amount",
+                                    "interval"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "$ref": "#/components/schemas/Amount"
+                                    },
+                                    "interval": {
+                                        "type": "string",
+                                        "enum": [
+                                            "day",
+                                            "week",
+                                            "month",
+                                            "year"
+                                        ]
+                                    },
+                                    "intervalCount": {
+                                        "type": "integer"
+                                    },
+                                    "trialDays": {
+                                        "type": "integer"
+                                    },
+                                    "countries": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Plan created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Plan"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "operationId": "listPlans",
+                "summary": "List all subscription plans",
+                "tags": [
+                    "Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "country",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of plans",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Plan"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/plan/{id}": {
+            "patch": {
+                "operationId": "updatePlan",
+                "summary": "Update a subscription plan",
+                "tags": [
+                    "Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "active": {
+                                        "type": "boolean"
+                                    },
+                                    "countries": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated plan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Plan"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "archivePlan",
+                "summary": "Archive a subscription plan",
+                "tags": [
+                    "Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plan archived",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Plan"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription": {
+            "post": {
+                "operationId": "createSubscription",
+                "summary": "Create and activate a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode",
+                                    "planId",
+                                    "shopper",
+                                    "card"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string"
+                                    },
+                                    "planId": {
+                                        "type": "string"
+                                    },
+                                    "shopper": {
+                                        "$ref": "#/components/schemas/Shopper"
+                                    },
+                                    "card": {
+                                        "$ref": "#/components/schemas/Card"
+                                    },
+                                    "metadata": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Subscription created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "operationId": "listSubscriptions",
+                "summary": "List and filter subscriptions",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "planId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cardBrand",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "createdAfter",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "createdBefore",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of subscriptions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Subscription"
+                                            }
+                                        },
+                                        "nextCursor": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}": {
+            "get": {
+                "operationId": "getSubscription",
+                "summary": "Retrieve subscription details",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}/cancel": {
+            "post": {
+                "operationId": "cancelSubscription",
+                "summary": "Cancel a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancellation confirmed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}/change-plan": {
+            "post": {
+                "operationId": "changeSubscriptionPlan",
+                "summary": "Upgrade or downgrade a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "planId"
+                                ],
+                                "properties": {
+                                    "planId": {
+                                        "type": "string"
+                                    },
+                                    "prorate": {
+                                        "type": "boolean"
+                                    },
+                                    "effective": {
+                                        "type": "string",
+                                        "enum": [
+                                            "immediate",
+                                            "next_cycle"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Plan changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}/pause": {
+            "post": {
+                "operationId": "pauseSubscription",
+                "summary": "Pause a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription paused",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}/resume": {
+            "post": {
+                "operationId": "resumeSubscription",
+                "summary": "Resume a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription resumed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}/payment-method": {
+            "post": {
+                "operationId": "updateSubscriptionPaymentMethod",
+                "summary": "Update the card on a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "card"
+                                ],
+                                "properties": {
+                                    "card": {
+                                        "$ref": "#/components/schemas/Card"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment method updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{id}/invoice": {
+            "get": {
+                "operationId": "listSubscriptionInvoices",
+                "summary": "List invoices for a subscription",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of invoices",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Invoice"
+                                            }
+                                        },
+                                        "nextCursor": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/invoice/{id}": {
+            "get": {
+                "operationId": "getInvoice",
+                "summary": "Retrieve a single invoice",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invoice details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Invoice"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
