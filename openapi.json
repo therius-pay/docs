@@ -11,7 +11,7 @@
             "description": "Production"
         },
         {
-            "url": "https://sandbox.therius.io/v1",
+            "url": "https://api-sandbox.therius.io/v1",
             "description": "Sandbox"
         }
     ],
