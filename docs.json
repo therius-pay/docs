@@ -3,9 +3,9 @@
   "name": "Therius",
   "theme": "maple",
   "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
+    "primary": "#DB2777",
+    "light": "#FCE7F3",
+    "dark": "#070002"
   },
   "favicon": "/favicon.svg",
   "navbar": {
