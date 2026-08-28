@@ -155,5 +155,8 @@
   "logo": {
     "light": "/images/therius-wordmark-primary.png",
     "dark": "/images/therius-wordmark-reversed.png"
+  },
+  "styling": {
+    "codeblocks": "dark"
   }
 }
