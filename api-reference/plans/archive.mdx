@@ -1,13 +1,14 @@
----
-title: "Archive a Subscription Plan — DELETE /subscription/plan"
+﻿---
+title: "Archive a Subscription Plan â€” DELETE /subscription/plan"
 sidebarTitle: "Archive Plan"
-description: "DELETE /subscription/plan/{id} — Soft-archive a plan so no new subscriptions can enroll. Existing subscribers continue until their next renewal."
+description: "DELETE /subscription/plan/{id} â€” Soft-archive a plan so no new subscriptions can enroll. Existing subscribers continue until their next renewal."
+openapi: "DELETE /subscription/plan/{id}"
 ---
 
 `DELETE /subscription/plan/{id}` soft-archives a plan by setting its `deletedAt` timestamp. Existing subscriptions on the archived plan continue billing normally. At each subscriber's next renewal date, Therius will cancel those subscriptions rather than renewing them. No new subscribers can enroll in an archived plan.
 
 <Note>
-  This is a soft-delete — the plan is not permanently removed. It remains visible in list results with its `deletedAt` timestamp populated, so you retain a complete audit trail.
+  This is a soft-delete â€” the plan is not permanently removed. It remains visible in list results with its `deletedAt` timestamp populated, so you retain a complete audit trail.
 </Note>
 
 ## Request

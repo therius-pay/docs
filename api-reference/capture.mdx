@@ -1,10 +1,11 @@
----
-title: "POST /payment/capture — Settle a Prior Authorization"
+﻿---
+title: "POST /payment/capture â€” Settle a Prior Authorization"
 sidebarTitle: "Capture"
-description: "POST /payment/capture — Settle a previously authorized payment. Supports partial capture. Must be called within the acquirer authorization window."
+description: "POST /payment/capture â€” Settle a previously authorized payment. Supports partial capture. Must be called within the acquirer authorization window."
+openapi: "POST /payment/capture"
 ---
 
-Call `POST /payment/capture` to settle funds from an earlier `POST /payment/authorization`. You can capture less than the full authorized amount — a partial capture — and the remaining hold is released automatically. You must call this endpoint within the acquirer's authorization window (typically 7 days) or the hold will expire and you'll need to re-authorize.
+Call `POST /payment/capture` to settle funds from an earlier `POST /payment/authorization`. You can capture less than the full authorized amount â€” a partial capture â€” and the remaining hold is released automatically. You must call this endpoint within the acquirer's authorization window (typically 7 days) or the hold will expire and you'll need to re-authorize.
 
 ## Request
 
@@ -65,8 +66,8 @@ Call `POST /payment/capture` to settle funds from an earlier `POST /payment/auth
 <ResponseField name="status" type="string">
   Result of the capture. One of:
 
-  - `"captured"` — funds settled successfully.
-  - `"failed"` — capture could not be processed. Check `connectionCode` and retry or contact support.
+  - `"captured"` â€” funds settled successfully.
+  - `"failed"` â€” capture could not be processed. Check `connectionCode` and retry or contact support.
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">

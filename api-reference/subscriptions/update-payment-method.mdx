@@ -1,10 +1,11 @@
----
-title: "POST /subscription/{id}/payment-method — Update Card"
+﻿---
+title: "POST /subscription/{id}/payment-method â€” Update Card"
 sidebarTitle: "Update Payment Method"
-description: "POST /subscription/{id}/payment-method — Replace the card on a subscription. Requires a fresh SDK nonce. Also reactivates a suspended subscription."
+description: "POST /subscription/{id}/payment-method â€” Replace the card on a subscription. Requires a fresh SDK nonce. Also reactivates a suspended subscription."
+openapi: "POST /subscription/{id}/payment-method"
 ---
 
-`POST /subscription/{id}/payment-method` replaces the card on a subscription and establishes a new Cardholder Initiated Transaction (CIT) mandate. This is also the only way to reactivate a `suspended` subscription — one where dunning retries have been exhausted and billing has stopped entirely.
+`POST /subscription/{id}/payment-method` replaces the card on a subscription and establishes a new Cardholder Initiated Transaction (CIT) mandate. This is also the only way to reactivate a `suspended` subscription â€” one where dunning retries have been exhausted and billing has stopped entirely.
 
 <Warning>
   Always pass a fresh SDK nonce from the Therius JS SDK. This endpoint requires the customer to be present, because it performs a new CIT to register the updated mandate with the card network. A saved vault token (`vt_...`) is not accepted here.

@@ -1,10 +1,11 @@
----
-title: "POST /subscription/{id}/pause and /resume — Pause & Resume"
+﻿---
+title: "POST /subscription/{id}/pause and /resume â€” Pause & Resume"
 sidebarTitle: "Pause & Resume"
 description: "Pause a subscription to stop billing temporarily without cancelling it. Resume billing from a paused or suspended state with a single API call."
+openapi: "POST /subscription/{id}/pause"
 ---
 
-Pausing a subscription stops all renewal attempts without cancelling it, preserving the subscription record and all its history. Resuming restores billing and recalculates the next billing date forward from the current date — the customer is not charged for time elapsed while paused.
+Pausing a subscription stops all renewal attempts without cancelling it, preserving the subscription record and all its history. Resuming restores billing and recalculates the next billing date forward from the current date â€” the customer is not charged for time elapsed while paused.
 
 ## Pause a Subscription
 
@@ -85,7 +86,7 @@ On success, Therius fires `subscription.resumed`. If a `suspended` subscription 
 | Code | Meaning |
 | --- | --- |
 | `400` | Subscription is not in a resumable state (e.g. already `active` or `cancelled`). |
-| `402` | Resume from `suspended` failed — immediate re-charge was declined. |
+| `402` | Resume from `suspended` failed â€” immediate re-charge was declined. |
 | `404` | Subscription not found. |
 
 ### Example
