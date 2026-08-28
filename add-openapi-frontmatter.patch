@@ -1,0 +1,406 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Add openapi frontmatter to enable sidebar method badges
+
+---
+diff --git a/api-reference/authorize.mdx b/api-reference/authorize.mdx
+--- a/api-reference/authorize.mdx
++++ b/api-reference/authorize.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/authorization — Place a Fund Reserve"
+ sidebarTitle: "Authorize"
+ description: "POST /payment/authorization — Reserve funds without capturing. Call capture later to settle, or cancel to release the hold. Ideal for physical goods."
++openapi: "POST /payment/authorization"
+ ---
+diff --git a/api-reference/purchase.mdx b/api-reference/purchase.mdx
+--- a/api-reference/purchase.mdx
++++ b/api-reference/purchase.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/purchase — Charge a Card in One Step"
+ sidebarTitle: "Purchase"
+ description: "POST /payment/purchase — Authorize and capture a payment in a single request. Use for digital goods or any order you fulfill immediately."
++openapi: "POST /payment/purchase"
+ ---
+diff --git a/api-reference/capture.mdx b/api-reference/capture.mdx
+--- a/api-reference/capture.mdx
++++ b/api-reference/capture.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/capture — Settle a Prior Authorization"
+ sidebarTitle: "Capture"
+ description: "POST /payment/capture — Settle a previously authorized payment. Supports partial capture. Must be called within the acquirer authorization window."
++openapi: "POST /payment/capture"
+ ---
+diff --git a/api-reference/cancel.mdx b/api-reference/cancel.mdx
+--- a/api-reference/cancel.mdx
++++ b/api-reference/cancel.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/cancel — Release an Authorization Hold"
+ sidebarTitle: "Cancel"
+ description: "POST /payment/cancel — Void a payment that is still in the authorized state. Funds are released immediately. Cannot cancel a captured payment."
++openapi: "POST /payment/cancel"
+ ---
+diff --git a/api-reference/refund.mdx b/api-reference/refund.mdx
+--- a/api-reference/refund.mdx
++++ b/api-reference/refund.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/refund — Issue a Full or Partial Refund"
+ sidebarTitle: "Refund"
+ description: "POST /payment/refund — Refund a captured payment in full or partially. Multiple partial refunds are allowed up to the total captured amount."
++openapi: "POST /payment/refund"
+ ---
+diff --git a/api-reference/cancel-or-refund.mdx b/api-reference/cancel-or-refund.mdx
+--- a/api-reference/cancel-or-refund.mdx
++++ b/api-reference/cancel-or-refund.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/cancel_or_refund — Reverse a Payment"
+ sidebarTitle: "Cancel or Refund"
+ description: "POST /payment/cancel_or_refund — Automatically cancels if the payment is authorized, or refunds if already captured. No need to track payment state."
++openapi: "POST /payment/cancel_or_refund"
+ ---
+diff --git a/api-reference/inquiry.mdx b/api-reference/inquiry.mdx
+--- a/api-reference/inquiry.mdx
++++ b/api-reference/inquiry.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /payment/inquiry/{id} — Retrieve Payment Status"
+ sidebarTitle: "Inquiry"
+ description: "GET /payment/inquiry/{id} — Retrieve the current status and full details of any payment using its paymentCode or internal payment UUID."
++openapi: "GET /payment/inquiry/{id}"
+ ---
+diff --git a/api-reference/resume.mdx b/api-reference/resume.mdx
+--- a/api-reference/resume.mdx
++++ b/api-reference/resume.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/resume — Continue After 3DS Challenge"
+ sidebarTitle: "Resume Payment"
+ description: "POST /payment/resume — Resume a payment paused for a 3DS challenge. Pass the sessionId from the pending_3ds response. No API key required."
++openapi: "POST /payment/resume"
+ ---
+diff --git a/api-reference/sdk-session.mdx b/api-reference/sdk-session.mdx
+--- a/api-reference/sdk-session.mdx
++++ b/api-reference/sdk-session.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /sdk/session — Create a Short-Lived SDK Token"
+ sidebarTitle: "SDK Session"
+ description: "POST /sdk/session — Exchange your private API key for a short-lived client token to initialize the Therius JS SDK in the browser safely."
++openapi: "POST /sdk/session"
+ ---
+diff --git a/api-reference/store-tokens.mdx b/api-reference/store-tokens.mdx
+--- a/api-reference/store-tokens.mdx
++++ b/api-reference/store-tokens.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /token — Store Card Tokens for Future Payments"
+ sidebarTitle: "Store Tokens"
+ description: "POST /token — Tokenize one or more cards without charging them. Each token is scoped to your merchant account and reusable for future payments."
++openapi: "POST /token"
+ ---
+diff --git a/api-reference/plans/create.mdx b/api-reference/plans/create.mdx
+--- a/api-reference/plans/create.mdx
++++ b/api-reference/plans/create.mdx
+@@ -2,6 +2,7 @@
+ title: "Create a Subscription Plan — POST /subscription/plan"
+ sidebarTitle: "Create Plan"
+ description: "POST /subscription/plan — Define a recurring billing plan with amount, currency, interval, trial period, and optional geographic restrictions."
++openapi: "POST /subscription/plan"
+ ---
+diff --git a/api-reference/plans/list.mdx b/api-reference/plans/list.mdx
+--- a/api-reference/plans/list.mdx
++++ b/api-reference/plans/list.mdx
+@@ -2,6 +2,7 @@
+ title: "List All Subscription Plans — GET /subscription/plan"
+ sidebarTitle: "List Plans"
+ description: "GET /subscription/plan — List all billing plans for your merchant account, with optional country filter. Includes subscriber count and archive state."
++openapi: "GET /subscription/plan"
+ ---
+diff --git a/api-reference/plans/update.mdx b/api-reference/plans/update.mdx
+--- a/api-reference/plans/update.mdx
++++ b/api-reference/plans/update.mdx
+@@ -2,6 +2,7 @@
+ title: "Update a Subscription Plan — PATCH /subscription/plan"
+ sidebarTitle: "Update Plan"
+ description: "PATCH /subscription/plan/{id} — Update a plan name, description, active status, or country availability. Amount and interval cannot be changed."
++openapi: "PATCH /subscription/plan/{id}"
+ ---
+diff --git a/api-reference/plans/archive.mdx b/api-reference/plans/archive.mdx
+--- a/api-reference/plans/archive.mdx
++++ b/api-reference/plans/archive.mdx
+@@ -2,6 +2,7 @@
+ title: "Archive a Subscription Plan — DELETE /subscription/plan"
+ sidebarTitle: "Archive Plan"
+ description: "DELETE /subscription/plan/{id} — Soft-archive a plan so no new subscriptions can enroll. Existing subscribers continue until their next renewal."
++openapi: "DELETE /subscription/plan/{id}"
+ ---
+diff --git a/api-reference/subscriptions/create.mdx b/api-reference/subscriptions/create.mdx
+--- a/api-reference/subscriptions/create.mdx
++++ b/api-reference/subscriptions/create.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription — Create and Activate a Subscription"
+ sidebarTitle: "Create"
+ description: "POST /subscription — Enroll a customer in a plan and charge the first billing cycle. Always requires a fresh SDK nonce for the initial CIT mandate."
++openapi: "POST /subscription"
+ ---
+diff --git a/api-reference/subscriptions/list.mdx b/api-reference/subscriptions/list.mdx
+--- a/api-reference/subscriptions/list.mdx
++++ b/api-reference/subscriptions/list.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /subscription — List and Filter Subscriptions"
+ sidebarTitle: "List"
+ description: "GET /subscription — Retrieve a paginated list of subscriptions with filters for status, email, plan, card brand, and creation date range."
++openapi: "GET /subscription"
+ ---
+diff --git a/api-reference/subscriptions/get.mdx b/api-reference/subscriptions/get.mdx
+--- a/api-reference/subscriptions/get.mdx
++++ b/api-reference/subscriptions/get.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /subscription/{id} — Retrieve Subscription Details"
+ sidebarTitle: "Get"
+ description: "GET /subscription/{id} — Retrieve full details for a subscription including its event timeline, invoice history, and current dunning state."
++openapi: "GET /subscription/{id}"
+ ---
+diff --git a/api-reference/subscriptions/cancel.mdx b/api-reference/subscriptions/cancel.mdx
+--- a/api-reference/subscriptions/cancel.mdx
++++ b/api-reference/subscriptions/cancel.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/cancel — Cancel a Subscription"
+ sidebarTitle: "Cancel"
+ description: "POST /subscription/{id}/cancel — Immediately cancel a subscription. Fires the subscription.cancelled webhook event. Cannot be undone."
++openapi: "POST /subscription/{id}/cancel"
+ ---
+diff --git a/api-reference/subscriptions/pause-resume.mdx b/api-reference/subscriptions/pause-resume.mdx
+--- a/api-reference/subscriptions/pause-resume.mdx
++++ b/api-reference/subscriptions/pause-resume.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/pause and /resume — Pause & Resume"
+ sidebarTitle: "Pause & Resume"
+ description: "Pause a subscription to stop billing temporarily without cancelling it. Resume billing from a paused or suspended state with a single API call."
++openapi: "POST /subscription/{id}/pause"
+ ---
+diff --git a/api-reference/subscriptions/change-plan.mdx b/api-reference/subscriptions/change-plan.mdx
+--- a/api-reference/subscriptions/change-plan.mdx
++++ b/api-reference/subscriptions/change-plan.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/change-plan — Upgrade or Downgrade"
+ sidebarTitle: "Change Plan"
+ description: "POST /subscription/{id}/change-plan — Move a subscriber to a different plan immediately (with proration) or at next billing cycle."
++openapi: "POST /subscription/{id}/change-plan"
+ ---
+diff --git a/api-reference/subscriptions/update-payment-method.mdx b/api-reference/subscriptions/update-payment-method.mdx
+--- a/api-reference/subscriptions/update-payment-method.mdx
++++ b/api-reference/subscriptions/update-payment-method.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/payment-method — Update Card"
+ sidebarTitle: "Update Payment Method"
+ description: "POST /subscription/{id}/payment-method — Replace the card on a subscription. Requires a fresh SDK nonce. Also reactivates a suspended subscription."
++openapi: "POST /subscription/{id}/payment-method"
+ ---
+diff --git a/api-reference/subscriptions/invoices.mdx b/api-reference/subscriptions/invoices.mdx
+--- a/api-reference/subscriptions/invoices.mdx
++++ b/api-reference/subscriptions/invoices.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /subscription/{id}/invoice — List and Get Invoices"
+ sidebarTitle: "Invoices"
+ description: "GET /subscription/{id}/invoice and GET /subscription/invoice/{id} — List invoices for a subscription or retrieve a single invoice by its UUID."
++openapi: "GET /subscription/{id}/invoice"
+ ---
+END
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Add openapi frontmatter to enable sidebar method badges
+
+---
+diff --git a/api-reference/authorize.mdx b/api-reference/authorize.mdx
+--- a/api-reference/authorize.mdx
++++ b/api-reference/authorize.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/authorization — Place a Fund Reserve"
+ sidebarTitle: "Authorize"
+ description: "POST /payment/authorization — Reserve funds without capturing. Call capture later to settle, or cancel to release the hold. Ideal for physical goods."
++openapi: "POST /payment/authorization"
+ ---
+diff --git a/api-reference/purchase.mdx b/api-reference/purchase.mdx
+--- a/api-reference/purchase.mdx
++++ b/api-reference/purchase.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/purchase — Charge a Card in One Step"
+ sidebarTitle: "Purchase"
+ description: "POST /payment/purchase — Authorize and capture a payment in a single request. Use for digital goods or any order you fulfill immediately."
++openapi: "POST /payment/purchase"
+ ---
+diff --git a/api-reference/capture.mdx b/api-reference/capture.mdx
+--- a/api-reference/capture.mdx
++++ b/api-reference/capture.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/capture — Settle a Prior Authorization"
+ sidebarTitle: "Capture"
+ description: "POST /payment/capture — Settle a previously authorized payment. Supports partial capture. Must be called within the acquirer authorization window."
++openapi: "POST /payment/capture"
+ ---
+diff --git a/api-reference/cancel.mdx b/api-reference/cancel.mdx
+--- a/api-reference/cancel.mdx
++++ b/api-reference/cancel.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/cancel — Release an Authorization Hold"
+ sidebarTitle: "Cancel"
+ description: "POST /payment/cancel — Void a payment that is still in the authorized state. Funds are released immediately. Cannot cancel a captured payment."
++openapi: "POST /payment/cancel"
+ ---
+diff --git a/api-reference/refund.mdx b/api-reference/refund.mdx
+--- a/api-reference/refund.mdx
++++ b/api-reference/refund.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/refund — Issue a Full or Partial Refund"
+ sidebarTitle: "Refund"
+ description: "POST /payment/refund — Refund a captured payment in full or partially. Multiple partial refunds are allowed up to the total captured amount."
++openapi: "POST /payment/refund"
+ ---
+diff --git a/api-reference/cancel-or-refund.mdx b/api-reference/cancel-or-refund.mdx
+--- a/api-reference/cancel-or-refund.mdx
++++ b/api-reference/cancel-or-refund.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/cancel_or_refund — Reverse a Payment"
+ sidebarTitle: "Cancel or Refund"
+ description: "POST /payment/cancel_or_refund — Automatically cancels if the payment is authorized, or refunds if already captured. No need to track payment state."
++openapi: "POST /payment/cancel_or_refund"
+ ---
+diff --git a/api-reference/inquiry.mdx b/api-reference/inquiry.mdx
+--- a/api-reference/inquiry.mdx
++++ b/api-reference/inquiry.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /payment/inquiry/{id} — Retrieve Payment Status"
+ sidebarTitle: "Inquiry"
+ description: "GET /payment/inquiry/{id} — Retrieve the current status and full details of any payment using its paymentCode or internal payment UUID."
++openapi: "GET /payment/inquiry/{id}"
+ ---
+diff --git a/api-reference/resume.mdx b/api-reference/resume.mdx
+--- a/api-reference/resume.mdx
++++ b/api-reference/resume.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /payment/resume — Continue After 3DS Challenge"
+ sidebarTitle: "Resume Payment"
+ description: "POST /payment/resume — Resume a payment paused for a 3DS challenge. Pass the sessionId from the pending_3ds response. No API key required."
++openapi: "POST /payment/resume"
+ ---
+diff --git a/api-reference/sdk-session.mdx b/api-reference/sdk-session.mdx
+--- a/api-reference/sdk-session.mdx
++++ b/api-reference/sdk-session.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /sdk/session — Create a Short-Lived SDK Token"
+ sidebarTitle: "SDK Session"
+ description: "POST /sdk/session — Exchange your private API key for a short-lived client token to initialize the Therius JS SDK in the browser safely."
++openapi: "POST /sdk/session"
+ ---
+diff --git a/api-reference/store-tokens.mdx b/api-reference/store-tokens.mdx
+--- a/api-reference/store-tokens.mdx
++++ b/api-reference/store-tokens.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /token — Store Card Tokens for Future Payments"
+ sidebarTitle: "Store Tokens"
+ description: "POST /token — Tokenize one or more cards without charging them. Each token is scoped to your merchant account and reusable for future payments."
++openapi: "POST /token"
+ ---
+diff --git a/api-reference/plans/create.mdx b/api-reference/plans/create.mdx
+--- a/api-reference/plans/create.mdx
++++ b/api-reference/plans/create.mdx
+@@ -2,6 +2,7 @@
+ title: "Create a Subscription Plan — POST /subscription/plan"
+ sidebarTitle: "Create Plan"
+ description: "POST /subscription/plan — Define a recurring billing plan with amount, currency, interval, trial period, and optional geographic restrictions."
++openapi: "POST /subscription/plan"
+ ---
+diff --git a/api-reference/plans/list.mdx b/api-reference/plans/list.mdx
+--- a/api-reference/plans/list.mdx
++++ b/api-reference/plans/list.mdx
+@@ -2,6 +2,7 @@
+ title: "List All Subscription Plans — GET /subscription/plan"
+ sidebarTitle: "List Plans"
+ description: "GET /subscription/plan — List all billing plans for your merchant account, with optional country filter. Includes subscriber count and archive state."
++openapi: "GET /subscription/plan"
+ ---
+diff --git a/api-reference/plans/update.mdx b/api-reference/plans/update.mdx
+--- a/api-reference/plans/update.mdx
++++ b/api-reference/plans/update.mdx
+@@ -2,6 +2,7 @@
+ title: "Update a Subscription Plan — PATCH /subscription/plan"
+ sidebarTitle: "Update Plan"
+ description: "PATCH /subscription/plan/{id} — Update a plan name, description, active status, or country availability. Amount and interval cannot be changed."
++openapi: "PATCH /subscription/plan/{id}"
+ ---
+diff --git a/api-reference/plans/archive.mdx b/api-reference/plans/archive.mdx
+--- a/api-reference/plans/archive.mdx
++++ b/api-reference/plans/archive.mdx
+@@ -2,6 +2,7 @@
+ title: "Archive a Subscription Plan — DELETE /subscription/plan"
+ sidebarTitle: "Archive Plan"
+ description: "DELETE /subscription/plan/{id} — Soft-archive a plan so no new subscriptions can enroll. Existing subscribers continue until their next renewal."
++openapi: "DELETE /subscription/plan/{id}"
+ ---
+diff --git a/api-reference/subscriptions/create.mdx b/api-reference/subscriptions/create.mdx
+--- a/api-reference/subscriptions/create.mdx
++++ b/api-reference/subscriptions/create.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription — Create and Activate a Subscription"
+ sidebarTitle: "Create"
+ description: "POST /subscription — Enroll a customer in a plan and charge the first billing cycle. Always requires a fresh SDK nonce for the initial CIT mandate."
++openapi: "POST /subscription"
+ ---
+diff --git a/api-reference/subscriptions/list.mdx b/api-reference/subscriptions/list.mdx
+--- a/api-reference/subscriptions/list.mdx
++++ b/api-reference/subscriptions/list.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /subscription — List and Filter Subscriptions"
+ sidebarTitle: "List"
+ description: "GET /subscription — Retrieve a paginated list of subscriptions with filters for status, email, plan, card brand, and creation date range."
++openapi: "GET /subscription"
+ ---
+diff --git a/api-reference/subscriptions/get.mdx b/api-reference/subscriptions/get.mdx
+--- a/api-reference/subscriptions/get.mdx
++++ b/api-reference/subscriptions/get.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /subscription/{id} — Retrieve Subscription Details"
+ sidebarTitle: "Get"
+ description: "GET /subscription/{id} — Retrieve full details for a subscription including its event timeline, invoice history, and current dunning state."
++openapi: "GET /subscription/{id}"
+ ---
+diff --git a/api-reference/subscriptions/cancel.mdx b/api-reference/subscriptions/cancel.mdx
+--- a/api-reference/subscriptions/cancel.mdx
++++ b/api-reference/subscriptions/cancel.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/cancel — Cancel a Subscription"
+ sidebarTitle: "Cancel"
+ description: "POST /subscription/{id}/cancel — Immediately cancel a subscription. Fires the subscription.cancelled webhook event. Cannot be undone."
++openapi: "POST /subscription/{id}/cancel"
+ ---
+diff --git a/api-reference/subscriptions/pause-resume.mdx b/api-reference/subscriptions/pause-resume.mdx
+--- a/api-reference/subscriptions/pause-resume.mdx
++++ b/api-reference/subscriptions/pause-resume.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/pause and /resume — Pause & Resume"
+ sidebarTitle: "Pause & Resume"
+ description: "Pause a subscription to stop billing temporarily without cancelling it. Resume billing from a paused or suspended state with a single API call."
++openapi: "POST /subscription/{id}/pause"
+ ---
+diff --git a/api-reference/subscriptions/change-plan.mdx b/api-reference/subscriptions/change-plan.mdx
+--- a/api-reference/subscriptions/change-plan.mdx
++++ b/api-reference/subscriptions/change-plan.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/change-plan — Upgrade or Downgrade"
+ sidebarTitle: "Change Plan"
+ description: "POST /subscription/{id}/change-plan — Move a subscriber to a different plan immediately (with proration) or at next billing cycle."
++openapi: "POST /subscription/{id}/change-plan"
+ ---
+diff --git a/api-reference/subscriptions/update-payment-method.mdx b/api-reference/subscriptions/update-payment-method.mdx
+--- a/api-reference/subscriptions/update-payment-method.mdx
++++ b/api-reference/subscriptions/update-payment-method.mdx
+@@ -2,6 +2,7 @@
+ title: "POST /subscription/{id}/payment-method — Update Card"
+ sidebarTitle: "Update Payment Method"
+ description: "POST /subscription/{id}/payment-method — Replace the card on a subscription. Requires a fresh SDK nonce. Also reactivates a suspended subscription."
++openapi: "POST /subscription/{id}/payment-method"
+ ---
+diff --git a/api-reference/subscriptions/invoices.mdx b/api-reference/subscriptions/invoices.mdx
+--- a/api-reference/subscriptions/invoices.mdx
++++ b/api-reference/subscriptions/invoices.mdx
+@@ -2,6 +2,7 @@
+ title: "GET /subscription/{id}/invoice — List and Get Invoices"
+ sidebarTitle: "Invoices"
+ description: "GET /subscription/{id}/invoice and GET /subscription/invoice/{id} — List invoices for a subscription or retrieve a single invoice by its UUID."
++openapi: "GET /subscription/{id}/invoice"
+ ---
