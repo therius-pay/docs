@@ -22,8 +22,11 @@ toc-item[data-active-deepest] > a::before {
 #navbar a[href="/"] svg,
 #sidebar a[href="/"] img,
 #sidebar a[href="/"] svg {
-  max-width: 14rem;
+  max-width: 9rem;
+  max-height: 1.75rem;
   height: auto;
+  width: auto;
+  object-fit: contain;
 }
 
 a[nav-tabs-item] {
