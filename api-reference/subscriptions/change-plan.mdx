@@ -1,11 +1,11 @@
-﻿---
-title: "POST /subscription/{id}/change-plan â€” Upgrade or Downgrade"
+---
+title: "POST /subscription/{id}/change-plan — Upgrade or Downgrade"
 sidebarTitle: "Change Plan"
-description: "POST /subscription/{id}/change-plan â€” Move a subscriber to a different plan immediately (with proration) or at next billing cycle."
+description: "POST /subscription/{id}/change-plan — Move a subscriber to a different plan immediately (with proration) or at next billing cycle."
 openapi: "POST /subscription/{id}/change-plan"
 ---
 
-Use `POST /subscription/{id}/change-plan` to move a subscriber to a different plan â€” either upgrading to a higher-priced tier or downgrading to a lower one. You control whether the change takes effect immediately (with proration charged or absorbed today) or is scheduled for the next billing cycle.
+Use `POST /subscription/{id}/change-plan` to move a subscriber to a different plan — either upgrading to a higher-priced tier or downgrading to a lower one. You control whether the change takes effect immediately (with proration charged or absorbed today) or is scheduled for the next billing cycle.
 
 <Note>
   A plan's `amount`, `interval`, and `intervalCount` are immutable once it has active subscribers. To change pricing or cadence, create a new plan and use this endpoint to migrate subscribers to it.
@@ -44,8 +44,8 @@ Use `POST /subscription/{id}/change-plan` to move a subscriber to a different pl
 <ParamField body="applyAt" default="next_billing" type="string">
   Controls when the plan change takes effect. Accepted values:
 
-  - `"now"` â€” applies immediately. For upgrades, the prorated difference for the remainder of the current billing period is charged as a Merchant Initiated Transaction (MIT) right away. For downgrades, no refund is issued; the lower price takes effect from the next cycle.
-  - `"next_billing"` â€” the new plan is scheduled for the subscriber's next renewal date. The current billing period completes at the existing rate.
+  - `"now"` — applies immediately. For upgrades, the prorated difference for the remainder of the current billing period is charged as a Merchant Initiated Transaction (MIT) right away. For downgrades, no refund is issued; the lower price takes effect from the next cycle.
+  - `"next_billing"` — the new plan is scheduled for the subscriber's next renewal date. The current billing period completes at the existing rate.
 </ParamField>
 
 ## Response

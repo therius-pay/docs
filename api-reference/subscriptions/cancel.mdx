@@ -1,11 +1,11 @@
-﻿---
-title: "POST /subscription/{id}/cancel â€” Cancel a Subscription"
+---
+title: "POST /subscription/{id}/cancel — Cancel a Subscription"
 sidebarTitle: "Cancel"
-description: "POST /subscription/{id}/cancel â€” Immediately cancel a subscription. Fires the subscription.cancelled webhook event. Cannot be undone."
+description: "POST /subscription/{id}/cancel — Immediately cancel a subscription. Fires the subscription.cancelled webhook event. Cannot be undone."
 openapi: "POST /subscription/{id}/cancel"
 ---
 
-`POST /subscription/{id}/cancel` immediately cancels a subscription. This action fires the `subscription.cancelled` webhook event and cannot be undone â€” the subscription moves to `cancelled` status permanently. If you want to stop billing temporarily without losing the subscription, use [Pause & Resume](/api-reference/subscriptions/pause-resume) instead.
+`POST /subscription/{id}/cancel` immediately cancels a subscription. This action fires the `subscription.cancelled` webhook event and cannot be undone — the subscription moves to `cancelled` status permanently. If you want to stop billing temporarily without losing the subscription, use [Pause & Resume](/api-reference/subscriptions/pause-resume) instead.
 
 <Warning>
   Cancellation is permanent. There is no reinstate endpoint. If you need to re-enroll a cancelled customer, create a new subscription using `POST /subscription`.

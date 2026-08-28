@@ -1,7 +1,7 @@
-﻿---
-title: "POST /payment/resume â€” Continue After 3DS Challenge"
+---
+title: "POST /payment/resume — Continue After 3DS Challenge"
 sidebarTitle: "Resume Payment"
-description: "POST /payment/resume â€” Resume a payment paused for a 3DS challenge. Pass the sessionId from the pending_3ds response. No API key required."
+description: "POST /payment/resume — Resume a payment paused for a 3DS challenge. Pass the sessionId from the pending_3ds response. No API key required."
 openapi: "POST /payment/resume"
 ---
 
@@ -15,7 +15,7 @@ When a purchase or authorization returns `status: "pending_3ds"`, the cardholder
 4. You call `POST /payment/resume` with the `sessionId` to get the final payment result.
 
 <Note>
-  No API key is required for this endpoint. The `sessionId` itself acts as the credential and is scoped to a single pending payment. Sessions expire **15 minutes** after the 3DS challenge is issued â€” if the session has expired, the original purchase or authorization must be retried.
+  No API key is required for this endpoint. The `sessionId` itself acts as the credential and is scoped to a single pending payment. Sessions expire **15 minutes** after the 3DS challenge is issued — if the session has expired, the original purchase or authorization must be retried.
 </Note>
 
 <Warning>
@@ -35,7 +35,7 @@ When a purchase or authorization returns `status: "pending_3ds"`, the cardholder
 </ParamField>
 
 <ParamField body="key" type="string">
-  Your merchant private API key. Optional â€” only used to select the sandbox vs. production environment when the environment cannot be inferred from the `sessionId` prefix.
+  Your merchant private API key. Optional — only used to select the sandbox vs. production environment when the environment cannot be inferred from the `sessionId` prefix.
 </ParamField>
 
 ## Response
@@ -45,10 +45,10 @@ The response is a full `paymentResponse` object with the final payment status.
 <ResponseField name="status" type="string">
   Final payment outcome after 3DS. One of:
 
-  - `"captured"` â€” payment succeeded and funds are settled (for purchase flows).
-  - `"authorized"` â€” authorization succeeded (for authorization flows).
-  - `"declined"` â€” the payment was declined post-challenge. Check `refusalCode`.
-  - `"failed"` â€” processing error.
+  - `"captured"` — payment succeeded and funds are settled (for purchase flows).
+  - `"authorized"` — authorization succeeded (for authorization flows).
+  - `"declined"` — the payment was declined post-challenge. Check `refusalCode`.
+  - `"failed"` — processing error.
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">
@@ -85,7 +85,7 @@ The response is a full `paymentResponse` object with the final payment status.
 
 ### Resume after a 3DS challenge
 
-**Expired session â€” `400 Bad Request`**
+**Expired session — `400 Bad Request`**
 
 ```json
 {

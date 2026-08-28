@@ -1,11 +1,11 @@
-﻿---
-title: "POST /payment/refund â€” Issue a Full or Partial Refund"
+---
+title: "POST /payment/refund — Issue a Full or Partial Refund"
 sidebarTitle: "Refund"
-description: "POST /payment/refund â€” Refund a captured payment in full or partially. Multiple partial refunds are allowed up to the total captured amount."
+description: "POST /payment/refund — Refund a captured payment in full or partially. Multiple partial refunds are allowed up to the total captured amount."
 openapi: "POST /payment/refund"
 ---
 
-Use `POST /payment/refund` to return funds to a cardholder after a payment has been captured and settled. You can issue a single full refund or multiple partial refunds â€” as long as the cumulative refunded amount doesn't exceed the originally captured total. Refunds typically appear on the cardholder's statement within 5â€“10 business days, depending on their bank.
+Use `POST /payment/refund` to return funds to a cardholder after a payment has been captured and settled. You can issue a single full refund or multiple partial refunds — as long as the cumulative refunded amount doesn't exceed the originally captured total. Refunds typically appear on the cardholder's statement within 5”“10 business days, depending on their bank.
 
 ## Request
 
@@ -16,7 +16,7 @@ Use `POST /payment/refund` to return funds to a cardholder after a payment has b
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Required in production â€” retrying with the same key returns the original response without issuing a duplicate refund.
+  A UUID you generate per operation. Required in production — retrying with the same key returns the original response without issuing a duplicate refund.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -66,8 +66,8 @@ Use `POST /payment/refund` to return funds to a cardholder after a payment has b
 <ResponseField name="status" type="string">
   Result of the refund. One of:
 
-  - `"refunded"` â€” funds successfully returned to the cardholder.
-  - `"failed"` â€” refund could not be processed. Retry with a new `Idempotency-Key` or contact support.
+  - `"refunded"` — funds successfully returned to the cardholder.
+  - `"failed"` — refund could not be processed. Retry with a new `Idempotency-Key` or contact support.
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">
@@ -122,7 +122,7 @@ curl -X POST https://api.therius.io/v1/payment/refund \
 
 ### Partial refund
 
-Refunding only part of an order â€” for example, a single returned item from a multi-item purchase:
+Refunding only part of an order — for example, a single returned item from a multi-item purchase:
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/refund \
@@ -156,5 +156,5 @@ curl -X POST https://api.therius.io/v1/payment/refund \
 </Note>
 
 <Tip>
-  If you're unsure whether a payment is in `authorized` or `captured` state, use [Cancel or Refund](/api-reference/cancel-or-refund) instead â€” it detects the state automatically and takes the appropriate action.
+  If you're unsure whether a payment is in `authorized` or `captured` state, use [Cancel or Refund](/api-reference/cancel-or-refund) instead — it detects the state automatically and takes the appropriate action.
 </Tip>

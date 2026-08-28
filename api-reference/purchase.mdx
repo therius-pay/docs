@@ -1,11 +1,11 @@
-﻿---
-title: "POST /payment/purchase â€” Charge a Card in One Step"
+---
+title: "POST /payment/purchase — Charge a Card in One Step"
 sidebarTitle: "Purchase"
-description: "POST /payment/purchase â€” Authorize and capture a payment in a single request. Use for digital goods or any order you fulfill immediately."
+description: "POST /payment/purchase — Authorize and capture a payment in a single request. Use for digital goods or any order you fulfill immediately."
 openapi: "POST /payment/purchase"
 ---
 
-`POST /payment/purchase` authorizes and captures funds in a single round-trip. Use it when you can fulfill the order immediately â€” digital goods, SaaS subscriptions, or in-stock retail. For physical goods that ship later, consider [Authorize](/api-reference/authorize) \+ [Capture](/api-reference/capture) to hold funds until fulfillment without settling early.
+`POST /payment/purchase` authorizes and captures funds in a single round-trip. Use it when you can fulfill the order immediately — digital goods, SaaS subscriptions, or in-stock retail. For physical goods that ship later, consider [Authorize](/api-reference/authorize) \+ [Capture](/api-reference/capture) to hold funds until fulfillment without settling early.
 
 ## Request
 
@@ -44,7 +44,7 @@ openapi: "POST /payment/purchase"
     </ParamField>
 
     <ParamField body="value" type="integer" required>
-      Amount in minor units (cents, pence, etc.). For USD, `4999` = \$49.99. For JPY (zero-decimal), `5000` = Â¥5000.
+      Amount in minor units (cents, pence, etc.). For USD, `4999` = \$49.99. For JPY (zero-decimal), `5000` = ¥5000.
     </ParamField>
 
     <ParamField body="exponent" type="integer" required>
@@ -166,7 +166,7 @@ openapi: "POST /payment/purchase"
 </ParamField>
 
 <ParamField body="paymentMethod" type="string">
-  Payment method code. Omit for card payments. For APMs, pass the relevant code â€” e.g. `"pix"`, `"ach"`, `"boleto"`.
+  Payment method code. Omit for card payments. For APMs, pass the relevant code — e.g. `"pix"`, `"ach"`, `"boleto"`.
 </ParamField>
 
 <ParamField body="shopper" type="object">
@@ -208,15 +208,15 @@ openapi: "POST /payment/purchase"
 <ResponseField name="status" type="string">
   Payment outcome. One of:
 
-  - `"captured"` â€” funds settled successfully.
-  - `"declined"` â€” issuer declined the payment. Check `refusalCode`.
-  - `"pending_3ds"` â€” cardholder must complete a 3D Secure challenge. Check `actionRequired`.
-  - `"pending_action"` â€” payment requires an external action (e.g. redirect or barcode). Check `actionRequired`.
-  - `"failed"` â€” processing error unrelated to the issuer.
+  - `"captured"` — funds settled successfully.
+  - `"declined"` — issuer declined the payment. Check `refusalCode`.
+  - `"pending_3ds"` — cardholder must complete a 3D Secure challenge. Check `actionRequired`.
+  - `"pending_action"` — payment requires an external action (e.g. redirect or barcode). Check `actionRequired`.
+  - `"failed"` — processing error unrelated to the issuer.
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">
-  Therius's unique receipt ID for this payment (e.g. `"PC-1234567890"`). Save this â€” you'll need it for captures, refunds, and inquiries.
+  Therius's unique receipt ID for this payment (e.g. `"PC-1234567890"`). Save this — you'll need it for captures, refunds, and inquiries.
 </ResponseField>
 
 <ResponseField name="orderCode" type="string">
@@ -388,9 +388,9 @@ curl -X POST https://api.therius.io/v1/payment/purchase \
 ```
 
 <Note>
-  `amount.value` is always in minor units. `1999` = \$19.99 for USD (exponent `2`). `5000` = Â¥5000 for JPY (exponent `0`). Always use the `exponent` field to determine the decimal position.
+  `amount.value` is always in minor units. `1999` = \$19.99 for USD (exponent `2`). `5000` = ¥5000 for JPY (exponent `0`). Always use the `exponent` field to determine the decimal position.
 </Note>
 
 <Note>
-  If `status` is `"pending_3ds"`, redirect the cardholder to `actionRequired.url` to complete the 3D Secure challenge. Once they finish, call [POST /payment/resume](/api-reference/resume) with the `sessionId` from the `pending_3ds` response to continue. If you use the Therius JS SDK, call `sdk.handleAction(result.actionRequired)` â€” it handles the redirect and resume automatically.
+  If `status` is `"pending_3ds"`, redirect the cardholder to `actionRequired.url` to complete the 3D Secure challenge. Once they finish, call [POST /payment/resume](/api-reference/resume) with the `sessionId` from the `pending_3ds` response to continue. If you use the Therius JS SDK, call `sdk.handleAction(result.actionRequired)` — it handles the redirect and resume automatically.
 </Note>

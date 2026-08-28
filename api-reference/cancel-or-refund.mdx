@@ -1,11 +1,11 @@
-﻿---
-title: "POST /payment/cancel_or_refund â€” Reverse a Payment"
+---
+title: "POST /payment/cancel_or_refund — Reverse a Payment"
 sidebarTitle: "Cancel or Refund"
-description: "POST /payment/cancel_or_refund â€” Automatically cancels if the payment is authorized, or refunds if already captured. No need to track payment state."
+description: "POST /payment/cancel_or_refund — Automatically cancels if the payment is authorized, or refunds if already captured. No need to track payment state."
 openapi: "POST /payment/cancel_or_refund"
 ---
 
-If you don't want to track whether a payment is in the `authorized` or `captured` state in your own system, `POST /payment/cancel_or_refund` handles it for you. Therius checks the current payment state and automatically cancels the authorization (if uncaptured) or issues a refund (if already captured). This is especially useful in order reversal workflows where the payment state may vary depending on timing â€” for example, a customer cancelling an order while fulfillment is in progress.
+If you don't want to track whether a payment is in the `authorized` or `captured` state in your own system, `POST /payment/cancel_or_refund` handles it for you. Therius checks the current payment state and automatically cancels the authorization (if uncaptured) or issues a refund (if already captured). This is especially useful in order reversal workflows where the payment state may vary depending on timing — for example, a customer cancelling an order while fulfillment is in progress.
 
 ## Request
 
@@ -66,9 +66,9 @@ If you don't want to track whether a payment is in the `authorized` or `captured
 <ResponseField name="status" type="string">
   The action taken. One of:
 
-  - `"cancelled"` â€” the authorization was voided (payment was in `authorized` state).
-  - `"refunded"` â€” funds were returned to the cardholder (payment was in `captured` state).
-  - `"failed"` â€” the operation could not be completed.
+  - `"cancelled"` — the authorization was voided (payment was in `authorized` state).
+  - `"refunded"` — funds were returned to the cardholder (payment was in `captured` state).
+  - `"failed"` — the operation could not be completed.
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">
@@ -120,7 +120,7 @@ curl -X POST https://api.therius.io/v1/payment/cancel_or_refund \
 
 </ResponseExample>
 
-**Response when payment was captured (refund path) â€” `200 OK`**
+**Response when payment was captured (refund path) — `200 OK`**
 
 ```json
 {
@@ -137,5 +137,5 @@ curl -X POST https://api.therius.io/v1/payment/cancel_or_refund \
 </Tip>
 
 <Note>
-  If you need to issue a partial refund on a captured payment, pass the `amount` field. For authorized payments, the `amount` field is ignored â€” cancellations always void the full hold.
+  If you need to issue a partial refund on a captured payment, pass the `amount` field. For authorized payments, the `amount` field is ignored — cancellations always void the full hold.
 </Note>

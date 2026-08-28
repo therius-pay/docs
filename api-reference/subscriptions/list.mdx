@@ -1,7 +1,7 @@
-﻿---
-title: "GET /subscription â€” List and Filter Subscriptions"
+---
+title: "GET /subscription — List and Filter Subscriptions"
 sidebarTitle: "List"
-description: "GET /subscription â€” Retrieve a paginated list of subscriptions with filters for status, email, plan, card brand, and creation date range."
+description: "GET /subscription — Retrieve a paginated list of subscriptions with filters for status, email, plan, card brand, and creation date range."
 openapi: "GET /subscription"
 ---
 
@@ -103,5 +103,5 @@ curl "https://api.therius.io/v1/subscription?key=sk_live_your_key_here&status=ac
 </ResponseExample>
 
 <Tip>
-  Combine `created_from` and `created_to` with `status=past_due` to identify subscribers who became overdue within a specific window â€” useful for targeted recovery campaigns.
+  Combine `created_from` and `created_to` with `status=past_due` to identify subscribers who became overdue within a specific window — useful for targeted recovery campaigns.
 </Tip>
