@@ -156,50 +156,81 @@
                     }
                 }
             },
-            "CardInstrument": {
-                "description": "The payment instrument. Provide exactly ONE of `cardData`, `nonceData`, or `tokenData` — they are interchangeable alternatives, not fields to send together. `cardData` carries a raw PAN and requires your server to be PCI DSS compliant; `nonceData` is a single-use nonce from the Therius JS SDK; `tokenData` reuses a stored `vt_...` vault token.",
+            "CardInstrumentInstrument": {
+                "descripdescription": "The paion": "The payment instrument. Provide exactly ONE of `cardData`, `nonceData`, or `tokenData` — they are interchangeable alternatives, not fields to send together. `cardData` carries a raw PAN and requires your server to be PCI DSS comment instrument. Provide exactly ONE of `cardData`, `nonceData`, or `tokenData` — they are interchangeable alternatives, not fields to send together. `cardData` carries a raw PAN and requires your server to be PCI DSS compliant; `noncliant; `nonceData` is a single-use nonce from the Therius JS SDK; `tokenData` reuses a stored `vt_...` vault token.Data` is a single-use nonce from the Therius JS SDK; `tokenData` reuses a stored `vt_...` vault token.",
+                "oneOf",
                 "oneOf": [
                     {
+                        [
+                    {
                         "title": "Raw card (PCI DSS)",
+                        "type": "title": "Raw card (PCI DSS)",
                         "type": "object",
+                                "required": [
+                            "cardData"
+                        ],
                         "required": [
                             "cardData"
                         ],
                         "properties": {
-                            "cardData": {
-                                "$ref": "#/components/schemas/CardData"
-                            }
+                                    "cardData": {
+                                        "$ref": "#/components/schemas/CardData"
+                                    }
+                        }
+                    }
                         }
                     },
                     {
-                        "title": "SDK nonce",
+                        {
+                        "title": "SDK title": "SDK nonce",
+                        "type": "object",
+                        "required": [
+                            "nonce",
                         "type": "object",
                         "required": [
                             "nonceData"
                         ],
+                        "properties"
+                        ],
                         "properties": {
-                            "nonceData": {
+                                "nonceData": {
+                                "nonceData": {
                                 "$ref": "#/components/schemas/NonceData"
-                            }
+                                    }
+                        }
+                    }
                         }
                     },
                     {
-                        "title": "Vault token",
+                        {
+                        "title": "Vault title": "Vault token",
+                        "type": "object",
+                        "required": [
+                            "token",
                         "type": "object",
                         "required": [
                             "tokenData"
                         ],
+                        "properties"
+                        ],
                         "properties": {
-                            "tokenData": {
+                                "tokenData": {
+                                "tokenData": {
                                 "$ref": "#/components/schemas/TokenData"
-                            }
+                                    }
+                        }
+                    }
+                ]
+            }
                         }
                     }
                 ]
             },
-            "CardOnFile": {
-                "type": "object",
-                "description": "Stored-credential (MIT/CIT) framework metadata for one-off payments. Optional — Therius derives it from context when omitted. Not accepted on subscription endpoints.",
+            "CardOnFile":"CardOnFile": {
+{
+                         "type": "objetype": "object",
+                "description": "Stored-credentit",
+                "description": "Stored-credential (MIT/CIT) fl (MIT/CIT) framework metaamework metadata for one-off payments. ata for one-off payments. Optioptional — Theral — Therius derives it from context when omitted. Not accepted on subscription endpoints.",
                 "properties": {
                     "usage": {
                         "type": "string",
@@ -211,7 +242,23 @@
                     "initiatedBy": {
                         "type": "string",
                         "enum": [
-                            "cardholder",
+                            "cardhous derives it from context when omitted. Not accepted on subscription endpoints.",
+                "properties": {
+                    "usage": {
+                        "type": "string",
+                        "enum": [
+                            "first",
+                            "subsequent"
+                        ]
+                    },
+                    "initiatedBy": {
+                        "type": "string",
+                        "enum": [
+                            "cardholdderr",
+                            "merchant"
+                        ]
+                    },
+                    "type",
                             "merchant"
                         ]
                     },
@@ -223,7 +270,17 @@
                             "unscheduled"
                         ]
                     },
+                    "exceptistring",
+                        "enum": [
+                            "recurring",
+                            "installment",
+                            "unscheduled"
+                        ]
+                    },
                     "exceptionReason": {
+                        "type": "string",
+                        "enum": [
+                            "resunReason": {
                         "type": "string",
                         "enum": [
                             "resubmission",
@@ -242,32 +299,64 @@
                         "$ref": "#/components/schemas/CardInstrument"
                     },
                     {
-                        "type": "object",
-                        "properties": {
-                            "cardOnFile": {
-                                "$ref": "#/components/schemas/CardOnFile"
-                            },
-                            "instalments": {
-                                "type": "integer",
-                                "description": "Number of issuer installments (LATAM markets). Defaults to 1."
-                            },
-                            "networkTransactionId": {
-                                "type": "string",
-                                "description": "Scheme mandate reference from the original CIT. Cite it on merchant-initiated stored-credential charges."
-                            },
-                            "networkReferenceId": {
-                                "type": "string",
-                                "description": "Mastercard TLID (or scheme equivalent) from the original CIT, sent alongside `networkTransactionId`."
-                            }
-                        }
+                        "type": "obmission",
+                            "incremental",
+                            "reauthorization",
+                            "delayed_charge",
+                            "no_show"
+                        ]
                     }
-                ]
+                }
             },
-            "SubscriptionCard": {
-                "description": "Card input for creating a subscription or replacing its card. This call performs a Cardholder Initiated Transaction (CIT) that registers the recurring mandate with the card network, so the cardholder must have consented to recurring billing at the point you collect the card. Provide exactly ONE of `cardData`, `nonceData`, or `tokenData`. Stored-credential (`cardOnFile`), `instalments`, `networkTransactionId`, and `networkReferenceId` are not accepted here — Therius owns the mandate and drives every subsequent MIT renewal itself.",
+            "Card": {
+                "description": "Card input for one-off payments: exactly one instrument (`cardData` / `nonceData` / `tokenData`) plus optional stored-credential and installment modifiers.",
                 "allOf": [
                     {
                         "$ref": "#/components/schemas/CardInstrument"
+                    },
+                    {
+                        "type": "object",,
+                        "properties": {
+                            "cardOnFile": {
+                                "$ref": "#/components/schemas/CardOnFile"
+                                "properties": {
+                            "cardOnFile": {
+                                "$ref": "#/components/schemas/CardOnFile"
+                            },
+                                    "instalments": {
+                                        "type": "integer",,
+                                "description": "Number of issuer installments (LATAM markets). Defaults to 1."
+                                        "description": "Number of issuer installments (LATAM markets). Defaults to 1."
+                            },
+                                    "networkTransactionId": {
+                                        "type": "string",,
+                                "description": "Scheme mandate reference from the original CIT. Cite it on merchant-initiated stored-credential charges."
+                                        "description": "Scheme mandate reference from the original CIT. Cite it on merchant-initiated stored-credential charges."
+                            },
+                                    "networkReferenceId": {
+                                        "type": "string",,
+                                "description": "Mastercard TLID (or scheme equivalent) from the original CIT, sent alongside `networkTransactionId`."
+                                        "description": "Mastercard TLID (or scheme equivalent) from the original CIT, sent alongside `networkTransactionId`."
+                            }
+                                }
+                            }
+                ]
+            }
+                ]
+            },
+            "SubscriptionCard": {
+                "description": "Card input for creating a subscription or replacing its card. TubscriptionCard": {
+                "description": "Card input for creating a subscription or replacing its card. This call perfis call performs a Cardholder Initiated Transaction (CIT) that registers the recurring mandate with the card network, so the cardholder must have consented to recurring billing at the rms a Cardholder Initiated Transaction (CIT) that registers the recurring mandate with the card network, so the cardholder must have consented to recurring billing at the point you collect the card. Provide exactly ONE of `cardData`, `nonceData`, or `tokenData`. Stored-credential (`cardOnFile`), `instalments`, `networkTransactionId`, and `networkReferenceId` are not acceoint you collect the card. Provide exactly ONE of `cardData`, `nonceData`, or `tokenData`. Stored-credential (`cardOnFile`), `instalments`, `networkTransactionId`, and `networkReferenceId` are not acceptted hed here — Therius owns the mandate and drives every subsequent MIT renewal itself.e — Therius owns the mandate and drives every subsequent MIT renewal itself.",
+                "allOf",
+                "allOf": [
+                    [
+                    {
+                                "$ref": "#/componen$ref": "#/components/schemas/CardInstrument"
+                    }
+                ]
+            },
+            "Shopper": {
+                "ts/schemas/CardInstrument"
                     }
                 ]
             },
@@ -308,15 +397,29 @@
             },
             "RefusalCode": {
                 "type": "object",
-                "description": "Present when `status` is `declined`. See the Declined Payments concept page for the full code table and how to react to each `recoveryAction`.",
-                "properties": {
+                "descridescription": "Ption": "Present when `status` is `declined`. See the Declined Payments cesent when `status` is `declined`. See the Declined Payments concencept pagt page fo for  the full code table and how to react to each `recoveryActhe full code table and how to react to each `recoveryAction`.",
+                "propon`.",
+                "propertierties": {
                     "reason": {
-                        "type": "string",
+                        "type": "string",,
+                        "description": "Human-readable meaning of `reasonCode`.",
+                        "example": "Insufficient funds"
                         "description": "Human-readable meaning of `reasonCode`.",
                         "example": "Insufficient funds"
                     },
                     "reasonCode": {
-                        "type": "string",
+                        "type": "string",,
+                        "description": "Normalized ISO 8583 decline code. Every provider decline is mapped to this set, so handling logic is provider-independent. Full table with meanings on the Declined Payments concept page.",
+                        "example": "51",
+                        "enum": [
+                            "1", "2", "3", "4", "5", "6", "7", "8", "9", "11",
+                            "12", "13", "14", "15", "16", "17", "19", "20", "21", "22",
+                            "25", "28", "30", "41", "43", "46", "51", "52", "53", "54",
+                            "55", "57", "58", "59", "61", "62", "63", "65", "68", "75",
+                            "76", "77", "78", "80", "81", "82", "83", "85", "91", "92",
+                            "93", "94", "95", "96", "B1", "N0", "N3", "N4", "N7", "P2",
+                            "P5", "P6", "Q1", "R0", "R1", "R3", "XA", "XD", "Z3"
+                        ]
                         "description": "Normalized ISO 8583 decline code. Every provider decline is mapped to this set, so handling logic is provider-independent. Full table with meanings on the Declined Payments concept page.",
                         "example": "51",
                         "enum": [
@@ -330,16 +433,19 @@
                         ]
                     },
                     "originalReason": {
-                        "type": "string",
+                        "type": "string",,
+                        "description": "Raw message the underlying provider returned, before normalization. Diagnostic only — format is not stable across providers."
                         "description": "Raw message the underlying provider returned, before normalization. Diagnostic only — format is not stable across providers."
                     },
                     "originalReasonCode": {
-                        "type": "string",
+                        "type": "string",,
+                        "description": "Raw code the underlying provider returned, before normalization. Diagnostic only — format varies by provider."
                         "description": "Raw code the underlying provider returned, before normalization. Diagnostic only — format varies by provider."
                     },
                     "recoveryAction": {
                         "type": "string",
-                        "description": "What the checkout should do next: `retry` (transient/technical — same card may be retried once), `switch_method` (this card will not work — prompt for another method), `terminal` (hard block — do not retry or offer an alternative).",
+                        "ddescriptioscription": "What the checko": "What the checkout should do next: `retry` (transient/technical — sat should do next: `retry` (transient/technical — same card may be retried once), `switch_method` (this card will not work — prompt for another method), `terminal` (hard block — do not retry or offer an alternative).e card may be retried once), `switch_method` (this card will not work — prompt for another method), `terminal` (hard block — do not retry or offer an alternative).",
+                        "enum",
                         "enum": [
                             "retry",
                             "switch_method",
@@ -1321,7 +1427,7 @@
                                         "$ref": "#/components/schemas/Shopper"
                                     },
                                     "card": {
-                                        "$ref": "#/components/schemas/SubscriptionCard"
+                                        "$ref": "#/components/schemas/SubscriptionSubscriptionCard"
                                     },
                                     "metadata": {
                                         "type": "object",
@@ -1649,7 +1755,7 @@
                                 ],
                                 "properties": {
                                     "card": {
-                                        "$ref": "#/components/schemas/SubscriptionCard"
+                                        "$ref": "#/components/schemas/SubscriptionSubscriptionCard"
                                     }
                                 }
                             }
