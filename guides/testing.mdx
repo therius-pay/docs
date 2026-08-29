@@ -1,0 +1,116 @@
+---
+title: 'Test Cards and Sandbox Scenarios for Therius'
+sidebarTitle: 'Testing'
+description: 'Every sandbox test card, decline reason, and 3D Secure scenario for the Therius API — plus how APM and subscription flows behave in the sandbox.'
+---
+
+The Therius sandbox (`https://api-sandbox.therius.io/v1`, `sk_sandbox_...` keys) is a fully isolated environment. Requests are handled by the built-in **Therius sandbox provider**, which simulates responses without touching a card network — no real money moves. This page lists the test data that drives each simulated outcome.
+
+<Note>
+  The card numbers below apply to the built-in Therius sandbox provider. If you have configured a **real provider in sandbox/test mode** (for example Stripe test keys), that provider's own test-card set applies instead — use the numbers from their documentation.
+</Note>
+
+## Using the test cards
+
+- Send the request with a `sk_sandbox_...` key, or add the header `X-Environment: sandbox`.
+- Use **any future expiry** (for example `12/29`) and **any 3-digit CVV** (for example `123`).
+- American Express requires a **4-digit** CVV (for example `1234`).
+
+## Approvals
+
+| Card number | Network | Notes |
+|---|---|---|
+| `4111111111111111` | Visa | Standard approval |
+| `5500005555555559` | Mastercard | Standard approval |
+| `374251018720955` | Amex | 4-digit CVV required |
+| `6011111111111117` | Discover | Standard approval |
+| `3530111333300000` | JCB | Standard approval |
+
+## Declines
+
+Each of these card numbers returns a `declined` status with a matching `refusalCode` — see [Declined Payments](/concepts/declined-payments) for the full code reference.
+
+| Card number | Decline reason |
+|---|---|
+| `4000000000000002` | Generic decline (do not honor) |
+| `4000000000009995` | Insufficient funds |
+| `4000000000000069` | Expired card |
+| `4000000000000127` | Incorrect CVC |
+| `4000000000009235` | Suspected fraud |
+| `4000000000001341` | Card velocity exceeded |
+
+## 3D Secure
+
+3DS is enabled per **route**, not per card — the step-up decision is made by a 3D Secure step in the routing pipeline. The default seeded sandbox route sends the BINs below through the built-in 3DS simulator and then to the sandbox gateway, so these cards work out of the box.
+
+| Card number | Outcome | Scenario |
+|---|---|---|
+| `4000003220000000` | `captured` | Frictionless — authenticated inline (ECI 05 + CAVV), no challenge shown |
+| `4000002500003155` | `pending_3ds` | Challenge — returns a `sessionId` and `challengeUrl`; complete with `POST /payment/resume` |
+| `4000000000003055` | `declined` | 3DS authentication failed (reason: "3DS authentication failed") |
+
+### Walking through the challenge card
+
+<Steps>
+  <Step title="Submit the purchase">
+    Charge `4000002500003155`. The response is:
+
+    ```json
+    {
+      "status": "pending_3ds",
+      "sessionId": "sbx3ds-ok-...",
+      "actionRequired": {
+        "type": "redirect",
+        "url": "https://.../3ds/challenge?token=..."
+      }
+    }
+    ```
+  </Step>
+  <Step title="Send the shopper to the challenge URL">
+    Redirect to `actionRequired.url`. The sandbox simulator treats the challenge as instantly completed — no interaction is required.
+  </Step>
+  <Step title="Resume the payment">
+    Call `POST /payment/resume` with `{ "key": "sk_sandbox_...", "sessionId": "..." }` — in the sandbox the key selects the environment. Sessions are single-use and expire after 15 minutes. A successful resume returns the final `PaymentResponse` with `status: "captured"`.
+  </Step>
+</Steps>
+
+<Note>
+  The sandbox gateway **refuses** the two 3DS BINs (`40000032200`, `40000025000`) if they arrive without ECI/CAVV data — so an approval proves the 3DS handoff actually happened, rather than the step being silently skipped.
+</Note>
+
+## Alternative payment methods
+
+Send an `apm` block instead of `card`. No card number is needed. Each method returns a deterministic sandbox response:
+
+| `apm.method` | Sandbox response |
+|---|---|
+| `pix` | `{ "status": "pending", "qrCode": "00020126..." }` |
+| `boleto` | `{ "status": "pending", "barCode": "34191.00008 ...", "boletoUrl": "https://..." }` |
+| `oxxo` | `{ "status": "pending", "voucherReference": "OXXO123..." }` |
+| `ach` | `{ "status": "captured" }` |
+| `pse` | `{ "status": "pending", "redirectUrl": "https://..." }` |
+
+```json
+{
+  "key": "sk_sandbox_...",
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-APM-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "pix",
+  "apm": {
+    "method": "pix",
+    "customerName": "Alice Smith",
+    "customerEmail": "alice@example.com"
+  }
+}
+```
+
+## Subscriptions in the sandbox
+
+- Create a subscription with any approval card above. It is stored on the sandbox database, fully separate from production.
+- The dunning worker processes sandbox subscriptions on the sandbox schedule.
+- Webhook deliveries for sandbox events are written to the sandbox delivery log and are marked with `"environment": "sandbox"` in the payload.
+
+## Idempotency in the sandbox
+
+The `Idempotency-Key` header is optional in the sandbox but behaves exactly as it does in production — retrying with the same key returns the cached first response. Build the habit here so your production code is already correct. See [Idempotency](/idempotency).

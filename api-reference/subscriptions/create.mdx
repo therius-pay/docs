@@ -1,14 +1,16 @@
 ---
 title: "Create and Activate a Subscription"
 sidebarTitle: "Create a Subscription"
-description: "Enroll a customer in a plan and charge the first billing cycle. Always requires a fresh SDK nonce for the initial CIT mandate."
+description: "Enroll a customer in a plan and charge the first billing cycle. Performs the initial CIT that registers the recurring mandate."
 openapi: "POST /subscription"
 ---
 
-`POST /subscription` enrolls a customer in a plan and performs the initial Cardholder Initiated Transaction (CIT). The customer must be present for this call — always pass a fresh SDK nonce (not a saved token) to establish the recurring mandate. Therius uses this CIT to register the mandate with the card network before any subsequent Merchant Initiated Transactions (MITs) can occur.
+`POST /subscription` enrolls a customer in a plan and performs the initial Cardholder Initiated Transaction (CIT). Therius uses this CIT to register the recurring mandate with the card network before any subsequent Merchant Initiated Transactions (MITs) can occur.
+
+Supply the card as **exactly one** of three interchangeable instruments — a fresh SDK nonce (`nonceData`), raw card data (`cardData`, PCI DSS compliant servers only), or a stored vault token (`tokenData`). Whichever you use, the customer must have been present and consenting to recurring billing at the point you collected the card.
 
 <Warning>
-  Never pass a saved vault token as the card for a new subscription. A fresh nonce from the JS SDK is required to establish the cardholder mandate. Passing a token will result in a `422` error.
+  Do not send stored-credential fields (`cardOnFile`, `networkTransactionId`, `networkReferenceId`) or `instalments` on this endpoint — they are ignored. Therius owns the mandate created here and drives every renewal as an MIT itself.
 </Warning>
 
 ## Request
@@ -46,11 +48,17 @@ openapi: "POST /subscription"
 </ParamField>
 
 <ParamField body="card" type="object" required>
-  Card details for the initial CIT. Must use `nonceData` from the JS SDK — raw card data and saved tokens are not accepted here.
+  Card details for the initial CIT. Provide **exactly one** of the instruments below — they are interchangeable alternatives, not fields to combine.
 
-  <Expandable title="card fields">
-    <ParamField body="card.nonceData.nonce" type="string" required>
-      A fresh one-time nonce returned by the Therius JS SDK after the customer enters their card details. Nonces are single-use and expire after a short window.
+  <Expandable title="card instruments — choose one">
+    <ParamField body="card.nonceData.nonce" type="string">
+      A fresh single-use nonce from the Therius JS SDK. Recommended — no card data touches your server. Nonces are single-use and expire after a short window.
+    </ParamField>
+    <ParamField body="card.cardData" type="object">
+      Raw card fields — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (and optional `documentNumber`, `cardAddress`). Only if your server is PCI DSS compliant to handle raw PANs.
+    </ParamField>
+    <ParamField body="card.tokenData.token" type="string">
+      A stored `vt_...` vault token, to enroll a card the customer has already saved with you.
     </ParamField>
   </Expandable>
 </ParamField>
@@ -90,7 +98,7 @@ A successful request returns `201 Created` with the full subscription object, in
 | `400` | Plan not found or inactive. |
 | `402` | Initial card declined. |
 | `409` | Duplicate `Idempotency-Key` with a conflicting request body. |
-| `422` | Validation error — e.g. missing nonce or invalid plan. |
+| `422` | Validation error — e.g. no card instrument provided, an expired/used nonce, or an invalid plan. |
 
 <RequestExample>
 

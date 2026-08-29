@@ -1,0 +1,145 @@
+---
+title: 'Therius Webhooks: Delivery, Retries, and Signature Verification'
+sidebarTitle: 'Overview'
+description: 'Receive payment and subscription events from Therius over HTTPS. Configure an endpoint, verify the X-Therius-Signature header, and handle retries idempotently.'
+---
+
+Many payment outcomes happen after your original API call returns — an asynchronous APM settles, a 3DS challenge completes, a dispute is opened, or a subscription renews on schedule. Webhooks are how Therius tells your server about these events. You register one HTTPS endpoint, subscribe to the event types you care about, and Therius `POST`s a JSON payload to that endpoint each time a matching event occurs.
+
+<Note>
+  Webhooks are the source of truth for asynchronous outcomes. For voucher and bank-transfer methods especially, do not fulfil an order on the initial `pending` / `pending_action` response — wait for the `payment.captured` webhook.
+</Note>
+
+## Configure your endpoint
+
+Webhook endpoints are configured in the **Therius dashboard**, under **Developers → Webhooks**:
+
+<Steps>
+  <Step title="Set the endpoint URL">
+    Enter a public HTTPS URL on your server (for example `https://your-server.com/webhooks/therius`). Non-HTTPS URLs and URLs that resolve to private, loopback, or link-local addresses are rejected.
+  </Step>
+  <Step title="Choose the events">
+    Select the event types to receive. Leaving the selection empty subscribes you to all events. See the [event catalog](/webhooks/events) for the full list.
+  </Step>
+  <Step title="Enable delivery">
+    Toggle the endpoint on. You can disable it at any time without losing the configuration.
+  </Step>
+  <Step title="Send a test event">
+    Use the **Send test event** control to fire a sample payload at your endpoint, then check it under **Recent deliveries**.
+  </Step>
+</Steps>
+
+One webhook endpoint is supported per merchant account. Sandbox and production events are configured together but every payload carries an `environment` field so you can tell them apart.
+
+## Delivery mechanics
+
+| Property | Value |
+|---|---|
+| HTTP method | `POST` |
+| Content type | `application/json` |
+| `User-Agent` | `Therius-Webhook/1.0` |
+| Signature header | `X-Therius-Signature: sha256=<hex>` (when a signing secret is set — see below) |
+| Success | Any `2xx` response |
+| Failure | Any non-`2xx`, a timeout, or a connection error |
+
+Your endpoint should acknowledge receipt with a `2xx` status **as fast as possible** — do the actual processing on a background queue. Therius treats a slow or non-`2xx` response as a failed delivery and retries it.
+
+## Retries
+
+A failed delivery is retried up to **7 times** on an increasing back-off schedule:
+
+| Attempt | Delay after previous attempt |
+|---|---|
+| 1 | 30 seconds |
+| 2 | 5 minutes |
+| 3 | 30 minutes |
+| 4 | 2 hours |
+| 5 | 6 hours |
+| 6 | 12 hours |
+| 7 | 24 hours |
+
+After the final attempt the delivery is marked dead. You can inspect every attempt — including the last HTTP status and error — under **Developers → Webhooks → Recent deliveries**, and trigger a fresh delivery with **Replay**.
+
+<Warning>
+  Because deliveries are retried, your endpoint **will** occasionally receive the same event more than once. Handle events idempotently — key your processing on the `data.payment_code` (or `subscription_id`) plus the `event` type, and make repeat deliveries a no-op.
+</Warning>
+
+## Signature verification
+
+When a signing secret is configured for your endpoint, every request carries an `X-Therius-Signature` header:
+
+```
+X-Therius-Signature: sha256=<hex-encoded HMAC-SHA256 of the raw request body>
+```
+
+The HMAC is computed over the **exact raw bytes** of the request body, using your signing secret as the key. Verify it before trusting a payload:
+
+<CodeGroup>
+```javascript Node.js
+import crypto from 'crypto'
+
+function verifyTheriusSignature(rawBody, header, signingSecret) {
+  const expected =
+    'sha256=' +
+    crypto.createHmac('sha256', signingSecret).update(rawBody).digest('hex')
+  // constant-time compare
+  return (
+    header &&
+    expected.length === header.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(header))
+  )
+}
+
+// Express: capture the raw body, do not use the parsed object for verification
+app.post(
+  '/webhooks/therius',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    const ok = verifyTheriusSignature(
+      req.body, // Buffer of raw bytes
+      req.header('X-Therius-Signature'),
+      process.env.THERIUS_WEBHOOK_SECRET,
+    )
+    if (!ok) return res.status(400).send('bad signature')
+
+    const event = JSON.parse(req.body.toString('utf8'))
+    // enqueue for background processing, then:
+    res.sendStatus(200)
+  },
+)
+```
+
+```python Python
+import hmac, hashlib
+
+def verify_therius_signature(raw_body: bytes, header: str, signing_secret: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        signing_secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, header or "")
+```
+</CodeGroup>
+
+<Note>
+  If no `X-Therius-Signature` header is present, a signing secret has not yet been provisioned for your account. Contact Therius to have one issued, and until then restrict the endpoint by other means (for example an unguessable path segment or an allow-list of Therius egress addresses).
+</Note>
+
+## Payload envelope
+
+Every webhook body is a JSON object with a top-level `event` string, a timestamp, and a `data` object. Payment and subscription events have slightly different envelopes — see [Webhook Events](/webhooks/events) for the exact shape of each.
+
+```json
+{
+  "event": "payment.captured",
+  "environment": "production",
+  "created_at": "2026-08-29T12:00:00Z",
+  "data": {
+    "payment_code": "PAY-abc123",
+    "order_code": "ORDER-001",
+    "status": "captured",
+    "amount": 1999,
+    "currency": "USD",
+    "exponent": 2
+  }
+}
+```

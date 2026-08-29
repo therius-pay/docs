@@ -62,9 +62,9 @@ If you are not sure whether a payment is in `authorized` or `captured` state, ca
 | `authorized` | Funds reserved but not yet settled. Capture or cancel next. |
 | `refunded` | A full (or final partial) refund has been issued. |
 | `cancelled` | Authorization voided before capture. Funds released. |
-| `pending_action` | Waiting for an action from the shopper (e.g., redirect to a bank page for APM). |
+| `pending_action` | Waiting for an action from the shopper (e.g., redirect to a bank page for APM). The final outcome arrives by [webhook](/webhooks/overview). |
 | `pending_3ds` | 3DS2 challenge required. Resume with `POST /payment/resume`. |
-| `declined` | Payment was declined by the issuer or acquirer. |
+| `declined` | Payment was declined by the issuer or acquirer. The response carries a `refusalCode` object — see [Declined Payments](/concepts/declined-payments). |
 | `failed` | A processing error prevented the payment from completing. |
 
 ## State Machine

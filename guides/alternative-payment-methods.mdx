@@ -6,6 +6,10 @@ description: 'Add Pix, ACH, iDEAL, Klarna, and 40+ more payment methods through 
 
 Every alternative payment method (APM) in the Therius catalog flows through the same `POST /payment/purchase` endpoint as a standard card charge. You don't need a different integration per method — you switch payment methods by setting the `paymentMethod` field and providing a method-specific payload under `apm`. This means you can add Pix in Brazil, ACH in the US, and Klarna in Europe without touching your core checkout logic.
 
+<Note>
+  Each APM requires a connection that supports it to be enabled on your account first. Check the **Connections** page in your dashboard for what is live, and contact Therius to add a method you need — no integration change is required on your side once it's enabled.
+</Note>
+
 ## Base Request Shape
 
 All APM requests share the same top-level structure. The only things that change between methods are `paymentMethod`, `amount.currency`, and the fields inside `apm`.

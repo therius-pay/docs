@@ -1,0 +1,58 @@
+---
+title: 'Smart Routing: Connections, Rules, and Failover'
+sidebarTitle: 'Smart Routing'
+description: 'How Therius routes each payment across your connected providers — routing rules, cascading failover, and where 3D Secure and fraud screening fit in the pipeline.'
+---
+
+Therius is a payment orchestrator: a single API in front of many payment providers. When you send a `POST /payment/purchase`, Therius decides — per transaction — which of your connected providers to attempt, in what order, and which authentication and risk steps to run along the way. That decision logic is **smart routing**, and you configure it in the Therius dashboard without changing a line of your integration code.
+
+## Connections
+
+A **connection** is one configured link to an external provider — an acquirer or PSP (Stripe, Adyen, a local acquirer), a fraud provider, or a 3D Secure provider. You add connections and their credentials in the dashboard under **Connections**. A single payment method (for example `card`) can have several acquirer connections behind it.
+
+Adding or removing a connection never changes your API requests. The `paymentMethod` you send stays the same; only the routing configuration behind it changes.
+
+## Routing rules
+
+Each payment method has a set of **routing rules**. A rule pairs a **condition** with an ordered list of connections to try. When a payment comes in, Therius evaluates the rules in priority order and uses the first one whose condition matches; a catch-all rule always sits at the end.
+
+Conditions are built from transaction attributes, including:
+
+| Attribute | Example use |
+|---|---|
+| Amount | Send transactions over a threshold to a lower-cost acquirer. |
+| Currency | Route each currency to the acquirer that settles it natively. |
+| Issuer country | Route domestic cards to a local acquirer for better rates and approval. |
+| Card brand / type / BIN | Send a specific brand or funding type down its own path. |
+| Wallet type | Route Apple Pay / Google Pay charges around card-BIN conditions. |
+| Stored-credential usage | Send first (customer-present) charges through 3DS, route subsequent MITs elsewhere. |
+| Metadata | Match on your own `metadata` keys sent with the payment. |
+
+<Note>
+  Routing rules are configured by your merchant administrator in the dashboard. They are not part of the public API — merchants do not create routing rules in an API request.
+</Note>
+
+## Cascading failover
+
+A routing rule's connection list is a **cascade**. If the first connection declines or errors in a retriable way, Therius automatically re-attempts the payment on the next connection in the list, and so on. Your integration sees one request and one final response — the retries happen inside Therius.
+
+A hop limit caps how many connections a single payment can traverse, so a misconfigured chain can never retry indefinitely. A payment that exhausts every connection in its rule returns the last provider's decline.
+
+<Warning>
+  Not every decline is retried. A hard decline (stolen card, invalid account) is terminal and is returned immediately — retrying it on another acquirer would only add scheme retry-rule violations. Soft declines (issuer unavailable, do-not-honor, insufficient funds) are the ones that cascade.
+</Warning>
+
+## Where 3DS and fraud screening fit
+
+3D Secure and fraud screening are **steps in the routing pipeline**, not separate API calls:
+
+- A **3D Secure step** decides whether to trigger a challenge (or rely on a frictionless flow or an SCA exemption) before the payment reaches the acquirer. This is why 3DS is enabled per route, not per card — see [3D Secure](/concepts/3d-secure).
+- A **fraud step** can screen a transaction **pre-authorization** (block before charging) or **post-authorization** (screen after the auth, with automatic reversal on a decline). The same fraud provider can sit at either point.
+
+Because these are pipeline steps, you can apply them selectively — for example, challenge only first-time customer-present charges, or fraud-screen only transactions above a certain amount — using the same conditions that drive connection selection.
+
+## What this means for your integration
+
+- You integrate once, against `POST /payment/purchase`. Adding acquirers, switching primary providers, tuning failover, and adjusting 3DS/fraud policy are all dashboard changes.
+- The response shape is identical regardless of which connection ultimately processed the payment. The `paymentCode` is Therius's stable reference across every retry attempt for that payment.
+- Use [webhooks](/webhooks/overview) to observe final outcomes — the synchronous response reflects the state at the moment the request returns, which for asynchronous methods is not the final state.

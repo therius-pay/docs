@@ -12,6 +12,9 @@ Therius is a payment API that consolidates every major payment method behind a s
   <Card icon="arrow-right-arrow-left" title="Single Unified Endpoint">
     Send all payment methods — cards, wallets, and 40+ APMs — through one `POST /payment/purchase` request. No per-method SDK juggling.
   </Card>
+  <Card icon="route" title="Smart Routing & Failover">
+    Route each transaction across your connected acquirers by amount, currency, card BIN, and more — with automatic cascading retry on soft declines. Configured in the dashboard, not in code.
+  </Card>
   <Card icon="rotate" title="Full Payment Lifecycle">
     Authorize, capture, refund, and cancel from the same API. Two-step authorize-then-capture is supported for physical goods and delayed fulfillment.
   </Card>
@@ -24,6 +27,9 @@ Therius is a payment API that consolidates every major payment method behind a s
   <Card icon="calendar-days" title="Subscriptions">
     Create plans with billing intervals, trials, and dunning rules. Therius retries failed subscription payments and notifies you via webhooks.
   </Card>
+  <Card icon="bell" title="Webhooks">
+    Get payment, dispute, and subscription events pushed to your server over HTTPS — signed, retried on a back-off schedule, and replayable from the dashboard.
+  </Card>
   <Card icon="browser" title="JS SDK">
     Collect card details in the browser using the Therius JS SDK. Card data is encrypted client-side and sent directly to Therius — your server never sees a raw PAN.
   </Card>
@@ -35,7 +41,7 @@ Therius is a payment API that consolidates every major payment method behind a s
 
 ## Where to Go Next
 
-Start with the quick start if you want to fire a real (sandbox) payment in under five minutes. Read the authentication guide to understand how API keys and the JS SDK session token work. Browse the SDK overview once you are ready to embed a payment form.
+Start with the quick start if you want to fire a real (sandbox) payment in under five minutes. Read the authentication guide to understand how API keys and the JS SDK session token work. Browse the SDK overview once you are ready to embed a payment form. When you are wiring up your backend, set up [webhooks](/webhooks/overview) so asynchronous outcomes reach your server, and keep the [testing](/guides/testing) reference handy for sandbox test cards.
 
 <CardGroup cols={3}>
   <Card icon="bolt" title="Quick Start" href="/quickstart">

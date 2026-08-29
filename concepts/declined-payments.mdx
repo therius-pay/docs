@@ -1,0 +1,142 @@
+---
+title: 'Declined Payments: Refusal Codes and Recovery Actions'
+sidebarTitle: 'Declined Payments'
+description: 'How Therius reports a declined payment — the refusalCode object, the recoveryAction hint, and the full table of normalized ISO 8583 refusal codes with their meanings.'
+---
+
+When an issuer or acquirer refuses a payment, Therius returns a `declined` status on the synchronous response and fires a [`payment.refused`](/webhooks/events) webhook. Both carry a `refusalCode` object that tells you *why* the payment failed and *what to do next*.
+
+## The `refusalCode` object
+
+```json
+{
+  "status": "declined",
+  "paymentCode": "PAY-abc123",
+  "orderCode": "ORDER-001",
+  "refusalCode": {
+    "reasonCode": "51",
+    "reason": "Insufficient funds",
+    "originalReasonCode": "insufficient_funds",
+    "originalReason": "Your card has insufficient funds.",
+    "recoveryAction": "switch_method"
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `reasonCode` | The **normalized** refusal code — an [ISO 8583](https://en.wikipedia.org/wiki/ISO_8583) decline code. Every provider's decline is mapped to this set, so your handling logic is the same regardless of which acquirer processed the payment. See the [table below](#refusal-code-reference). |
+| `reason` | Human-readable meaning of `reasonCode`. |
+| `originalReasonCode` | The raw code the underlying provider returned, before normalization. Useful for support tickets and provider-specific debugging. Format varies by provider. |
+| `originalReason` | The raw message the underlying provider returned. |
+| `recoveryAction` | A hint for what your checkout should do next — one of `retry`, `switch_method`, or `terminal`. See below. |
+
+<Note>
+  Only `reasonCode` and `recoveryAction` are safe to build logic on. `originalReasonCode` / `originalReason` are passthrough diagnostics and their format is not stable across providers.
+</Note>
+
+## `recoveryAction`
+
+Therius classifies every refusal into one of three recovery actions so your checkout can respond without hard-coding a decision for all 60+ codes.
+
+<CardGroup cols={3}>
+  <Card icon="rotate-right" title="retry">
+    The decline may clear on a second attempt — a malformed or mistimed message, a system malfunction, or a generic issuer response (including "Do not honor"). Retrying the **same** card once is reasonable. Always cap retries at a small fixed number — do not loop.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="switch_method">
+    Retrying this card will not help (insufficient funds, expired card, restricted card), but a **different payment method** might succeed. Prompt the shopper to try another card or an alternative method.
+  </Card>
+  <Card icon="ban" title="terminal">
+    A hard block — pickup/lost/stolen card, closed account, suspected fraud, or a revocation order. Do **not** offer a retry or an alternate method. Show a neutral failure message and stop.
+  </Card>
+</CardGroup>
+
+An unrecognized or missing `reasonCode` is reported as `switch_method` — the safe default, since blindly retrying an unclassified decline risks card-scheme excessive-attempt penalties.
+
+<Warning>
+  Card networks monitor repeated authorization attempts on a declined card (Visa VAMP, Mastercard excessive-attempts). Never retry a `terminal` decline, and never retry any decline more than a small, fixed number of times.
+</Warning>
+
+## Automatic re-routing
+
+Most soft declines are retried by Therius **before** you ever see them — [smart routing](/concepts/smart-routing) cascades the payment to the next connection in the route. The decline you receive on the response is therefore the outcome after Therius has already exhausted the alternatives in that route. Hard declines (`terminal` above, plus a few others such as incorrect PIN and CVV failures) are returned immediately and are never re-routed, because retrying them on another acquirer would only add scheme violations.
+
+## Subscriptions and dunning
+
+For subscription renewals, Therius applies the same classification internally: a `terminal` decline stops the dunning sequence immediately (the subscription goes to `suspended` and fires [`subscription.suspended`](/webhooks/events)), rather than wasting the remaining retry attempts on a card the issuer will never approve.
+
+## Refusal code reference
+
+The normalized `reasonCode` values Therius can return, with their meaning and default `recoveryAction`.
+
+| Code | Meaning | `recoveryAction` |
+|---|---|---|
+| `1` | Refer to card issuer | `switch_method` |
+| `2` | Refer to card issuer, special condition | `switch_method` |
+| `3` | Invalid merchant or service provider | `switch_method` |
+| `4` | Pickup card | `terminal` |
+| `5` | Do not honor | `retry` |
+| `6` | General error | `retry` |
+| `7` | Pickup card, special condition (not lost/stolen) | `terminal` |
+| `8` | Honor with identification | `switch_method` |
+| `9` | Request in progress | `switch_method` |
+| `11` | VIP approval | `switch_method` |
+| `12` | Invalid transaction | `retry` |
+| `13` | Invalid amount, or amount exceeds maximum for the card program | `retry` |
+| `14` | Invalid account number (no such number) | `terminal` |
+| `15` | No such issuer | `terminal` |
+| `16` | Insufficient funds | `switch_method` |
+| `17` | Customer cancellation | `switch_method` |
+| `19` | Re-enter transaction | `retry` |
+| `20` | Invalid response | `retry` |
+| `21` | No action taken (unable to back out prior transaction) | `switch_method` |
+| `22` | Suspected malfunction | `retry` |
+| `25` | Unable to locate record in file, or account number missing from the inquiry | `switch_method` |
+| `28` | File is temporarily unavailable | `switch_method` |
+| `30` | Format error | `switch_method` |
+| `41` | Lost card — merchant should retain | `terminal` |
+| `43` | Stolen card — merchant should retain | `terminal` |
+| `46` | Closed account | `terminal` |
+| `51` | Insufficient funds | `switch_method` |
+| `52` | No checking account | `switch_method` |
+| `53` | No savings account | `switch_method` |
+| `54` | Expired card | `switch_method` |
+| `55` | Incorrect PIN | `switch_method` |
+| `57` | Transaction not permitted to cardholder | `terminal` |
+| `58` | Transaction not allowed at terminal | `switch_method` |
+| `59` | Suspected fraud | `terminal` |
+| `61` | Activity amount limit exceeded | `switch_method` |
+| `62` | Restricted card (e.g. country exclusion) | `terminal` |
+| `63` | Security violation | `terminal` |
+| `65` | Activity count limit exceeded | `switch_method` |
+| `68` | Response received too late | `retry` |
+| `75` | Allowable number of PIN-entry tries exceeded | `switch_method` |
+| `76` | Unable to locate previous message (no match on retrieval reference number) | `switch_method` |
+| `77` | Repeat or reversal data inconsistent with the original message | `switch_method` |
+| `78` | Blocked, first used — new cardholder card not properly unblocked | `switch_method` |
+| `80` | Credit issuer unavailable, or invalid date | `switch_method` |
+| `81` | PIN cryptographic error | `switch_method` |
+| `82` | Negative CAM, dCVV, iCVV, or CVV results | `switch_method` |
+| `83` | Unable to verify PIN | `switch_method` |
+| `85` | No reason to decline (verification-only or credit voucher) | `retry` |
+| `91` | Issuer unavailable or switch inoperative | `switch_method` |
+| `92` | Destination cannot be found for routing | `switch_method` |
+| `93` | Transaction cannot be completed, violation of law | `switch_method` |
+| `94` | Duplicate transmission | `switch_method` |
+| `95` | Reconcile error | `retry` |
+| `96` | System malfunction | `retry` |
+| `B1` | Surcharge amount not permitted on Visa cards (U.S. acquirers only) | `switch_method` |
+| `N0` | Force STIP | `switch_method` |
+| `N3` | Cash service not available | `switch_method` |
+| `N4` | Cashback request exceeds issuer limit | `switch_method` |
+| `N7` | Decline for CVV2 failure | `switch_method` |
+| `P2` | Invalid biller information | `switch_method` |
+| `P5` | PIN change/unblock request declined | `switch_method` |
+| `P6` | Unsafe PIN | `switch_method` |
+| `Q1` | Card authentication failed (3D Secure) | `switch_method` |
+| `R0` | Stop payment order | `terminal` |
+| `R1` | Revocation of authorization order | `terminal` |
+| `R3` | Revocation of all authorizations order | `terminal` |
+| `XA` | Forward to issuer | `switch_method` |
+| `XD` | Forward to issuer | `switch_method` |
+| `Z3` | Unable to go online | `switch_method` |

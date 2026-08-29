@@ -1,14 +1,16 @@
 ---
 title: "Update a Subscription's Payment Method"
 sidebarTitle: "Update Card on File"
-description: "Replace the card on a subscription. Requires a fresh SDK nonce. Also reactivates a suspended subscription."
+description: "Replace the card on a subscription with a new CIT. Also reactivates a suspended subscription."
 openapi: "POST /subscription/{id}/payment-method"
 ---
 
 `POST /subscription/{id}/payment-method` replaces the card on a subscription and establishes a new Cardholder Initiated Transaction (CIT) mandate. This is also the only way to reactivate a `suspended` subscription — one where dunning retries have been exhausted and billing has stopped entirely.
 
+Supply the new card as **exactly one** of three interchangeable instruments — a fresh SDK nonce (`nonceData`), raw card data (`cardData`, PCI DSS compliant servers only), or a stored vault token (`tokenData`). This call performs a new CIT, so the customer must have been present and consenting to recurring billing when you collected the card.
+
 <Warning>
-  Always pass a fresh SDK nonce from the Therius JS SDK. This endpoint requires the customer to be present, because it performs a new CIT to register the updated mandate with the card network. A saved vault token (`vt_...`) is not accepted here.
+  Do not send stored-credential fields (`cardOnFile`, `networkTransactionId`, `networkReferenceId`) or `instalments` here — they are ignored. Therius owns the new mandate and drives every subsequent renewal as an MIT itself.
 </Warning>
 
 ## Request
@@ -38,11 +40,17 @@ openapi: "POST /subscription/{id}/payment-method"
 </ParamField>
 
 <ParamField body="card" type="object" required>
-  The new card details. Must use a fresh SDK nonce.
+  The new card. Provide **exactly one** of the instruments below — they are interchangeable alternatives, not fields to combine.
 
-  <Expandable title="card fields">
-    <ParamField body="card.nonceData.nonce" type="string" required>
-      A fresh one-time nonce returned by the Therius JS SDK after the customer enters their new card details.
+  <Expandable title="card instruments — choose one">
+    <ParamField body="card.nonceData.nonce" type="string">
+      A fresh single-use nonce from the Therius JS SDK. Recommended — no card data touches your server.
+    </ParamField>
+    <ParamField body="card.cardData" type="object">
+      Raw card fields — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (and optional `documentNumber`, `cardAddress`). Only if your server is PCI DSS compliant to handle raw PANs.
+    </ParamField>
+    <ParamField body="card.tokenData.token" type="string">
+      A stored `vt_...` vault token.
     </ParamField>
   </Expandable>
 </ParamField>
@@ -63,7 +71,7 @@ Returns `200 OK` with the updated subscription object. The response includes the
 | Code | Meaning |
 | --- | --- |
 | `404` | Subscription not found. |
-| `422` | No nonce provided, nonce already used, or the CIT was declined by the card network. |
+| `422` | No card instrument provided, an expired/used nonce, or the CIT was declined by the card network. |
 
 <RequestExample>
 

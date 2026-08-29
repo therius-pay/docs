@@ -36,6 +36,8 @@
             "group": "Core Concepts",
             "pages": [
               "concepts/payment-lifecycle",
+              "concepts/smart-routing",
+              "concepts/declined-payments",
               "concepts/tokenization",
               "concepts/3d-secure",
               "concepts/environments"
@@ -47,7 +49,15 @@
               "guides/browser-checkout",
               "guides/subscriptions",
               "guides/alternative-payment-methods",
-              "guides/stored-credentials"
+              "guides/stored-credentials",
+              "guides/testing"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "webhooks/overview",
+              "webhooks/events"
             ]
           }
         ]

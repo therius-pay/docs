@@ -53,7 +53,7 @@ The response includes a plan `id` that you pass when enrolling a customer.
 
 ## Creating a Subscription
 
-Enrolling a customer always requires the customer to be actively present during checkout. Collect a fresh card nonce from the Therius JS SDK first — see the [Browser Checkout](/guides/browser-checkout) guide — then submit it with the subscription request.
+Enrolling a customer performs a Cardholder Initiated Transaction (CIT), so the customer must be present and consenting to recurring billing when you collect the card. Pass the card as **one** of: a fresh nonce from the Therius JS SDK (recommended — see the [Browser Checkout](/guides/browser-checkout) guide), raw `cardData` if your server is PCI DSS compliant, or a stored `vt_...` vault token.
 
 ```json
 POST /subscription
@@ -73,7 +73,7 @@ POST /subscription
 The response includes the subscription `id`, its initial `status` (`trialing` if the plan has a trial, otherwise `pending` until the first payment clears), the current period start and end dates, and the first invoice object.
 
 <Info>
-  Always use a fresh SDK nonce when creating a subscription or updating the payment method. Card scheme rules require the customer to be actively present when their card is first saved for future charges. You cannot reuse a nonce from a previous session.
+  However you supply the card — SDK nonce, raw `cardData`, or a `vt_...` token — card scheme rules require the customer to be actively present and consenting when their card is first saved for recurring charges. If you use an SDK nonce it must be fresh; you cannot reuse a nonce from a previous session.
 </Info>
 
 ---
@@ -106,7 +106,7 @@ After a subscription is active, use the following endpoints to manage it. All en
   <Card icon="credit-card" title="Update Payment Method">
     `POST /subscription/{id}/payment-method`
 
-    Replaces the stored card with a new one. Requires a fresh nonce collected while the customer is present. This is also the only way to reactivate a `suspended` subscription.
+    Replaces the stored card with a new one via a fresh CIT (SDK nonce, PCI-compliant `cardData`, or a `vt_...` token), collected while the customer is present. This is also the only way to reactivate a `suspended` subscription.
   </Card>
   <Card icon="rotate" title="Retry Payment">
     `POST /subscription/{id}/retry-payment`
@@ -126,7 +126,7 @@ After a subscription is active, use the following endpoints to manage it. All en
 
 When a scheduled renewal fails — for example due to insufficient funds or an expired card — Therius automatically moves the subscription to `past_due` and begins the dunning sequence. Retries are spaced according to card scheme retry caps and your merchant configuration.
 
-Once all retries are exhausted, the subscription moves to `suspended` and Therius fires a `subscription.suspended` webhook. To reactivate a suspended subscription, the customer must provide a new payment method:
+Once all retries are exhausted, the subscription moves to `suspended` and Therius fires a `subscription.suspended` webhook. See the [webhook events catalog](/webhooks/events) for every subscription event you can subscribe to. To reactivate a suspended subscription, the customer must provide a new payment method:
 
 ```json
 POST /subscription/{id}/payment-method

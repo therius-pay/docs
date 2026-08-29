@@ -22,10 +22,17 @@ The sandbox environment is a fully isolated test environment backed by a test-pr
 
 | Card number | Result |
 |---|---|
-| `4111111111111111` | Always approved |
-| `4000000000000002` | Always declined |
+| `4111111111111111` | Always approved (Visa) |
+| `5500005555555559` | Always approved (Mastercard) |
+| `4000000000000002` | Always declined (do not honor) |
+| `4000003220000000` | 3DS frictionless — approved without a challenge |
+| `4000002500003155` | 3DS challenge — returns `pending_3ds` |
 
-Use any future expiry date, any cardholder name, and any 3-digit CVV with these card numbers.
+Use any future expiry date, any cardholder name, and any 3-digit CVV (4 digits for Amex).
+
+<Card icon="flask-vial" title="Full testing reference" href="/guides/testing">
+  Every test card by network, decline scenarios by reason, the complete 3D Secure walkthrough, and APM sandbox responses.
+</Card>
 
 ## Production
 

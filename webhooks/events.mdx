@@ -1,0 +1,84 @@
+---
+title: 'Therius Webhook Events Catalog and Payloads'
+sidebarTitle: 'Webhook Events'
+description: 'Every webhook event Therius sends — payment lifecycle, disputes, and subscription billing — with the payload shape for each family.'
+---
+
+This page lists every event type Therius delivers to a configured webhook endpoint. Subscribe to a subset under **Developers → Webhooks**, or leave the selection empty to receive all of them. See [Webhooks Overview](/webhooks/overview) for delivery, retry, and signature-verification details.
+
+## Payment events
+
+Payment event payloads use this envelope:
+
+```json
+{
+  "event": "payment.captured",
+  "environment": "production",
+  "created_at": "2026-08-29T12:00:00Z",
+  "data": {
+    "payment_id": "b1f2...",
+    "transaction_id": "t_9a8b...",
+    "order_code": "ORDER-001",
+    "payment_code": "PAY-abc123",
+    "merchant_id": 42,
+    "status": "captured",
+    "amount": 1999,
+    "currency": "USD",
+    "exponent": 2,
+    "authorization_code": "OK123"
+  }
+}
+```
+
+| Event | Fires when |
+|---|---|
+| `payment.authorized` | Funds were reserved by an `authorization` call (or the auth leg of a `purchase`). |
+| `payment.captured` | A capture succeeded — including the automatic capture inside `purchase`, and the confirmation of an asynchronous APM or voucher payment. |
+| `payment.refused` | The issuer or acquirer declined the payment. Corresponds to a `declined` status on the synchronous API response — see [Declined Payments](/concepts/declined-payments) for how to read the refusal. |
+| `payment.refunded` | A refund was processed. Fires on each refund; `data.status` is `refunded` only once the payment is fully refunded. |
+| `payment.cancelled` | An authorization was voided before capture. |
+| `payment.chargeback` | A dispute was raised against a settled payment (received from the acquirer's dispute notification). |
+| `payment.capture_failed` | A capture attempt failed. The payment stays `authorized`. |
+| `payment.refund_failed` | A refund attempt failed. The payment stays `captured`. |
+| `payment.cancel_failed` | A cancel attempt failed. The payment stays `authorized`. |
+
+<Note>
+  Webhook event names use `refused` where the synchronous [API response](/api-reference/purchase) `status` field uses `declined`, and `payment.<status>` for terminal states such as `expired`. Match on the `event` string, not on substring parsing.
+</Note>
+
+## Subscription events
+
+Subscription event payloads use a slightly different envelope — `subscription_id` is a top-level field and `data` carries event-specific detail:
+
+```json
+{
+  "event": "subscription.renewed",
+  "created_at": "2026-08-29T12:00:00Z",
+  "subscription_id": "sub_abc123",
+  "merchant_id": 42,
+  "data": {
+    "...": "event-specific fields (invoice, period dates, amount, failure reason, ...)"
+  }
+}
+```
+
+| Event | Fires when |
+|---|---|
+| `subscription.created` | A subscription was created. |
+| `subscription.trial_ended` | A free trial period ended and billing begins. |
+| `subscription.renewed` | A scheduled renewal was charged successfully. |
+| `subscription.payment_failed` | A renewal charge failed. |
+| `subscription.dunning_started` | The subscription entered `past_due` and the dunning retry sequence began. |
+| `subscription.suspended` | All dunning retries were exhausted; the subscription is inactive until the payment method is updated. |
+| `subscription.reactivated` | A `suspended` subscription was recovered (new payment method or successful retry). |
+| `subscription.paused` | The subscription was manually paused. |
+| `subscription.resumed` | A paused subscription resumed. |
+| `subscription.cancelled` | The subscription was permanently cancelled. |
+| `subscription.completed` | The subscription reached its fixed number of billing cycles and ended naturally. |
+| `subscription.payment_method_updated` | The stored card on the subscription was replaced. |
+| `subscription.plan_change_scheduled` | A plan change was queued to apply at the next billing date. |
+| `subscription.plan_changed` | A plan change took effect. |
+
+## Testing events
+
+Use **Developers → Webhooks → Send test event** to deliver a sample payload for any event type to your endpoint without creating a real payment or subscription. Test deliveries appear in **Recent deliveries** alongside live ones and can be replayed.
