@@ -1,0 +1,82 @@
+---
+title: 'Therius for Magento 2'
+sidebarTitle: 'Magento 2'
+description: 'Install and configure the Therius payment module for Magento 2 — sandbox and production keys, webhooks, and refunds.'
+---
+
+The Therius module for Magento 2 adds a **Therius Payments** method to checkout. It mounts the [Checkout Widget](/sdk/checkout-widget) for card and alternative payment methods, with 3D Secure and Device Data Collection handled before the order is placed.
+
+**Repository:** [`therius-pay/therius-plugin-magento`](https://github.com/therius-pay/therius-plugin-magento)
+
+## Requirements
+
+- Magento 2 (Open Source or Commerce), command-line access to run `bin/magento`
+- A Therius account with API keys and a checkout configuration
+
+## Install
+
+<Tabs>
+  <Tab title="Composer (path repository)">
+    1. Place the `therius-plugin-magento` folder where Composer can reach it, and add a path repository to your project's `composer.json`:
+
+       ```json
+       "repositories": {
+           "therius-payment": { "type": "path", "url": "../therius-plugin-magento" }
+       }
+       ```
+    2. `composer require therius/module-payment:*`
+    3. Enable and build:
+
+       ```bash
+       bin/magento module:enable Therius_Payment
+       bin/magento setup:upgrade
+       bin/magento setup:di:compile
+       bin/magento cache:flush
+       ```
+  </Tab>
+  <Tab title="Copy into app/code">
+    1. Copy the folder to `app/code/Therius/Payment/`.
+    2. Run the same four `bin/magento` commands shown for the Composer install.
+  </Tab>
+</Tabs>
+
+<Note>
+  Re-run `bin/magento setup:static-content:deploy` and `cache:flush` after any change to the module's front-end assets, or the browser blocks the JavaScript on an integrity-hash mismatch.
+</Note>
+
+## Configure
+
+<Steps>
+  ### Open the payment method settings
+
+  Go to **Stores → Configuration → Sales → Payment Methods → Therius Payments** and set **Enabled** to *Yes*.
+
+  ### Choose an environment and enter keys
+
+  - **Sandbox:** set **Test Mode** to *Yes*, then fill in **Test Publishable Key** and **Test Private Key**. Transactions route to `https://api-sandbox.therius.io`.
+  - **Production:** set **Test Mode** to *No*, then fill in **Live Publishable Key** and **Live Private Key**. Transactions route to `https://api.therius.io`.
+
+  ### Save and flush the cache
+
+  Save the configuration, then run `bin/magento cache:flush` — Magento caches config values.
+</Steps>
+
+## Webhooks
+
+<Warning>
+  Configure this before taking live payments. Without it, orders left in `pending_payment` (async fraud/issuer review) never resolve, and refunds or chargebacks from the Therius Dashboard are never reflected on the Magento order.
+</Warning>
+
+1. In the Therius Dashboard, go to **Developers → Webhooks** and add an endpoint pointing at:
+
+   ```
+   https://your-store.com/therius/webhook/index
+   ```
+
+   Create one endpoint in **Sandbox** mode and one in **Production** mode if you use both.
+2. Subscribe to at least: `payment.captured`, `payment.refused`, `payment.refunded`, `payment.cancelled`, `payment.chargeback`.
+3. Copy each environment's signing secret into the module's **Test Webhook Signing Secret** / **Live Webhook Signing Secret** field.
+
+## Refunds
+
+Create a credit memo from **Sales → Orders → (order) → Credit Memo**. The module calls Therius and adds a comment to the order history; the order reflects the refund once the `payment.refunded` webhook confirms it.

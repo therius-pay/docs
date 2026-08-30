@@ -1,0 +1,69 @@
+---
+title: 'Therius for Shopware 6'
+sidebarTitle: 'Shopware 6'
+description: 'Install and configure the Therius payment plugin for Shopware 6 — sandbox and production keys, webhooks, and checkout behavior.'
+---
+
+<Note>
+  **Beta.** This plugin is feature-complete and code-reviewed but has not yet been verified against a live Shopware install. See **Known limitations** below before relying on it, and test thoroughly in your own staging environment.
+</Note>
+
+The Therius plugin for Shopware 6 replaces standard single-gateway integrations with the [Checkout Widget](/sdk/checkout-widget), supporting cards and local alternative payment methods with [smart routing](/concepts/smart-routing).
+
+**Repository:** [`therius-pay/therius-plugin-shopware`](https://github.com/therius-pay/therius-plugin-shopware)
+
+## Requirements
+
+- Shopware 6 with admin access to install extensions
+- A Therius account with API keys and a checkout configuration
+
+## Install
+
+1. Download the plugin `.zip`.
+2. In the Shopware admin, go to **Extensions → My extensions → Upload extension** and upload the `.zip`.
+3. Click **Install**, then **Activate**.
+
+## Configure
+
+<Steps>
+  ### Open the plugin configuration
+
+  Go to **Settings → Extensions → Therius Payment**.
+
+  ### Enter your details
+
+  Per environment:
+
+  - **Test:** Test Publishable Key, Test Private Key, Test Checkout Config ID, Test Webhook Secret.
+  - **Live:** Live Publishable Key, Live Private Key, Live Checkout Config ID, Live Webhook Secret.
+
+  ### Pick the active environment
+
+  Toggle **Enable Test Mode** — *Enabled* routes checkout to `https://api-sandbox.therius.io` with the Test credentials; *Disabled* routes to `https://api.therius.io` with the Live credentials. Save.
+</Steps>
+
+## Checkout behavior
+
+Selecting Therius Payments on the confirm page does not render an inline card form. Clicking **Complete order** opens the Therius Checkout Widget in a lightbox, fetching a fresh checkout session at that moment. Any extra step the payment needs — a 3D Secure challenge, an APM redirect, a microdeposit-verification step — happens inside that same lightbox. Shopware only creates the order once payment has succeeded.
+
+## Webhooks
+
+<Warning>
+  Configure this before taking live payments. Without it, payments that require asynchronous validation stay pending and refunds made from the Therius Dashboard do not reflect in Shopware.
+</Warning>
+
+1. In the Therius Dashboard, go to **Developers → Webhooks** and add an endpoint pointing at:
+
+   ```
+   https://your-store.com/therius/webhook
+   ```
+
+   Create one endpoint in **Sandbox** mode and one in **Production** mode if you use both.
+2. Subscribe to: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.cancelled`, `payment.chargeback`, `payment.capture_failed`, `payment.cancel_failed`.
+3. Copy each environment's signing secret into the matching **Test Webhook Secret** / **Live Webhook Secret** field in the plugin configuration.
+
+## Known limitations
+
+<Warning>
+  **Webhook-driven order updates are not working in the current build.** The plugin matches incoming webhooks against the Shopware order number, but the identifier it sends to Therius at charge time is the cart token, not the eventual order number — so deliveries for real orders do not match and are logged as "unknown order". Until this is fixed, captures, refunds, chargebacks, and cancellations performed from the Therius Dashboard **do not** update the Shopware order status. Refunds are expected to be initiated from the Therius Dashboard rather than the Shopware admin.
+</Warning>

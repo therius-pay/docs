@@ -1,0 +1,67 @@
+---
+title: 'Therius for PrestaShop'
+sidebarTitle: 'PrestaShop'
+description: 'Install and configure the Therius payment module for PrestaShop — sandbox and production keys, webhooks, and refunds.'
+---
+
+<Note>
+  **Beta.** This module is feature-complete and code-reviewed but has not yet been verified against a live PrestaShop install. Test it thoroughly in your own staging environment before going live.
+</Note>
+
+The Therius module for PrestaShop adds a **Therius Payments** option to checkout, mounting the [Checkout Widget](/sdk/checkout-widget) for card and alternative payment methods.
+
+**Repository:** [`therius-pay/therius-plugin-prestashop`](https://github.com/therius-pay/therius-plugin-prestashop)
+
+## Requirements
+
+- PrestaShop with admin access to install modules
+- A Therius account with API keys and a checkout configuration
+
+## Install
+
+1. Copy the `therius-plugin-prestashop` folder into your PrestaShop `modules/` directory, named `therius`.
+2. In the PrestaShop admin, go to **Modules → Module Manager**, find **Therius Payments**, and click **Install**.
+
+## Configure
+
+<Steps>
+  ### Open the module configuration
+
+  In **Modules → Module Manager**, find **Therius Payments** and click **Configure**.
+
+  ### Enter your details
+
+  Fill in **Merchant Code**, then, per environment:
+
+  - **Test:** Test Publishable Key, Test Private Key, Test Checkout Config ID, Test Webhook Secret.
+  - **Live:** Live Publishable Key, Live Private Key, Live Checkout Config ID, Live Webhook Secret.
+
+  ### Pick the active environment
+
+  Toggle **Test mode** — *Enabled* routes checkout to `https://api-sandbox.therius.io` with the Test credentials; *Disabled* routes to `https://api.therius.io` with the Live credentials. Click **Save**.
+</Steps>
+
+## Webhooks
+
+<Warning>
+  Configuring this is not optional. This checkout charges the card **before** the PrestaShop order exists — the order is normally created by the shopper's browser posting back after payment. If that post never lands (closed tab, dropped connection), the `payment.captured` / `payment.authorized` webhook is the only way the store learns the charge happened and builds the missing order.
+</Warning>
+
+1. In the Therius Dashboard, go to **Developers → Webhooks** and add an endpoint pointing at:
+
+   ```
+   https://your-store-url/module/therius/webhook
+   ```
+
+   Create one endpoint in **Sandbox** mode and one in **Production** mode if you use both.
+2. Subscribe to: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.cancelled`, `payment.chargeback`, `payment.capture_failed`.
+3. Copy each environment's signing secret into the matching **Test Webhook Secret** / **Live Webhook Secret** field.
+
+## Refunds
+
+Issue a refund by creating a **partial refund / credit slip** on the order in the PrestaShop admin. The module sends the refund to Therius with an idempotency key so a retried request does not double-refund.
+
+## Known limitations
+
+- **`payment.chargeback` is acknowledged but not mapped to an order-state change** — PrestaShop has no built-in "on hold" state this module uses elsewhere. The event returns `200` and is otherwise ignored.
+- **A webhook-recovered order can be priced from the cart's current total**, not the amount actually charged, if the cart's contents change in the gap between the charge and the webhook delivery. This is rare but worth checking if a recovered order's total does not match its payment amount.
