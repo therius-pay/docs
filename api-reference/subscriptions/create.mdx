@@ -104,10 +104,12 @@ Run a 3DS-capable CIT yourself, then attach the result:
 </ParamField>
 
 <ParamField body="firstPaymentReference" type="string">
-  Record mode only. The `orderCode` or `paymentCode` of the CIT you already ran for this
-  card. When set, Therius validates it against a settled payment on your account that
-  charged the same token and marks cycle 1 paid (no charge). When omitted, Therius charges
-  cycle 1 as an MIT against the recorded mandate.
+  Record mode only, and only when a first payment is due (ignored for trial or deferred
+  subscriptions). The `orderCode` or `paymentCode` of the CIT you already ran for this card.
+  Therius validates that it resolves to a `captured` or `authorized` payment on your account
+  that charged the **same vaulted token** and is in the **plan's currency**, then marks
+  cycle 1's invoice paid and links it — no charge. When omitted, Therius charges cycle 1 as
+  an MIT against the recorded mandate.
 </ParamField>
 
 <ParamField body="metadata" type="object">
