@@ -205,6 +205,10 @@ openapi: "POST /payment/purchase"
 
 ## Response
 
+<ResponseField name="id" type="string">
+  The Therius payment `id` (a UUID). **Store this** — it is the handle for the payment: pass it as the `{id}` path segment of a later [Refund](/api-reference/refund) or [Cancel or Refund](/api-reference/cancel-or-refund) call.
+</ResponseField>
+
 <ResponseField name="status" type="string">
   Payment outcome. One of:
 
@@ -216,7 +220,7 @@ openapi: "POST /payment/purchase"
 </ResponseField>
 
 <ResponseField name="paymentCode" type="string">
-  Therius's unique receipt ID for this payment (e.g. `"PC-1234567890"`). Save this — you'll need it for captures, refunds, and inquiries.
+  Therius's receipt ID for this payment (e.g. `"PC-1234567890"`). A reference for reconciliation, support and [Inquiry](/api-reference/inquiry) — it is **not** used to address the payment for refund/cancel; use `id` for that.
 </ResponseField>
 
 <ResponseField name="orderCode" type="string">
@@ -356,6 +360,7 @@ curl -X POST https://api.therius.io/v1/payment/purchase \
 
 ```json 200 OK
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "captured",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-001",

@@ -53,6 +53,7 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
 
     ```json
     {
+      "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
       "status": "captured",
       "paymentCode": "PAY-abc123xyz",
       "orderCode": "QUICKSTART-001",
@@ -60,14 +61,14 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
     }
     ```
 
-    Save the `paymentCode` — it is Therius's receipt ID for this payment and you will need it for refunds, cancellations, and lookups.
+    Save the `id` — it is the handle for this payment, used as the `{id}` path segment for capture, refund and cancel. (`paymentCode` is a reference for lookups and reconciliation.)
   </Step>
 
   <Step title="Look up the payment">
-    Retrieve any payment by passing its `paymentCode` (Therius's receipt ID, returned in the purchase response) to `GET /payment/inquiry/{id}`.
+    Retrieve any payment by passing its `id` (or its `paymentCode`) to `GET /payment/inquiry/{id}`.
 
     ```bash
-    curl https://api-sandbox.therius.io/v1/payment/inquiry/PAY-abc123xyz \
+    curl https://api-sandbox.therius.io/v1/payment/inquiry/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e \
       -H "Authorization: Bearer sk_sandbox_your_key_here"
     ```
 

@@ -2,14 +2,24 @@
 title: "Settle a Prior Authorization"
 sidebarTitle: "Capture a Payment"
 description: "Settle a previously authorized payment. Supports partial capture. Must be called within the acquirer authorization window."
-openapi: "POST /payment/capture"
+openapi: "POST /payment/{id}/capture"
 ---
 
-Call `POST /payment/capture` to settle funds from an earlier `POST /payment/authorization`. You can capture less than the full authorized amount — a partial capture — and the remaining hold is released automatically. You must call this endpoint within the acquirer's authorization window (typically 7 days) or the hold will expire and you'll need to re-authorize.
+Call `POST /payment/{id}/capture` to settle funds from an earlier `POST /payment/authorization`. You can capture less than the full authorized amount — a partial capture — and the remaining hold is released automatically. You must call this endpoint within the acquirer's authorization window (typically 7 days) or the hold will expire and you'll need to re-authorize.
+
+## Identifying the payment
+
+`{id}` is the Therius payment `id` returned in the response to `POST /payment/authorization` (and `POST /payment/purchase`). Store it when you create the payment. `orderCode` and `paymentCode` are your own reference fields — they are **not** accepted as a way to address the payment for capture, refund or cancel.
+
+An `id` that does not exist, or that belongs to another merchant, returns `404`.
 
 ## Request
 
-**Endpoint:** `POST https://api.therius.io/v1/payment/capture`
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/capture`
+
+<ParamField path="id" type="string" required>
+  The Therius payment `id` from the authorization/purchase response.
+</ParamField>
 
 <ParamField header="Authorization" type="string">
   Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
@@ -29,14 +39,6 @@ Call `POST /payment/capture` to settle funds from an earlier `POST /payment/auth
 
 <ParamField body="merchantCode" type="string" required>
   Your merchant identifier.
-</ParamField>
-
-<ParamField body="orderCode" type="string">
-  Your original order reference. Either `orderCode` or `paymentCode` is required to identify the payment.
-</ParamField>
-
-<ParamField body="paymentCode" type="string">
-  The Therius payment receipt ID returned when the authorization was created (e.g. `"PC-1234567890"`). Either `paymentCode` or `orderCode` is required.
 </ParamField>
 
 <ParamField body="reference" type="string">
@@ -62,6 +64,10 @@ Call `POST /payment/capture` to settle funds from an earlier `POST /payment/auth
 </ParamField>
 
 ## Response
+
+<ResponseField name="id" type="string">
+  The Therius payment `id` (same value as the `{id}` path segment).
+</ResponseField>
 
 <ResponseField name="status" type="string">
   Result of the capture. One of:
@@ -93,13 +99,12 @@ Call `POST /payment/capture` to settle funds from an earlier `POST /payment/auth
 <RequestExample>
 
 ```bash cURL
-curl -X POST https://api.therius.io/v1/payment/capture \
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/capture \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",
-    "paymentCode": "PC-1234567890",
     "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
   }'
 ```
@@ -110,6 +115,7 @@ curl -X POST https://api.therius.io/v1/payment/capture \
 
 ```json 200 OK
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "captured",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-002",
@@ -123,19 +129,19 @@ curl -X POST https://api.therius.io/v1/payment/capture \
 ### Partial capture
 
 ```bash
-curl -X POST https://api.therius.io/v1/payment/capture \
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/capture \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",
-    "paymentCode": "PC-1234567890",
     "amount": { "currency": "USD", "value": 7500, "exponent": 2 }
   }'
 ```
 
 ```json
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "captured",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-002",

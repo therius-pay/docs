@@ -4,6 +4,40 @@ Entries moved here by the `technical-writer` skill after processing.
 
 ---
 
+## 2026-08-30 — Capture / refund / cancel move to `POST /payment/{id}/...`
+
+- Skill: developer. Processed 2026-08-30.
+- Doc-visible change: **Breaking API change.** `POST /payment/authorization` and
+  `POST /payment/purchase` responses now include a top-level `id` (Therius payment UUID).
+  Lifecycle operations are no longer body-addressed by `orderCode` + `paymentCode`; they
+  take the id as a path parameter: `POST /payment/{id}/{capture,refund,cancel,cancel_or_refund}`.
+  Those four request bodies drop `orderCode`/`paymentCode` (keep `key`, `merchantCode`,
+  `amount` for capture/refund, `reference`). Responses gain `id`. Unknown/foreign id → `404`.
+  `orderCode`/`paymentCode` are reference fields only now. `resume` + `inquiry` unchanged.
+- Where in code/spec: `therius-public-api/handlers_payment.go`, `main.go`, `services_core.go`
+  (commit `dbf2971`).
+- Doc edits made:
+  - `openapi.json` — renamed the 4 paths to `/payment/{id}/...`; new `PaymentId` path
+    parameter (in `components.parameters`, referenced by all 4); removed `paymentCode` from
+    the 4 request bodies and fixed `required`; added `id` (uuid) to `PaymentResponse`.
+    Also corrected `cancel_or_refund` — it never accepted an `amount` (full reversal only).
+  - `api-reference/capture.mdx`, `refund.mdx`, `cancel.mdx`, `cancel-or-refund.mdx` —
+    rewrote frontmatter `openapi:` binding, added an "Identifying the payment" section,
+    `id` path `<ParamField>`, dropped `orderCode`/`paymentCode` body fields, added `id` to
+    the response fields, updated all curl + JSON examples to the `/payment/{id}/...` form.
+  - `api-reference/authorize.mdx`, `purchase.mdx` — added `id` response field + example
+    line; reframed `paymentCode` as a reference, not the payment handle.
+  - `concepts/payment-lifecycle.mdx` — state-machine diagram + all path references updated;
+    rewrote the "`paymentCode` vs `orderCode`" section into an `id` / `paymentCode` /
+    `orderCode` table making `id` the handle.
+  - `idempotency.mdx` — endpoint list + cross-endpoint example updated.
+  - `quickstart.mdx` — success-response example + "save the id" guidance + inquiry example.
+- Not touched: `docs.json` (page paths unchanged). `guides/testing.mdx` only references
+  `/payment/resume` (unchanged).
+- GA status: live & wired (`dbf2971`, on `main`). Pre-GA — hard replacement, no alias.
+- Open: plugins (WooCommerce/Magento/PrestaShop/Shopware) still call the old shape — a
+  plugin-developer task, tracked in `../memory/Roadmap/open-items.md`.
+
 ## 2026-08-29 — Refusal-code reference page + RefusalCode enum (benchmark gap #1)
 
 - Source: developer skill, same-session follow-up to the technical-writer first pass.
@@ -62,9 +96,49 @@ Entries moved here by the `technical-writer` skill after processing.
      the docs.
   3. DONE (commit 051142e) — dashboard `developers/page.tsx` doc links repointed to
      `docs.therius.io` / `openapi.json`.
-  4. DONE (commit 359797a) — **Scalar docs site sunset per user.** `publish-openapi.sh`/`.ps1`
-     deleted, `.githooks/post-commit` regenerate-only, CLAUDE.md/README/main.go/docs.go
-     rewritten single-site. `docs.therius.io` (Mintlify, this repo's parent `D:\therius\docs`)
-     is now the ONLY public docs site. The `D:\therius\code\web` repo still needs its own
-     cleanup: drop `src/docs/`, remove the `/docs` route + deploy, add a
-     `therius.io/docs` → `docs.therius.io` redirect.
+  4. DONE (commits 359797a, fa63bf4, 2084b6b + skills a18aa2b/b78d8a2/ed11a0b) — **Scalar
+     docs site sunset per user.** `publish-openapi.sh`/`.ps1` deleted, `.githooks/post-commit`
+     regenerate-only, all CLAUDE.md/README/main.go/docs.go/skill-file references to the old
+     Scalar docs + the (now-deleted) `D:\therius\code\web` repo removed. `docs.therius.io`
+     (Mintlify, `D:\therius\docs`) is the ONLY public docs site. The marketing site is a
+     separate Astro repo, `D:\therius\code\therius-website`, marketing-only with no docs.
+     Only hosting-side item left: a `therius.io/docs` → `docs.therius.io` redirect (DNS/CDN
+     config, not in any repo).
+
+---
+
+## 2026-08-29 — Subscription card update: record mode
+
+- Source: developer skill (feature), processed inline same session.
+- Doc-visible change: `POST /subscription/{id}/payment-method` now has two modes —
+  **record** (`card.tokenData` — attach a card already CIT'd via /payment/*; no charge, no
+  3DS; mandate read from the token or passed as `networkTransactionId`/`networkReferenceId`;
+  rejects `suspended` subs) and **CIT** (`card.nonceData`/`card.cardData` — zero-value CIT
+  here, can't do a 3DS challenge, can reactivate a suspended sub).
+- Files: `api-reference/subscriptions/update-payment-method.mdx` (rewritten — two modes, a
+  Steps walkthrough for the record flow), `openapi.json` (new `SubscriptionCardUpdate`
+  schema; `/subscription` create still uses `SubscriptionCard`), `guides/subscriptions.mdx`
+  (Update Payment Method card + a Dunning `<Note>` about the 3DS limitation).
+- Where in code: `therius-public-api/handlers_subscription.go` `updateSubscriptionPaymentMethod`.
+- GA status: code built clean, not smoke-tested against a live subscription.
+
+---
+
+## 2026-08-30 — Subscription CREATE record mode (Pattern A, completing the 3DS story)
+
+- Source: developer skill (feature), processed inline.
+- Doc-visible change: `POST /subscription` now has the same two modes as
+  `/subscription/{id}/payment-method` — CIT mode (`nonceData`/`cardData`) and record mode
+  (`tokenData`). Record mode: attach a card already CIT'd (incl. 3DS) via `/payment/*`; new
+  `firstPaymentReference` body field decides cycle 1 (link an existing payment vs. charge an
+  MIT).
+- Files: `api-reference/subscriptions/create.mdx` (CardGroup + Steps for the record flow,
+  `firstPaymentReference` ParamField, errors table), `openapi.json` (`SubscriptionCard`
+  reworked to two-mode + `networkTransactionId`/`networkReferenceId`; `firstPaymentReference`
+  added to the `/subscription` request body; 201 response note), `guides/subscriptions.mdx`
+  ("Creating a Subscription" section).
+- Where in code: `therius-public-api/handlers_subscription.go` `createSubscriptionRecordMode`
+  (commit `63290df`); `CLAUDE.md` subscription section (`4013c8c`).
+- GA status: built clean, not smoke-tested against a live stack.
+- Deferred: Pattern B (route the create/update CIT through the real 3DS-capable pipeline with
+  a pending/resume flow) — the Adyen/Checkout.com model, bigger lift.

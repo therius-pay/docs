@@ -12,10 +12,10 @@ All mutating endpoints accept an `Idempotency-Key` request header:
 
 - `POST /payment/purchase`
 - `POST /payment/authorization`
-- `POST /payment/capture`
-- `POST /payment/refund`
-- `POST /payment/cancel`
-- `POST /payment/cancel_or_refund`
+- `POST /payment/{id}/capture`
+- `POST /payment/{id}/refund`
+- `POST /payment/{id}/cancel`
+- `POST /payment/{id}/cancel_or_refund`
 - `POST /payment/resume`
 - `POST /subscription`
 
@@ -79,5 +79,5 @@ Store the UUID alongside the order in your database before sending the request. 
 
 - **Generate the key before the request, not after.** Store it with the order record so you can retrieve it if you need to retry.
 - **One UUID per logical operation.** A purchase and its subsequent refund are two separate operations — each gets its own UUID.
-- **Do not reuse keys across endpoints.** A key used for `POST /payment/purchase` cannot be used for `POST /payment/refund`.
+- **Do not reuse keys across endpoints.** A key used for `POST /payment/purchase` cannot be used for `POST /payment/{id}/refund`.
 - **Do not share keys across customers or orders.** Each key must be globally unique to a single operation.

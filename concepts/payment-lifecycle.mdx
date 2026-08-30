@@ -8,10 +8,11 @@ Every payment moves through a predictable series of states — from an initial r
 
 ## One-Step Flow: Purchase
 
-Use `POST /payment/purchase` when you can fulfil the order immediately — digital downloads, SaaS subscriptions, and any product you deliver the moment payment completes. A single round-trip reserves the funds and settles them in one go. The response carries `status: "captured"`.
+Use `POST /payment/purchase` when you can fulfil the order immediately — digital downloads, SaaS subscriptions, and any product you deliver the moment payment completes. A single round-trip reserves the funds and settles them in one go. The response carries `status: "captured"` and an `id` — the payment handle.
 
 ```json
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "captured",
   "paymentCode": "PAY-abc123",
   "orderCode": "ORDER-001"
@@ -23,9 +24,12 @@ Use `POST /payment/purchase` when you can fulfil the order immediately — digit
 Use `POST /payment/authorization` to reserve funds without settling them. This is the right flow when you need to confirm availability before you fulfil — for example, physical goods that may go out of stock, or hotel reservations where you confirm the room before charging.
 
 ```txt
-POST /payment/authorization  →  status: "authorized"
-POST /payment/capture        →  status: "captured"
+POST /payment/authorization  →  status: "authorized", id: "<payment id>"
+POST /payment/{id}/capture   →  status: "captured"
 ```
+
+The authorization response includes an `id` (a UUID). That `id` is how you address
+the payment for every follow-up operation — pass it as the `{id}` path segment.
 
 A few rules apply:
 
@@ -35,11 +39,11 @@ A few rules apply:
 
 ## Refund
 
-Call `POST /payment/refund` to return funds on a captured payment. Refunds can be full or partial, and you can issue multiple partial refunds as long as the cumulative total does not exceed the originally captured amount.
+Call `POST /payment/{id}/refund` to return funds on a captured payment. Refunds can be full or partial, and you can issue multiple partial refunds as long as the cumulative total does not exceed the originally captured amount.
 
 ```json
 {
-  "paymentCode": "PAY-abc123",
+  "merchantCode": "MERCHANT_001",
   "amount": { "currency": "USD", "value": 500, "exponent": 2 }
 }
 ```
@@ -48,11 +52,11 @@ A partial refund of $5.00 on a $19.99 payment returns the difference to the card
 
 ## Cancel
 
-Call `POST /payment/cancel` to void an **authorized** payment before it is captured. Funds are released immediately and the customer is never charged. You cannot cancel a payment that has already been captured — call `POST /payment/refund` instead.
+Call `POST /payment/{id}/cancel` to void an **authorized** payment before it is captured. Funds are released immediately and the customer is never charged. You cannot cancel a payment that has already been captured — call `POST /payment/{id}/refund` instead.
 
 ## Auto Cancel or Refund
 
-If you are not sure whether a payment is in `authorized` or `captured` state, call `POST /payment/cancel_or_refund`. Therius checks the current state and performs the correct operation automatically — a cancel if the payment is authorized, a full refund if it is captured.
+If you are not sure whether a payment is in `authorized` or `captured` state, call `POST /payment/{id}/cancel_or_refund`. Therius checks the current state and performs the correct operation automatically — a cancel if the payment is authorized, a full refund if it is captured.
 
 ## Payment Statuses
 
@@ -73,9 +77,9 @@ If you are not sure whether a payment is in `authorized` or `captured` state, ca
 stateDiagram-v2
     [*] --> authorized : POST /payment/authorization
     [*] --> captured : POST /payment/purchase
-    authorized --> captured : POST /payment/capture
-    authorized --> cancelled : POST /payment/cancel
-    captured --> refunded : POST /payment/refund
+    authorized --> captured : POST /payment/{id}/capture
+    authorized --> cancelled : POST /payment/{id}/cancel
+    captured --> refunded : POST /payment/{id}/refund
     [*] --> pending_3ds : 3DS challenge triggered
     pending_3ds --> authorized : POST /payment/resume
     pending_3ds --> captured : POST /payment/resume
@@ -83,8 +87,12 @@ stateDiagram-v2
     [*] --> failed : Processing error
 ```
 
-## `paymentCode` vs `orderCode`
+## `id`, `paymentCode`, and `orderCode`
 
-When you create a payment you supply an `orderCode` — your own reference for the order (e.g., `ORDER-2024-001`). Therius returns a `paymentCode` in the response — its own receipt ID (e.g., `PAY-abc123`).
+| Field | Set by | Purpose |
+|---|---|---|
+| `id` | Therius (returned on authorize/purchase) | **The handle for the payment.** Pass it as the `{id}` path segment of capture, refund, cancel and cancel_or_refund. |
+| `orderCode` | You, on the create call | Your own reference for the order (e.g., `ORDER-2024-001`). |
+| `paymentCode` | You (optional) or Therius | A per-attempt reference. If you support multiple attempts for one order (e.g., a retry after a decline), each attempt can carry its own `paymentCode` while sharing the `orderCode`. |
 
-Both identifiers work interchangeably on all post-payment operations: inquiry, refund, cancel, and capture all accept either value. Use whichever is more convenient for your integration. If you support multiple payment attempts for the same order (e.g., a retry after a decline), each attempt gets its own `paymentCode` while sharing the same `orderCode`.
+`orderCode` and `paymentCode` are reference fields only — they are echoed back on responses and webhooks. [Inquiry](/api-reference/inquiry) accepts either the `id` or the `paymentCode` in its path. But capture, refund, cancel and cancel_or_refund take **only** the `id`. Always store the `id` from the authorize/purchase response and use it for those calls.

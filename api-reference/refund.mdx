@@ -2,14 +2,22 @@
 title: "Issue a Full or Partial Refund"
 sidebarTitle: "Refund a Payment"
 description: "Refund a captured payment in full or partially. Multiple partial refunds are allowed up to the total captured amount."
-openapi: "POST /payment/refund"
+openapi: "POST /payment/{id}/refund"
 ---
 
-Use `POST /payment/refund` to return funds to a cardholder after a payment has been captured and settled. You can issue a single full refund or multiple partial refunds — as long as the cumulative refunded amount doesn't exceed the originally captured total. Refunds typically appear on the cardholder's statement within 5”“10 business days, depending on their bank.
+Use `POST /payment/{id}/refund` to return funds to a cardholder after a payment has been captured and settled. You can issue a single full refund or multiple partial refunds — as long as the cumulative refunded amount doesn't exceed the originally captured total. Refunds typically appear on the cardholder's statement within 5–10 business days, depending on their bank.
+
+## Identifying the payment
+
+`{id}` is the Therius payment `id` returned by `POST /payment/authorization` and `POST /payment/purchase`. `orderCode` and `paymentCode` are your own reference fields and are **not** accepted here. An unknown or non-owned `id` returns `404`.
 
 ## Request
 
-**Endpoint:** `POST https://api.therius.io/v1/payment/refund`
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/refund`
+
+<ParamField path="id" type="string" required>
+  The Therius payment `id` from the authorization/purchase response.
+</ParamField>
 
 <ParamField header="Authorization" type="string">
   Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
@@ -29,14 +37,6 @@ Use `POST /payment/refund` to return funds to a cardholder after a payment has b
 
 <ParamField body="merchantCode" type="string" required>
   Your merchant identifier.
-</ParamField>
-
-<ParamField body="orderCode" type="string">
-  Your original order reference. Either `orderCode` or `paymentCode` is required to identify the payment to refund.
-</ParamField>
-
-<ParamField body="paymentCode" type="string">
-  The Therius payment receipt ID (e.g. `"PC-1234567890"`). Either `paymentCode` or `orderCode` is required.
 </ParamField>
 
 <ParamField body="reference" type="string">
@@ -62,6 +62,10 @@ Use `POST /payment/refund` to return funds to a cardholder after a payment has b
 </ParamField>
 
 ## Response
+
+<ResponseField name="id" type="string">
+  The Therius payment `id` (same value as the `{id}` path segment).
+</ResponseField>
 
 <ResponseField name="status" type="string">
   Result of the refund. One of:
@@ -93,13 +97,12 @@ Use `POST /payment/refund` to return funds to a cardholder after a payment has b
 <RequestExample>
 
 ```bash cURL
-curl -X POST https://api.therius.io/v1/payment/refund \
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/refund \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",
-    "paymentCode": "PC-1234567890",
     "amount": { "currency": "USD", "value": 4999, "exponent": 2 }
   }'
 ```
@@ -110,6 +113,7 @@ curl -X POST https://api.therius.io/v1/payment/refund \
 
 ```json 200 OK
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "refunded",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-001",
@@ -125,13 +129,12 @@ curl -X POST https://api.therius.io/v1/payment/refund \
 Refunding only part of an order — for example, a single returned item from a multi-item purchase:
 
 ```bash
-curl -X POST https://api.therius.io/v1/payment/refund \
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/refund \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",
-    "paymentCode": "PC-1234567890",
     "reference": "RETURN-98765",
     "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
   }'
@@ -139,6 +142,7 @@ curl -X POST https://api.therius.io/v1/payment/refund \
 
 ```json
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "refunded",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-001",
@@ -152,7 +156,7 @@ curl -X POST https://api.therius.io/v1/payment/refund \
 </Warning>
 
 <Note>
-  Multiple partial refunds are allowed. You can call this endpoint several times against the same `paymentCode`, provided the cumulative refund amount doesn't exceed the original captured amount. Each call should use a distinct `Idempotency-Key`.
+  Multiple partial refunds are allowed. You can call this endpoint several times against the same payment `id`, provided the cumulative refund amount doesn't exceed the original captured amount. Each call should use a distinct `Idempotency-Key`.
 </Note>
 
 <Tip>

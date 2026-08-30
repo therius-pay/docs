@@ -2,14 +2,22 @@
 title: "Reverse a Payment"
 sidebarTitle: "Cancel or Refund Automatically"
 description: "Automatically cancels if the payment is authorized, or refunds if already captured. No need to track payment state."
-openapi: "POST /payment/cancel_or_refund"
+openapi: "POST /payment/{id}/cancel_or_refund"
 ---
 
-If you don't want to track whether a payment is in the `authorized` or `captured` state in your own system, `POST /payment/cancel_or_refund` handles it for you. Therius checks the current payment state and automatically cancels the authorization (if uncaptured) or issues a refund (if already captured). This is especially useful in order reversal workflows where the payment state may vary depending on timing — for example, a customer cancelling an order while fulfillment is in progress.
+If you don't want to track whether a payment is in the `authorized` or `captured` state in your own system, `POST /payment/{id}/cancel_or_refund` handles it for you. Therius checks the current payment state and automatically cancels the authorization (if uncaptured) or issues a full refund (if already captured). This is especially useful in order reversal workflows where the payment state may vary depending on timing — for example, a customer cancelling an order while fulfillment is in progress.
+
+## Identifying the payment
+
+`{id}` is the Therius payment `id` returned by `POST /payment/authorization` and `POST /payment/purchase`. `orderCode` and `paymentCode` are your own reference fields and are **not** accepted here. An unknown or non-owned `id` returns `404`.
 
 ## Request
 
-**Endpoint:** `POST https://api.therius.io/v1/payment/cancel_or_refund`
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/cancel_or_refund`
+
+<ParamField path="id" type="string" required>
+  The Therius payment `id` from the authorization/purchase response.
+</ParamField>
 
 <ParamField header="Authorization" type="string">
   Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
@@ -31,37 +39,19 @@ If you don't want to track whether a payment is in the `authorized` or `captured
   Your merchant identifier.
 </ParamField>
 
-<ParamField body="orderCode" type="string">
-  Your original order reference. Either `orderCode` or `paymentCode` is required.
-</ParamField>
-
-<ParamField body="paymentCode" type="string">
-  The Therius payment receipt ID (e.g. `"PC-1234567890"`). Either `paymentCode` or `orderCode` is required.
-</ParamField>
-
 <ParamField body="reference" type="string">
   An optional internal reference for this operation.
 </ParamField>
 
-<ParamField body="amount" type="object">
-  The amount to refund. Only relevant when the payment has already been captured (partial refund). If omitted and the payment is captured, a full refund is issued. Ignored if the payment is still authorized (cancellation always voids the full hold).
-
-  <Expandable title="amount fields">
-    <ParamField body="currency" type="string">
-      ISO 4217 currency code.
-    </ParamField>
-
-    <ParamField body="value" type="integer">
-      Amount in minor units.
-    </ParamField>
-
-    <ParamField body="exponent" type="integer">
-      Number of decimal places.
-    </ParamField>
-  </Expandable>
-</ParamField>
+<Note>
+  This endpoint always reverses the **full** payment — it voids the entire authorization hold, or refunds the entire captured amount. To issue a *partial* refund on a captured payment, call [Refund](/api-reference/refund) with an `amount` instead.
+</Note>
 
 ## Response
+
+<ResponseField name="id" type="string">
+  The Therius payment `id` (same value as the `{id}` path segment).
+</ResponseField>
 
 <ResponseField name="status" type="string">
   The action taken. One of:
@@ -94,13 +84,12 @@ If you don't want to track whether a payment is in the `authorized` or `captured
 <RequestExample>
 
 ```bash cURL
-curl -X POST https://api.therius.io/v1/payment/cancel_or_refund \
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/cancel_or_refund \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
-    "merchantCode": "MERCHANT_001",
-    "paymentCode": "PC-1234567890"
+    "merchantCode": "MERCHANT_001"
   }'
 ```
 
@@ -110,6 +99,7 @@ curl -X POST https://api.therius.io/v1/payment/cancel_or_refund \
 
 ```json 200 OK
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "cancelled",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-002",
@@ -124,6 +114,7 @@ curl -X POST https://api.therius.io/v1/payment/cancel_or_refund \
 
 ```json
 {
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
   "status": "refunded",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-001",
@@ -135,7 +126,3 @@ curl -X POST https://api.therius.io/v1/payment/cancel_or_refund \
 <Tip>
   This endpoint is ideal for order reversal flows triggered by your customer-facing cancellation UI, where the same code path handles both pre-capture and post-capture states. Use the `status` in the response to determine which action was taken and update your internal records accordingly.
 </Tip>
-
-<Note>
-  If you need to issue a partial refund on a captured payment, pass the `amount` field. For authorized payments, the `amount` field is ignored — cancellations always void the full hold.
-</Note>
