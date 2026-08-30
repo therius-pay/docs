@@ -1,17 +1,59 @@
 ---
 title: "Update a Subscription's Payment Method"
 sidebarTitle: "Update Card on File"
-description: "Replace the card on a subscription with a new CIT. Also reactivates a suspended subscription."
+description: "Replace the card on a subscription. Changing the card is a CIT and may need 3D Secure — record a card you already CIT'd, or run a zero-value CIT here."
 openapi: "POST /subscription/{id}/payment-method"
 ---
 
-`POST /subscription/{id}/payment-method` replaces the card on a subscription and establishes a new Cardholder Initiated Transaction (CIT) mandate. This is also the only way to reactivate a `suspended` subscription — one where dunning retries have been exhausted and billing has stopped entirely.
+`POST /subscription/{id}/payment-method` replaces the card on a subscription and its
+stored-credential mandate, so every future renewal (a Merchant Initiated Transaction, MIT)
+cites the right `networkTransactionId` / `networkReferenceId`.
 
-Supply the new card as **exactly one** of three interchangeable instruments — a fresh SDK nonce (`nonceData`), raw card data (`cardData`, PCI DSS compliant servers only), or a stored vault token (`tokenData`). This call performs a new CIT, so the customer must have been present and consenting to recurring billing when you collected the card.
+Changing the card on a subscription is **always a Cardholder Initiated Transaction (CIT)**,
+and a CIT may require 3D Secure. There are two ways to supply the new card:
 
-<Warning>
-  Do not send stored-credential fields (`cardOnFile`, `networkTransactionId`, `networkReferenceId`) or `instalments` here — they are ignored. Therius owns the new mandate and drives every subsequent renewal as an MIT itself.
-</Warning>
+<CardGroup cols={2}>
+  <Card title="Record mode — card.tokenData" icon="shield-check">
+    The token is a card that **already completed a CIT** elsewhere. You run the CIT (with
+    3DS if the issuer asks) through `/payment/authorization` or `/payment/purchase`, then
+    attach the resulting token here. No gateway call, no 3DS on this endpoint.
+    **Use this for any card that needs 3D Secure.**
+  </Card>
+  <Card title="CIT mode — card.nonceData / card.cardData" icon="credit-card">
+    Runs a zero-value CIT here to validate the card and establish a fresh mandate, and can
+    **reactivate a `suspended` subscription**. This CIT **cannot carry out a 3D Secure
+    challenge** — a card that requires 3DS will fail.
+  </Card>
+</CardGroup>
+
+Either mode resets the scheme retry sequence and fires `subscription.payment_method_updated`.
+
+## Record mode (recommended)
+
+Because this endpoint's own CIT can't do a 3DS challenge, the reliable way to change a card
+is to run the CIT yourself where 3DS *is* supported, then record it:
+
+<Steps>
+  <Step title="Run a 3DS-capable CIT">
+    Call `/payment/authorization` (a zero-value or small auth) or `/payment/purchase` with
+    `card.nonceData.tokenize: true` (or `card.cardData.tokenize: true`) **and** a `shopper.id`.
+    Handle any `actionRequired` / 3DS challenge with the JS SDK exactly as you would for a
+    normal payment. On success the response returns a vault token and
+    `card.networkTransactionId` / `card.networkReferenceId`.
+  </Step>
+  <Step title="Attach the token to the subscription">
+    `POST /subscription/{id}/payment-method` with `card.tokenData.token` set to that vault
+    token. Therius reads the mandate the token stored at its CIT — you don't need to pass
+    `networkTransactionId` yourself. (Pass it explicitly only when the card was CIT'd
+    outside Therius.)
+  </Step>
+</Steps>
+
+<Note>
+  Record mode **cannot reactivate a `suspended` subscription** — it runs no charge to
+  confirm the new card works. For a suspended subscription, use CIT mode (below), or run a
+  recovery charge yourself first.
+</Note>
 
 ## Request
 
@@ -40,52 +82,71 @@ Supply the new card as **exactly one** of three interchangeable instruments — 
 </ParamField>
 
 <ParamField body="card" type="object" required>
-  The new card. Provide **exactly one** of the instruments below — they are interchangeable alternatives, not fields to combine.
+  The new card. Provide **exactly one** instrument.
 
   <Expandable title="card instruments — choose one">
+    <ParamField body="card.tokenData.token" type="string">
+      **Record mode.** A `vt_...` vault token for a card that already completed a CIT.
+    </ParamField>
     <ParamField body="card.nonceData.nonce" type="string">
-      A fresh single-use nonce from the Therius JS SDK. Recommended — no card data touches your server.
+      **CIT mode.** A fresh single-use nonce from the Therius JS SDK.
     </ParamField>
     <ParamField body="card.cardData" type="object">
-      Raw card fields — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (and optional `documentNumber`, `cardAddress`). Only if your server is PCI DSS compliant to handle raw PANs.
+      **CIT mode.** Raw card fields — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`,
+      `cardholderName` (+ optional `documentNumber`, `cardAddress`). PCI DSS compliant
+      servers only.
     </ParamField>
-    <ParamField body="card.tokenData.token" type="string">
-      A stored `vt_...` vault token.
+    <ParamField body="card.networkTransactionId" type="string">
+      **Record mode, optional.** The Network Transaction ID from the original CIT. Only
+      needed when recording a card that was CIT'd outside Therius — otherwise it's read
+      from the token.
+    </ParamField>
+    <ParamField body="card.networkReferenceId" type="string">
+      **Record mode, optional.** The Mastercard TLID (or scheme equivalent) from the
+      original CIT, alongside `networkTransactionId`. Defaults to `networkTransactionId`.
     </ParamField>
   </Expandable>
 </ParamField>
 
 ## Response
 
-Returns `200 OK` with the updated subscription object. The response includes the new masked card details under `paymentMethod`.
+Returns `200 OK` with the updated subscription object.
 
 ### Webhook events fired
 
 | Event | When |
 | --- | --- |
-| `subscription.payment_method_updated` | Always, on success. |
-| `subscription.reactivated` | Additionally fired if the subscription was `suspended` and the new CIT succeeded. |
+| `subscription.payment_method_updated` | Always, on success. Payload carries `mode: "record"` for record mode. |
+| `subscription.reactivated` | CIT mode only — additionally fired when the subscription was `suspended` and the new CIT + recovery charge succeeded. |
 
 ## Errors
 
 | Code | Meaning |
 | --- | --- |
+| `400` | Card missing; record mode on a `suspended` subscription; the token carries no CIT mandate and no `networkTransactionId` was passed; or the subscription is `cancelled`. |
+| `402` | CIT mode — the card authorization was declined. |
 | `404` | Subscription not found. |
-| `422` | No card instrument provided, an expired/used nonce, or the CIT was declined by the card network. |
+| `422` | No/invalid card instrument, or an expired/used nonce. |
 
 <RequestExample>
 
-```bash cURL
+```bash Record mode
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",
-    "card": {
-      "nonceData": {
-        "nonce": "<fresh nonce from JS SDK>"
-      }
-    }
+    "card": { "tokenData": { "token": "vt_9f2c..." } }
+  }'
+```
+
+```bash CIT mode
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "card": { "nonceData": { "nonce": "<fresh nonce from JS SDK>" } }
   }'
 ```
 
@@ -98,7 +159,3 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-met
 ```
 
 </ResponseExample>
-
-<Tip>
-  Build a card-update flow in your customer portal by creating a new SDK session (`POST /sdk/session`) server-side, passing the `clientToken` to the browser, collecting the new card via the JS SDK, and then calling this endpoint with the resulting nonce.
-</Tip>

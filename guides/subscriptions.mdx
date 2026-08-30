@@ -53,7 +53,12 @@ The response includes a plan `id` that you pass when enrolling a customer.
 
 ## Creating a Subscription
 
-Enrolling a customer performs a Cardholder Initiated Transaction (CIT), so the customer must be present and consenting to recurring billing when you collect the card. Pass the card as **one** of: a fresh nonce from the Therius JS SDK (recommended — see the [Browser Checkout](/guides/browser-checkout) guide), raw `cardData` if your server is PCI DSS compliant, or a stored `vt_...` vault token.
+Enrolling a customer is a Cardholder Initiated Transaction (CIT), and a CIT may require 3D Secure. Pass the card one of two ways:
+
+- **`card.nonceData` / `card.cardData`** — Therius runs the CIT + first charge here. Simple, but this CIT **cannot do a 3D Secure challenge**, so a 3DS-required card fails.
+- **`card.tokenData`** — a card that already completed its CIT (with 3DS) via `/payment/authorization` or `/payment/purchase`. Therius records the mandate and, for cycle 1, either charges an MIT or — if you pass `firstPaymentReference` — links the payment you already made. This is the reliable path for 3DS cards. See the [endpoint reference](/api-reference/subscriptions/create).
+
+Whichever you use, the customer must have been present and consenting to recurring billing when the card was collected.
 
 ```json
 POST /subscription
@@ -106,7 +111,7 @@ After a subscription is active, use the following endpoints to manage it. All en
   <Card icon="credit-card" title="Update Payment Method">
     `POST /subscription/{id}/payment-method`
 
-    Replaces the stored card with a new one via a fresh CIT (SDK nonce, PCI-compliant `cardData`, or a `vt_...` token), collected while the customer is present. This is also the only way to reactivate a `suspended` subscription.
+    Replaces the stored card and its mandate. Changing the card is a CIT and may need 3D Secure — either **record** a card you already CIT'd elsewhere (`card.tokenData`, no charge, no 3DS here), or run a zero-value CIT here (`card.nonceData` / `card.cardData`). Only the CIT-mode path can reactivate a `suspended` subscription. See the [endpoint reference](/api-reference/subscriptions/update-payment-method).
   </Card>
   <Card icon="rotate" title="Retry Payment">
     `POST /subscription/{id}/retry-payment`
@@ -140,6 +145,13 @@ POST /subscription/{id}/payment-method
 ```
 
 Therius immediately attempts a recovery charge. If it succeeds, the subscription returns to `active`.
+
+<Note>
+  This reactivation path runs its own CIT and **cannot complete a 3D Secure challenge**. If
+  the new card requires 3DS, run a 3DS-capable CIT + recovery charge yourself via
+  `/payment/purchase`, then record the resulting token with `card.tokenData` — see the
+  [Update Card on File reference](/api-reference/subscriptions/update-payment-method).
+</Note>
 
 ---
 

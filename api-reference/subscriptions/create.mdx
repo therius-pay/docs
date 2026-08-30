@@ -5,13 +5,53 @@ description: "Enroll a customer in a plan and charge the first billing cycle. Pe
 openapi: "POST /subscription"
 ---
 
-`POST /subscription` enrolls a customer in a plan and performs the initial Cardholder Initiated Transaction (CIT). Therius uses this CIT to register the recurring mandate with the card network before any subsequent Merchant Initiated Transactions (MITs) can occur.
+`POST /subscription` enrolls a customer in a plan and establishes the recurring mandate that
+anchors every future Merchant Initiated Transaction (MIT). Enrolling a customer is a
+Cardholder Initiated Transaction (CIT), and a CIT may require 3D Secure. Two modes:
 
-Supply the card as **exactly one** of three interchangeable instruments — a fresh SDK nonce (`nonceData`), raw card data (`cardData`, PCI DSS compliant servers only), or a stored vault token (`tokenData`). Whichever you use, the customer must have been present and consenting to recurring billing at the point you collected the card.
+<CardGroup cols={2}>
+  <Card title="CIT mode — nonceData / cardData" icon="credit-card">
+    Therius runs the initial CIT + first charge here. The customer must be present. This CIT
+    **cannot carry out a 3D Secure challenge** — a 3DS-required card will fail.
+  </Card>
+  <Card title="Record mode — tokenData" icon="shield-check">
+    The token is a card that **already completed a CIT** (including 3DS) through
+    `/payment/authorization` or `/payment/purchase`. No second CIT runs here.
+    **Use this for any card that needs 3D Secure.**
+  </Card>
+</CardGroup>
+
+Supply the card as **exactly one** instrument — `nonceData`, `cardData` (PCI DSS compliant
+servers only), or `tokenData`.
 
 <Warning>
-  Do not send stored-credential fields (`cardOnFile`, `networkTransactionId`, `networkReferenceId`) or `instalments` on this endpoint — they are ignored. Therius owns the mandate created here and drives every renewal as an MIT itself.
+  `cardOnFile` and `instalments` are ignored here — Therius owns the mandate. In record mode
+  `networkTransactionId` / `networkReferenceId` are read from the token; pass them only for a
+  card CIT'd outside Therius.
 </Warning>
+
+## Record mode
+
+Run a 3DS-capable CIT yourself, then attach the result:
+
+<Steps>
+  <Step title="Run the CIT via /payment/*">
+    Call `/payment/authorization` (amount 0 = account verification) or `/payment/purchase`
+    with `card.<x>.tokenize: true` + a `shopper.id`, and handle any 3DS challenge with the
+    JS SDK as you would for a normal payment. The response returns a `vt_...` token.
+  </Step>
+  <Step title="Create the subscription">
+    `POST /subscription` with `card.tokenData.token`. For cycle 1:
+    <br />• trial or deferred `startAt` → nothing is charged;
+    <br />• you charged the first cycle in your CIT (`/payment/purchase`) → also pass
+    `firstPaymentReference` (that payment's `orderCode` or `paymentCode`); Therius marks the
+    first invoice paid and links it, no charge;
+    <br />• your CIT was a zero-value verification → omit `firstPaymentReference`; Therius
+    charges cycle 1 as an MIT against the recorded mandate (rolls the subscription back with
+    a `402` if it declines).
+    <br />The response's `firstCycle` object reports what happened.
+  </Step>
+</Steps>
 
 ## Request
 
@@ -58,9 +98,16 @@ Supply the card as **exactly one** of three interchangeable instruments — a fr
       Raw card fields — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (and optional `documentNumber`, `cardAddress`). Only if your server is PCI DSS compliant to handle raw PANs.
     </ParamField>
     <ParamField body="card.tokenData.token" type="string">
-      A stored `vt_...` vault token, to enroll a card the customer has already saved with you.
+      **Record mode.** A `vt_...` vault token for a card that already completed its CIT.
     </ParamField>
   </Expandable>
+</ParamField>
+
+<ParamField body="firstPaymentReference" type="string">
+  Record mode only. The `orderCode` or `paymentCode` of the CIT you already ran for this
+  card. When set, Therius validates it against a settled payment on your account that
+  charged the same token and marks cycle 1 paid (no charge). When omitted, Therius charges
+  cycle 1 as an MIT against the recorded mandate.
 </ParamField>
 
 <ParamField body="metadata" type="object">
@@ -95,8 +142,8 @@ A successful request returns `201 Created` with the full subscription object, in
 
 | Code | Meaning |
 | --- | --- |
-| `400` | Plan not found or inactive. |
-| `402` | Initial card declined. |
+| `400` | Plan not found or inactive; or (record mode) the token carries no CIT mandate, or `firstPaymentReference` doesn't resolve to a settled payment that charged this token. |
+| `402` | Initial CIT charge declined (CIT mode), or the first-cycle MIT declined (record mode — the subscription is rolled back). |
 | `409` | Duplicate `Idempotency-Key` with a conflicting request body. |
 | `422` | Validation error — e.g. no card instrument provided, an expired/used nonce, or an invalid plan. |
 
