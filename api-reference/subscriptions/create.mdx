@@ -44,11 +44,11 @@ Run a 3DS-capable CIT yourself, then attach the result:
     `POST /subscription` with `card.tokenData.token`. For cycle 1:
     <br />• trial or deferred `startAt` → nothing is charged;
     <br />• you charged the first cycle in your CIT (`/payment/purchase`) → also pass
-    `firstPaymentReference` (that payment's `orderCode` or `paymentCode`); Therius marks the
-    first invoice paid and links it, no charge;
-    <br />• your CIT was a zero-value verification → omit `firstPaymentReference`; Therius
-    charges cycle 1 as an MIT against the recorded mandate (rolls the subscription back with
-    a `402` if it declines).
+    `firstPaymentId` (the payment `id` from that call's response); Therius marks the first
+    invoice paid and links it, no charge;
+    <br />• your CIT was a zero-value verification → omit `firstPaymentId`; Therius charges
+    cycle 1 as an MIT against the recorded mandate (rolls the subscription back with a `402`
+    if it declines).
     <br />The response's `firstCycle` object reports what happened.
   </Step>
 </Steps>
@@ -103,13 +103,13 @@ Run a 3DS-capable CIT yourself, then attach the result:
   </Expandable>
 </ParamField>
 
-<ParamField body="firstPaymentReference" type="string">
+<ParamField body="firstPaymentId" type="string">
   Record mode only, and only when a first payment is due (ignored for trial or deferred
-  subscriptions). The `orderCode` or `paymentCode` of the CIT you already ran for this card.
-  Therius validates that it resolves to a `captured` or `authorized` payment on your account
-  that charged the **same vaulted token** and is in the **plan's currency**, then marks
-  cycle 1's invoice paid and links it — no charge. When omitted, Therius charges cycle 1 as
-  an MIT against the recorded mandate.
+  subscriptions). The payment `id` returned by the `/payment/authorization` or
+  `/payment/purchase` call in which you ran the CIT for this card. Therius validates that it
+  is a `captured` or `authorized` payment on your account that charged the **same vaulted
+  token** and is in the **plan's currency**, then marks cycle 1's invoice paid and links it
+  — no charge. When omitted, Therius charges cycle 1 as an MIT against the recorded mandate.
 </ParamField>
 
 <ParamField body="metadata" type="object">
@@ -144,7 +144,7 @@ A successful request returns `201 Created` with the full subscription object, in
 
 | Code | Meaning |
 | --- | --- |
-| `400` | Plan not found or inactive; or (record mode) the token carries no CIT mandate, or `firstPaymentReference` doesn't resolve to a settled payment that charged this token. |
+| `400` | Plan not found or inactive; or (record mode) the token carries no CIT mandate, or `firstPaymentId` doesn't resolve to a settled payment that charged this token. |
 | `402` | Initial CIT charge declined (CIT mode), or the first-cycle MIT declined (record mode — the subscription is rolled back). |
 | `409` | Duplicate `Idempotency-Key` with a conflicting request body. |
 | `422` | Validation error — e.g. no card instrument provided, an expired/used nonce, or an invalid plan. |

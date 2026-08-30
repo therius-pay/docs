@@ -56,7 +56,7 @@ The response includes a plan `id` that you pass when enrolling a customer.
 Enrolling a customer is a Cardholder Initiated Transaction (CIT), and a CIT may require 3D Secure. Pass the card one of two ways:
 
 - **`card.nonceData` / `card.cardData`** — Therius runs the CIT + first charge here. Simple, but this CIT **cannot do a 3D Secure challenge**, so a 3DS-required card fails.
-- **`card.tokenData`** — a card that already completed its CIT (with 3DS) via `/payment/authorization` or `/payment/purchase`. Therius records the mandate and, for cycle 1, either charges an MIT or — if you pass `firstPaymentReference` — links the payment you already made. This is the reliable path for 3DS cards. See the [endpoint reference](/api-reference/subscriptions/create).
+- **`card.tokenData`** — a card that already completed its CIT (with 3DS) via `/payment/authorization` or `/payment/purchase`. Therius records the mandate and, for cycle 1, either charges an MIT or — if you pass `firstPaymentId` (the payment id from that CIT) — links the payment you already made. This is the reliable path for 3DS cards. See the [endpoint reference](/api-reference/subscriptions/create).
 
 Whichever you use, the customer must have been present and consenting to recurring billing when the card was collected.
 
