@@ -41,7 +41,7 @@ Pausing a subscription stops all renewal attempts without cancelling it, preserv
 
 ### Request Body
 
-<ParamField body="merchantCode" type="string">
+<ParamField body="merchantCode" type="string" required>
   Your merchant account identifier.
 </ParamField>
 
@@ -97,7 +97,7 @@ On success, Therius fires `subscription.resumed`. If a `suspended` subscription 
 
 ### Request Body
 
-<ParamField body="merchantCode" type="string">
+<ParamField body="merchantCode" type="string" required>
   Your merchant account identifier.
 </ParamField>
 

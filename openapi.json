@@ -1211,6 +1211,15 @@
                 ],
                 "parameters": [
                     {
+                        "name": "merchantCode",
+                        "in": "query",
+                        "required": true,
+                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "country",
                         "in": "query",
                         "schema": {
@@ -1270,7 +1279,14 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "required": [
+                                    "merchantCode"
+                                ],
                                 "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
+                                    },
                                     "name": {
                                         "type": "string"
                                     },
@@ -1315,6 +1331,15 @@
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "merchantCode",
+                        "in": "query",
+                        "required": true,
+                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant.",
                         "schema": {
                             "type": "string"
                         }
@@ -1401,6 +1426,15 @@
                     "Subscriptions"
                 ],
                 "parameters": [
+                    {
+                        "name": "merchantCode",
+                        "in": "query",
+                        "required": true,
+                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     {
                         "name": "status",
                         "in": "query",
@@ -1500,6 +1534,15 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "merchantCode",
+                        "in": "query",
+                        "required": true,
+                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant.",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -1533,6 +1576,25 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Cancellation confirmed",
@@ -1571,9 +1633,14 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
+                                    "merchantCode",
                                     "planId"
                                 ],
                                 "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
+                                    },
                                     "planId": {
                                         "type": "string"
                                     },
@@ -1623,6 +1690,25 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Subscription paused",
@@ -1654,6 +1740,25 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantCode"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Subscription resumed",
@@ -1692,9 +1797,14 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
+                                    "merchantCode",
                                     "card"
                                 ],
                                 "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
+                                    },
                                     "card": {
                                         "$ref": "#/components/schemas/SubscriptionCardUpdate"
                                     }
@@ -1729,6 +1839,15 @@
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "merchantCode",
+                        "in": "query",
+                        "required": true,
+                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant.",
                         "schema": {
                             "type": "string"
                         }
@@ -1792,6 +1911,15 @@
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "merchantCode",
+                        "in": "query",
+                        "required": true,
+                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant.",
                         "schema": {
                             "type": "string"
                         }

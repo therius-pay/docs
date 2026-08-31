@@ -142,3 +142,29 @@ Entries moved here by the `technical-writer` skill after processing.
 - GA status: built clean, not smoke-tested against a live stack.
 - Deferred: Pattern B (route the create/update CIT through the real 3DS-capable pipeline with
   a pending/resume flow) — the Adyen/Checkout.com model, bigger lift.
+
+---
+
+## 2026-08-31 — Removed the dead `key` auth param; Headers / Body / Query separation
+
+- Source: developer skill / Daniel (docs polish), processed inline.
+- Doc-visible change: auth is `Authorization: Bearer` **only** (therius-public-api
+  `auth.go` — the raw key is not read from the body or query string; the dead
+  `form:"key"` struct fields were removed in `a2f09ea`).
+  - `openapi.json`: removed `key` from all 6 request-body schemas.
+  - All 22 `api-reference/**` pages (`2f38edf`): removed every `key` param (body on
+    POST/PATCH, query on GET/DELETE) + the "or pass key in the request body" clauses.
+    Restructured each Request section into explicit `### Headers` / `### Path Parameters`
+    / `### Request Body` (or `### Query Parameters`) subsections, replacing the loose
+    `**Authentication:** / **Idempotency:**` prose. GET/DELETE pages get `Authorization`
+    only (no Content-Type / Idempotency-Key).
+  - Guides / concepts / connections / quickstart / index / authentication (`cd22849`):
+    removed the `"key": "sk_..."` line from 71 code samples, added the missing
+    `-H "Authorization: Bearer"` to the quickstart + `/payment/resume` curls, and
+    rewrote the prose that still called `key` a body/query field.
+- Where in code: `therius-public-api/auth.go` (`authKeyMerchant` / `extractBearer`),
+  `handlers_subscription.go` (`a2f09ea`).
+- GA status: matches shipped code.
+- `merchantCode` — RESOLVED 2026-08-31 (Daniel): keep it and keep validating it against
+  the key exactly as now. It is a deliberate cross-check, not redundant. Docs continue to
+  document it as a required body/query field.

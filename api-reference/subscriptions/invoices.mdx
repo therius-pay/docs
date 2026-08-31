@@ -29,7 +29,7 @@ Therius creates one invoice per billing cycle. Each invoice records the charge a
 
 ### Query Parameters
 
-<ParamField query="merchantCode" type="string">
+<ParamField query="merchantCode" type="string" required>
   Your merchant account identifier.
 </ParamField>
 
@@ -103,7 +103,7 @@ curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?key=sk_liv
 
 ### Query Parameters
 
-<ParamField query="merchantCode" type="string">
+<ParamField query="merchantCode" type="string" required>
   Your merchant account identifier.
 </ParamField>
 
