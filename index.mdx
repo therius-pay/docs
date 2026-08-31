@@ -41,7 +41,7 @@ Every payment — card, wallet, or alternative method — flows through the same
     Your Therius account includes a sandbox key (`sk_sandbox_...`) out of the box. It routes to a test-provider stub — nothing touches a real card network.
   </Step>
   <Step title="Make your first API call">
-    Pass the key in `Authorization: Bearer` (or in the request body as `key`) and fire a `POST /payment/purchase`. See the [Quick Start](/quickstart) for a ready-to-run curl command.
+    Send your key as `Authorization: Bearer sk_live_...` and fire a `POST /payment/purchase`. See the [Quick Start](/quickstart) for a ready-to-run curl command.
   </Step>
   <Step title="Integrate the JS SDK (if browser-based)">
     If you're accepting cards from a browser, use the [JS SDK](/sdk/overview) so raw card numbers never transit your server. The SDK issues a one-time nonce; your server charges the nonce.

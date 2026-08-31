@@ -39,6 +39,7 @@ Call `POST /payment/resume` with the `sessionId` from the paused response. No AP
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/resume \
+  -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "sessionId": "<sessionId from pending_3ds response>"

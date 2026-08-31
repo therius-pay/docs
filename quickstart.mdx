@@ -16,7 +16,7 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
   <Step title="Get a sandbox key">
     Log in to your Therius dashboard and copy the key labeled **Sandbox Secret Key**. It looks like `sk_sandbox_xxxxxxxxxxxx`.
 
-    Every request to `https://api-sandbox.therius.io/v1` must include this key either in the `Authorization` header or in the `key` field of the request body. The key prefix (`sk_sandbox_`) tells Therius to route the request to the sandbox environment automatically — no extra configuration needed.
+    Every request to `https://api-sandbox.therius.io/v1` sends this key as `Authorization: Bearer sk_sandbox_...`. The key prefix (`sk_sandbox_`) tells Therius to route the request to the sandbox environment automatically — no extra configuration needed.
   </Step>
 
   <Step title="Fire your first purchase">
@@ -24,10 +24,10 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
 
     ```bash
     curl -X POST https://api-sandbox.therius.io/v1/payment/purchase \
+      -H "Authorization: Bearer sk_sandbox_your_key_here" \
       -H "Content-Type: application/json" \
       -H "Idempotency-Key: $(uuidgen)" \
       -d '{
-        "key": "sk_sandbox_your_key_here",
         "merchantCode": "MERCHANT_001",
         "orderCode": "QUICKSTART-001",
         "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
@@ -80,7 +80,6 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
 
     ```json
     {
-      "key": "sk_sandbox_your_key_here",
       "merchantCode": "MERCHANT_001",
       "orderCode": "QUICKSTART-002",
       "amount": { "currency": "USD", "value": 1999, "exponent": 2 },

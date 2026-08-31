@@ -4,7 +4,7 @@ sidebarTitle: 'Authentication'
 description: 'Learn how Therius API keys work, how to pass them in requests, the difference between live and sandbox credentials, and how to mint SDK session tokens.'
 ---
 
-Every Therius API endpoint requires a credential. You can provide it in one of two ways: as a `Bearer` token in the `Authorization` header (preferred for server-to-server calls), or as a `key` field in the JSON request body. Both methods are equivalent — choose whichever fits your integration style. What you must never do is expose a private API key in frontend code or pass it through an untrusted client.
+Every Therius API endpoint requires a credential. Server-to-server calls send your private key as a `Bearer` token in the `Authorization` header. What you must never do is expose a private API key in frontend code or pass it through an untrusted client — browser integrations use a short-lived SDK client token instead (see below).
 
 ## API Key Types
 
@@ -25,22 +25,13 @@ Therius issues four kinds of credentials. The prefix on every key tells you exac
 
 ## How to Pass Credentials
 
-Use the `Authorization` header on server-side requests. The `key` body field is a convenience for quick testing.
+Send your private key as a `Bearer` token in the `Authorization` header on every server-side request. It is not accepted in the request body or query string.
 
 ```bash
-# Authorization header (preferred for server-side calls)
 curl -X POST https://api.therius.io/v1/payment/purchase \
   -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Content-Type: application/json" \
-  -d '{ ... }'
-
-# Alternatively, pass the key in the request body
-curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key": "sk_live_your_key_here",
-    ...
-  }'
+  -d '{ "merchantCode": "MERCHANT_001", ... }'
 ```
 
 <Note>

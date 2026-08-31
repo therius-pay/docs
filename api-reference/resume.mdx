@@ -98,6 +98,7 @@ The response is a full `paymentResponse` object with the final payment status.
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/resume \
+  -H "Authorization: Bearer sk_live_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "sessionId": "<sessionId from pending_3ds response>" }'
 ```

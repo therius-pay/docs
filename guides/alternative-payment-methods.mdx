@@ -16,7 +16,6 @@ All APM requests share the same top-level structure. The only things that change
 
 ```json
 {
-  "key": "sk_live_...",
   "merchantCode": "MERCHANT_001",
   "orderCode": "ORDER-001",
   "amount": {
@@ -117,7 +116,6 @@ When a method returns `status: "pending_action"`, you must send your customer to
 
     ```json
     {
-      "key": "sk_live_...",
       "merchantCode": "MERCHANT_001",
       "orderCode": "ORDER-PIX-001",
       "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
@@ -133,7 +131,6 @@ When a method returns `status: "pending_action"`, you must send your customer to
 
     ```json
     {
-      "key": "sk_live_...",
       "merchantCode": "MERCHANT_001",
       "orderCode": "ORDER-ACH-001",
       "amount": { "currency": "USD", "value": 10000, "exponent": 2 },
@@ -154,7 +151,6 @@ When a method returns `status: "pending_action"`, you must send your customer to
 
     ```json
     {
-      "key": "sk_live_...",
       "merchantCode": "MERCHANT_001",
       "orderCode": "ORDER-IDEAL-001",
       "amount": { "currency": "EUR", "value": 2500, "exponent": 2 },
@@ -171,7 +167,6 @@ When a method returns `status: "pending_action"`, you must send your customer to
 
     ```json
     {
-      "key": "sk_live_...",
       "merchantCode": "MERCHANT_001",
       "orderCode": "ORDER-KLARNA-001",
       "amount": { "currency": "USD", "value": 7500, "exponent": 2 },

@@ -31,7 +31,6 @@ A plan is the template that defines what you charge and how often. Create a plan
 POST /subscription/plan
 
 {
-  "key": "sk_live_...",
   "merchantCode": "MERCHANT_001",
   "name": "Pro Monthly",
   "amount": 2900,
@@ -64,7 +63,6 @@ Whichever you use, the customer must have been present and consenting to recurri
 POST /subscription
 
 {
-  "key": "sk_live_...",
   "merchantCode": "MERCHANT_001",
   "planId": 42,
   "customerEmail": "ada@example.com",
@@ -137,7 +135,6 @@ Once all retries are exhausted, the subscription moves to `suspended` and Theriu
 POST /subscription/{id}/payment-method
 
 {
-  "key": "sk_live_...",
   "card": {
     "nonceData": { "nonce": "<fresh nonce from customer>" }
   }
@@ -163,7 +160,6 @@ You can link subscriptions together by passing `parentSubscriptionId` when creat
 POST /subscription
 
 {
-  "key": "sk_live_...",
   "merchantCode": "MERCHANT_001",
   "planId": 99,
   "parentSubscriptionId": "sub_abc123",

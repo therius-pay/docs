@@ -70,7 +70,7 @@ Each of these card numbers returns a `declined` status with a matching `refusalC
     Redirect to `actionRequired.url`. The sandbox simulator treats the challenge as instantly completed — no interaction is required.
   </Step>
   <Step title="Resume the payment">
-    Call `POST /payment/resume` with `{ "key": "sk_sandbox_...", "sessionId": "..." }` — in the sandbox the key selects the environment. Sessions are single-use and expire after 15 minutes. A successful resume returns the final `PaymentResponse` with `status: "captured"`.
+    Call `POST /payment/resume` with `{ "sessionId": "..." }` and your `Authorization: Bearer sk_sandbox_...` header — the `sk_sandbox_` prefix routes to the sandbox. Sessions are single-use and expire after 15 minutes. A successful resume returns the final `PaymentResponse` with `status: "captured"`.
   </Step>
 </Steps>
 
@@ -92,7 +92,6 @@ Send an `apm` block instead of `card`. No card number is needed. Each method ret
 
 ```json
 {
-  "key": "sk_sandbox_...",
   "merchantCode": "MERCHANT_001",
   "orderCode": "ORDER-APM-001",
   "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },

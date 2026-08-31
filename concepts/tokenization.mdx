@@ -14,7 +14,6 @@ Add `"tokenize": true` inside `card.cardData` (or `card.nonceData` if using the 
 
 ```json
 {
-  "key": "sk_live_your_key_here",
   "merchantCode": "MERCHANT_001",
   "orderCode": "ORDER-001",
   "amount": { "currency": "USD", "value": 2999, "exponent": 2 },
@@ -50,7 +49,6 @@ Call `POST /token` to store one or more cards as tokens without making a payment
 
 ```json
 {
-  "key": "sk_live_your_key_here",
   "merchantCode": "MERCHANT_001",
   "shopper": { "id": "shopper-42" },
   "card": {
@@ -73,7 +71,6 @@ Pass `card.tokenData.token` instead of `card.cardData` on any subsequent purchas
 
 ```json
 {
-  "key": "sk_live_your_key_here",
   "merchantCode": "MERCHANT_001",
   "orderCode": "ORDER-002",
   "amount": { "currency": "USD", "value": 2999, "exponent": 2 },
