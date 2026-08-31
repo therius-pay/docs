@@ -54,16 +54,6 @@
             ]
           },
           {
-            "group": "E-Commerce Plugins",
-            "pages": [
-              "guides/plugins/overview",
-              "guides/plugins/woocommerce",
-              "guides/plugins/magento",
-              "guides/plugins/prestashop",
-              "guides/plugins/shopware"
-            ]
-          },
-          {
             "group": "Webhooks",
             "pages": [
               "webhooks/overview",
@@ -77,6 +67,16 @@
               "ai/thera",
               "ai/bring-your-own-ai",
               "ai/tools"
+            ]
+          },
+          {
+            "group": "E-Commerce Plugins",
+            "pages": [
+              "guides/plugins/overview",
+              "guides/plugins/woocommerce",
+              "guides/plugins/magento",
+              "guides/plugins/prestashop",
+              "guides/plugins/shopware"
             ]
           }
         ]
