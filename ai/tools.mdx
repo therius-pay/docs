@@ -1,0 +1,83 @@
+---
+title: 'Therius AI Tool Reference'
+sidebarTitle: 'Tool Reference'
+description: 'Every tool available to Thera and to a connected AI agent, what it returns, and the capability and permission it requires.'
+---
+
+These are the tools that back both [Thera](/ai/thera) and the [Bring Your Own AI](/ai/bring-your-own-ai) surface. A tool is only visible — and only callable — when your session or AI key holds the listed capability, which in turn requires the listed dashboard permission.
+
+All tools are **read-only or draft-only**. None captures money, saves a routing rule, resolves a dispute, or changes any state.
+
+## Analytics
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `get_auth_rate` | Authorization-rate summary and per-connection breakdown over a time window. | `analytics:read` |
+| `get_routing_performance` | Per-connection auth rate, p95 latency, and volume mix from the recent-outcomes view. | `analytics:read` |
+| `get_settlement_summary` | Captured vs. settled/refunded amounts by currency over a time window. | `analytics:read` |
+| `find_auth_rate_anomalies` | Flags a connection's auth-rate drop against its own recent baseline, with reroutable decline reasons attached. | `analytics:read` |
+| `get_decline_breakdown` | Refused payments grouped by decline reason, with the human meaning and reroutable flag. <sup>Superadmin only.</sup> | `analytics:read` |
+| `search_payments` | Search recent payments (masked — brand and last 4 only). Filter by status, currency, order code. | `payments:read` |
+
+## Payments and routing
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `find_payment` | Find payments by order code, payment ID, customer email, or card last 4 (masked results). | `payments:read` |
+| `get_payment_timeline` | The full transaction timeline for one payment — status changes, provider responses, refusal reasons. | `payments:read` |
+| `explain_routing_decision` | Which connection a payment used and how the merchant's connections have recently performed — the context Therius routes on. | `analytics:read` |
+| `propose_routing_rule` | A **draft** routing rule from structured conditions and an ordered connection list, dry-run against the last 30 days of payments. Never saves — you apply it in the routing editor. | `routing:propose` |
+
+## Subscriptions
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `get_subscription` | A subscription's status, plan, billing dates, and dunning state. | `subscriptions:read` |
+| `explain_dunning` | Why a subscription is past due: dunning attempt count, scheme retry state, and the next retry time. | `subscriptions:read` |
+
+## Disputes
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `get_dispute` | A dispute's status, type, amount, reason, and evidence deadline. | `disputes:read` |
+| `list_disputes_due_soon` | Open disputes whose evidence deadline falls within N days (default 7). | `disputes:read` |
+| `get_dispute_evidence_context` | The full payment, timeline, card, and subscription-history context behind a dispute, plus any evidence already drafted. Read-only — you compose and submit the evidence. | `disputes:propose` |
+
+## Fraud and reconciliation
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `get_fraud_review_context` | Behind a pending fraud review: which rule flagged it, the actual signal values (velocity count vs. threshold, BIN risk, amount range), and the shopper's/IP's prior review history. Read-only — you approve or decline. | `fraud:propose` |
+| `find_settlement_match_candidates` | For one unmatched settlement record, candidate payments ranked by amount match, date proximity, and acquirer-reference overlap. Read-only — you click Match or Dismiss. | `reconciliation:propose` |
+
+## Actions (draft only)
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `propose_refund` | A **draft** refund for a payment, for you to review and confirm in the dashboard. Refunds nothing itself. | `actions:propose` |
+
+## Integration and documentation
+
+These tools expose no merchant data and are always available with `docs:read`.
+
+| Tool | Returns | Capability |
+|---|---|---|
+| `search_docs` | Search the API reference (endpoints, fields, auth), grounded in the live OpenAPI spec. | `docs:read` |
+| `get_endpoint` | The request/response schema for one endpoint. | `docs:read` |
+| `list_providers` | Payment providers Therius can route to, with high-level capabilities. | `docs:read` |
+| `get_provider_capabilities` | One provider's supported features — 3DS, wallets, multi-capture, disputes, recurring. | `docs:read` |
+| `get_test_cards` | Sandbox test cards and the outcomes they trigger. | `docs:read` |
+| `generate_integration_snippet` | A starter snippet for a server purchase or webhook verification, in curl, Node, or Python. | `docs:read` |
+| `explain_error` | The meaning of a Therius/ISO decline or reason code, and whether it is retryable or reroutable. <sup>Superadmin only.</sup> | `docs:read` |
+
+## Sandbox scaffolding
+
+| Tool | Status | Capability |
+|---|---|---|
+| `create_sandbox_key` | Issues a new sandbox API key for a merchant you're assigned. Non-destructive; shown once. | `sandbox:write` |
+| `run_test_purchase` | Runs a real sandbox purchase end-to-end using an ephemeral key that is revoked immediately after. | `sandbox:write` |
+| `simulate_webhook` | Planned — not implemented in the current build. Use the dashboard's **Send test event** control. | `sandbox:write` |
+
+<Note>
+  This list reflects the tools available today. New tools are added as the AI layer grows; a connected MCP client always sees the current set through tool discovery.
+</Note>

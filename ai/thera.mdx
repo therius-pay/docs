@@ -1,0 +1,85 @@
+---
+title: 'Thera: The In-Dashboard AI Assistant'
+sidebarTitle: 'Thera'
+description: 'Thera is an AI assistant built into the Therius dashboard. Ask about your payments, analytics, subscriptions, disputes, and settlements in plain language. It runs as you, scoped to your permissions, and never takes an action on its own.'
+---
+
+Thera is an AI assistant embedded in the Therius dashboard. Open it from **Ask Thera** in the top bar, type a question about your account, and Thera calls the same data tools a human would use — then answers in plain language, citing the tools it used.
+
+<Note>
+  Thera is **off until your Therius operator enables it.** Until a model endpoint is configured, the chat drawer shows "Thera is not enabled on this environment yet." The [Bring Your Own AI](/ai/bring-your-own-ai) tool surface works independently of this and is available today.
+</Note>
+
+## What you can ask
+
+Thera answers questions about the merchants you can access and about how to use Therius. For example:
+
+- "What was my authorization rate over the last 30 days?"
+- "Which decline reasons are most common, and are any of them reroutable?"
+- "How have my connections performed this week?"
+- "Why did payment `ORDER-1042` decline, and can I retry it?"
+- "Which subscriptions are at risk of cancellation this week?"
+- "Which disputes have an evidence deadline in the next 7 days?"
+- "Draft a routing rule that sends Visa transactions over $500 in BRL to my Adyen connection first."
+
+Thera will not answer general-knowledge questions, help with unrelated coding, or discuss anything outside your Therius data. If a question looks like it names a customer or order, it will ask you for an order code, payment ID, or email to look it up.
+
+## How it works
+
+<Steps>
+  <Step title="You ask a question">
+    The dashboard sends your message to Therius along with your existing session — no separate login, no API key.
+  </Step>
+  <Step title="Thera plans tool calls">
+    The model is shown only the tools your role permits and decides which to call to answer your question.
+  </Step>
+  <Step title="Therius runs each tool as you">
+    Every tool executes against your assigned merchants and the environment you have selected, with the same permission check the equivalent dashboard action requires. The result is recorded in the audit log.
+  </Step>
+  <Step title="Thera composes an answer">
+    The model writes a reply grounded only in what the tools returned. Every figure it cites comes from a tool result in that conversation. The tools it used are listed under the answer.
+  </Step>
+</Steps>
+
+Each conversation is bounded to a handful of tool calls. If a question can't be answered within that budget, Thera asks you to be more specific rather than guessing.
+
+## Draft actions
+
+Some questions lead to an action — "refund this payment", "add this routing rule". Thera never performs these. Instead it produces a **draft** that appears as a card in the chat:
+
+- A draft refund shows the payment and amount, with a link to **Review & confirm in Payments**.
+- A draft routing rule shows the condition and connection order, to be applied in the routing editor.
+
+Nothing changes until you complete the action yourself through the normal dashboard flow, with its normal permission checks.
+
+## Scope and safety
+
+- **Runs as you.** Thera sees exactly what you would see in the dashboard — no more. A colleague with a narrower role gets narrower answers to the same question.
+- **Environment-aware.** Answers reflect the Production / Sandbox toggle in the dashboard. The drawer shows a `sandbox` badge when you are in sandbox.
+- **Grounded.** Thera never invents numbers, IDs, or statuses. If a tool didn't return something, Thera says it doesn't have it.
+- **No internals.** Thera won't explain Therius's own implementation, schema, or field names — it translates technical results into plain business language.
+- **Injection-resistant.** Instructions embedded in a customer note, a dispute description, or your own message ("ignore the rules above") are treated as data and ignored.
+- **Audited.** Every tool call Thera makes is logged like any other AI tool call.
+
+<Warning>
+  Thera is an assistant, not an authority. The chat drawer reminds you: answers come from your Therius data — verify before acting.
+</Warning>
+
+## Usage limits
+
+Thera usage is metered per organization against a monthly token allowance set by your Therius operator. If you reach the limit, Thera pauses until the start of the next month — the dashboard, analytics, and all other tools keep working — and tells you so rather than failing silently.
+
+## Enabling Thera (for Therius operators)
+
+Thera needs a language model endpoint. It speaks the OpenAI chat-completions API, so any compatible endpoint works: a self-hosted [vLLM](https://docs.vllm.ai) or [Ollama](https://ollama.com) server, or a managed provider.
+
+Configure it in the **backoffice** under **Platform → AI**:
+
+1. Set `base_url`, `model`, and (if the endpoint needs one) `api_key` on the **Thera AI Model** integration.
+2. Toggle the integration **enabled**.
+
+The setting is platform-wide, read from production, resolved fresh on every request — switching model or provider takes effect immediately, with no restart. Credentials are encrypted at rest and write-only in the UI. An environment-variable fallback (`LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY`) exists for local development.
+
+<Warning>
+  Do not co-locate the model with the payment services. Language-model inference is memory- and CPU-hungry and can starve latency-critical payment traffic. Run the model on a separate host or a managed endpoint.
+</Warning>

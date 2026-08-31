@@ -1,0 +1,116 @@
+---
+title: 'Bring Your Own AI: Connect Claude, Cursor, or ChatGPT to Therius'
+sidebarTitle: 'Bring Your Own AI'
+description: 'Point any MCP client or the REST tool surface at Therius with a user-scoped AI key. Your AI agent gets real, RBAC-enforced access to your payments, analytics, routing, and integration data — Therius hosts no model for this path.'
+---
+
+You don't have to use Therius's assistant to get an AI over your payment data. Therius publishes its tools as a **Model Context Protocol (MCP)** server and an equivalent **REST tool surface**, so you can connect the AI tool you already use — Claude, Cursor, an MCP-capable ChatGPT connector, or your own agent.
+
+There is no model-hosting cost and nothing to deploy. You authenticate with an **AI key** that acts as your dashboard user: it reaches only the merchants you're assigned and only the tools you grant it.
+
+## Why use it
+
+- **Your model, your subscription.** Therius runs no model on this path. Bring the AI you already pay for.
+- **Real tools, not a sandbox demo.** The agent calls the same analytics, routing, dispute, reconciliation, and integration tools that back Thera.
+- **Scoped to you.** An AI key can never see more than the user who created it. Its capabilities are a subset of that user's permissions, re-checked live on every call.
+- **Environment-safe.** A key is bound to production or sandbox by its prefix and cannot cross over.
+- **Works today.** No operator setup step — create a key in the dashboard and connect.
+- **Audited.** Every call an AI key makes is recorded.
+- **Integration acceleration.** The `docs:read` tools let an AI coding agent look up endpoint schemas, provider capabilities, error codes, and test cards while it writes your integration.
+
+## Create an AI key
+
+In the Therius dashboard, go to **Developers → AI keys**:
+
+<Steps>
+  <Step title="New AI key">
+    Click **New AI key**. Give it a label and choose the environment (**production** or **sandbox**).
+  </Step>
+  <Step title="Grant capabilities">
+    Select the capability groups the key may use. You can only grant capabilities your own role allows — see the table below.
+  </Step>
+  <Step title="Copy the key">
+    The full key (`ai_live_…` or `ai_sandbox_…`) is shown **once** and cannot be recovered afterward. Store it in a secret manager.
+  </Step>
+</Steps>
+
+Keys default to a read-only set (`analytics:read`, `docs:read`) if you grant nothing. A client administrator can also issue keys to other users within the same client. Revoke a key at any time from the same page — revocation is immediate.
+
+Each key has a request-rate limit (120 requests/minute by default).
+
+## Connect an MCP client
+
+The MCP endpoint and REST base URL are shown on the **Developers → AI keys** page. Copy them from there. The examples below use `https://ai.therius.com`.
+
+<CodeGroup>
+```bash Claude Code
+claude mcp add --transport http therius https://ai.therius.com/mcp \
+  --header "Authorization: Bearer <your-ai-key>"
+```
+
+```json Claude Desktop / Cursor (mcp.json)
+{
+  "mcpServers": {
+    "therius": {
+      "url": "https://ai.therius.com/mcp",
+      "headers": { "Authorization": "Bearer <your-ai-key>" }
+    }
+  }
+}
+```
+</CodeGroup>
+
+The MCP server speaks JSON-RPC 2.0 over Streamable HTTP. Your client discovers the available tools automatically — it will see only the tools your key's capabilities allow.
+
+For ChatGPT connectors or a custom GPT action, register the OpenAPI descriptor at `https://ai.therius.com/openapi.json` and authenticate with the same key as a Bearer token.
+
+## Use the REST tool surface
+
+If you're not using MCP, the same tools are available over plain REST:
+
+| Method & path | Purpose |
+|---|---|
+| `GET /v1/tools` | List the tools your key can call, with their input schemas. |
+| `POST /v1/tools/{tool}` | Call one tool. The JSON body is the tool's arguments. |
+| `GET /openapi.json` | OpenAPI descriptor for the surface (for GPT actions / connectors). |
+
+Authenticate every request with `Authorization: Bearer <your-ai-key>`.
+
+```bash
+curl https://ai.therius.com/v1/tools/find_auth_rate_anomalies \
+  -H "Authorization: Bearer ai_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "window_days": 7 }'
+```
+
+## Capabilities
+
+A key carries one or more capabilities. Each maps to the dashboard permission the equivalent action needs — you can only grant a capability if your own role has that permission, and the key's effective set is narrowed live if your role changes.
+
+| Capability | Grants | Requires permission |
+|---|---|---|
+| `docs:read` | API reference search, endpoint schemas, provider capabilities, decline-code meanings, sandbox test cards, starter snippets. No merchant data. | *(always allowed)* |
+| `analytics:read` | Authorization-rate analytics and anomaly detection. | `get_transaction` |
+| `payments:read` | Look up a payment and its lifecycle timeline. | `get_transaction` |
+| `subscriptions:read` | Subscription status and dunning state. | `get_subscriptions` |
+| `disputes:read` | Dispute list and deadlines. | `get_disputes` |
+| `sandbox:write` | Sandbox integration scaffolding (limited in the current build). | `edit_merchant` |
+| `actions:propose` | Produce a **draft** refund for a human to confirm. | `edit_transaction` |
+| `routing:propose` | Produce a **draft** routing rule (validated + dry-run; not saved). | `edit_routing` |
+| `disputes:propose` | Gather full evidence context for a dispute. | `manage_disputes` |
+| `fraud:propose` | Summarize why a fraud review was flagged. | `manage_fraud_reviews` |
+| `reconciliation:propose` | Rank likely matches for an unmatched settlement record. | `manage_reconciliation` |
+
+<Warning>
+  The `*:propose` capabilities never execute anything. They return a draft or a context summary; a human applies the change through the dashboard.
+</Warning>
+
+## Scope and safety
+
+- **User-scoped.** The key acts as the user who created it. It reaches that user's assigned merchants only — never the whole platform, unless the user is a platform administrator.
+- **Capability ceiling.** A key's capabilities can only ever narrow the user's permissions. An over-grant is rejected at creation; a later role change re-narrows the key on the next request.
+- **Environment-bound.** `ai_live_` keys reach production data; `ai_sandbox_` keys reach sandbox data. There is no cross-over.
+- **No card data or secrets.** PANs, CVVs, and connection credentials are masked at the tool layer and never returned.
+- **Audited.** Every tool call — tool name, masked arguments, caller, timestamp — is written to the audit log.
+
+See the [tool reference](/ai/tools) for every tool, its arguments, and its capability.

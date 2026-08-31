@@ -69,6 +69,15 @@
               "webhooks/overview",
               "webhooks/events"
             ]
+          },
+          {
+            "group": "AI Assistant",
+            "pages": [
+              "ai/overview",
+              "ai/thera",
+              "ai/bring-your-own-ai",
+              "ai/tools"
+            ]
           }
         ]
       },

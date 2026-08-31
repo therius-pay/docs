@@ -1,0 +1,59 @@
+---
+title: 'Therius AI: Thera and Bring Your Own AI'
+sidebarTitle: 'Overview'
+description: 'Therius exposes your payments, analytics, routing, disputes, and reconciliation data to AI — either through Thera, the in-dashboard assistant, or by connecting your own AI agent over MCP. No card data or secrets ever reach a model.'
+---
+
+Therius turns its orchestration data into something an AI can reason over: authorization rates, decline reasons, routing decisions, subscription health, dispute deadlines, and settlement matching. There are two ways to use it, and they share the same tools, the same permission model, and the same guardrails.
+
+<CardGroup cols={2}>
+  <Card icon="sparkles" title="Thera" href="/ai/thera">
+    An AI assistant built into the Therius dashboard. Ask questions in plain language about the merchants you can access. Runs as you, scoped to your permissions.
+  </Card>
+  <Card icon="plug" title="Bring Your Own AI" href="/ai/bring-your-own-ai">
+    Connect Claude, Cursor, ChatGPT, or any MCP client to Therius with a user-scoped AI key. Your AI subscription, your model — Therius hosts nothing for this path.
+  </Card>
+</CardGroup>
+
+## Which one should I use?
+
+| | Thera | Bring Your Own AI |
+|---|---|---|
+| Where it runs | Inside the Therius dashboard | In your own AI tool (Claude, Cursor, ChatGPT, a custom agent) |
+| Who hosts the model | You — Therius points at an OpenAI-compatible endpoint you provide | You — your existing AI subscription |
+| Availability | Off until your Therius operator configures a model endpoint | Available today; create an AI key in the dashboard |
+| Authentication | Your dashboard session (admin JWT) | An AI key (`ai_live_…` / `ai_sandbox_…`) as a Bearer token |
+| Interface | Chat drawer in the dashboard | MCP (Streamable HTTP) and a REST tool surface |
+| Best for | Day-to-day questions while working in the dashboard | Building AI workflows, integration help, pulling data into your own agent |
+
+## Shared guarantees
+
+Both paths are built on the same rules:
+
+- **Your scope, never wider.** An AI request can only reach the merchants you are assigned and can only call the tools your Therius role permits. Scope is enforced by Therius on every call — the model cannot widen it, and revoking a role immediately strips the matching capability from any AI key you issued.
+- **Environment isolation.** Production and sandbox data never mix. A sandbox AI key (`ai_sandbox_…`) reaches only sandbox data; Thera answers for the environment you have selected in the dashboard.
+- **No card data, no secrets.** Full card numbers, CVVs, and connection credentials are never sent to a model — they are masked at the tool layer regardless of which model you use.
+- **Read and draft only.** No AI tool captures money, issues a refund, changes a routing rule, or resolves a dispute on its own. Actions that change state are returned as **drafts** for a human to review and confirm through the normal dashboard flow.
+- **Untrusted input is treated as data.** Text inside tool results (customer names, dispute notes) and the prompt itself are treated as data, not instructions.
+- **Full audit trail.** Every AI tool call is recorded — who called it, which tool, with what arguments, and when.
+
+## What the AI can see and do
+
+The same tool set backs Thera and the MCP/REST surface. Availability of each tool depends on the permissions behind your session or AI key.
+
+| Area | What it does |
+|---|---|
+| **Analytics** | Authorization rate over a period, breakdowns by connection, issuer, country, and decline reason; auth-rate anomaly detection against a recent baseline. |
+| **Payments** | Look up a payment by order code, ID, customer email, or last 4; explain its lifecycle and every status transition. |
+| **Routing** | Explain why a payment routed to a given connection; draft a routing rule from a plain-language request (validated and dry-run against real history — you still click **Save**). |
+| **Subscriptions** | Subscription status, dunning state, and why a renewal failed. |
+| **Disputes** | Open disputes, evidence deadlines, and the full payment/timeline/subscription context for a dispute. |
+| **Reconciliation** | Rank the most likely payment matches for an unmatched settlement record. |
+| **Fraud** | Summarize why a review was flagged and the real numbers behind the rule that fired. |
+| **Integration & docs** | Search the API reference, get an endpoint schema, list provider capabilities, fetch sandbox test cards, generate a starter snippet. |
+
+See the [tool reference](/ai/tools) for the full list and the permission each one needs.
+
+<Note>
+  Some capabilities are still maturing. Draft routing rules and dispute-evidence context are gathered for you, but a human always composes and applies the final change. Sandbox scaffolding tools are limited in the current build. The [tool reference](/ai/tools) marks what is fully live.
+</Note>
