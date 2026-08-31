@@ -1,0 +1,118 @@
+---
+title: 'Bring Your Own AI: conecte Claude, Cursor ou ChatGPT ao Therius'
+sidebarTitle: 'Bring Your Own AI'
+description: 'Aponte qualquer cliente MCP ou a superfície de ferramentas REST para o Therius com uma chave de IA limitada ao usuário. O seu agente de IA obtém acesso real, com RBAC aplicado, aos seus dados de pagamentos, analytics, roteamento e integração — o Therius não hospeda nenhum modelo neste caminho.'
+translationOf: ai/bring-your-own-ai.mdx
+translationSourceHash: 503c0b47775e007e4c816c548eb386c4f1e1db8c9c58c92b515dd581fc90dd8e
+---
+
+Você não precisa usar o assistente do Therius para ter uma IA sobre os seus dados de pagamento. O Therius publica as suas ferramentas como um servidor **Model Context Protocol (MCP)** e uma **superfície de ferramentas REST** equivalente, então você pode conectar a ferramenta de IA que já usa — Claude, Cursor, um conector do ChatGPT com capacidade MCP, ou o seu próprio agente.
+
+Não há custo de hospedagem de modelo nem nada a implantar. Você se autentica com uma **chave de IA** que age como o seu usuário do painel: ela alcança apenas os lojistas que você tem atribuídos e apenas as ferramentas que você concede a ela.
+
+## Por que usar
+
+- **O seu modelo, a sua assinatura.** O Therius não executa nenhum modelo neste caminho. Traga a IA que você já paga.
+- **Ferramentas reais, não uma demo de sandbox.** O agente chama as mesmas ferramentas de analytics, roteamento, disputa, conciliação e integração que dão suporte ao Thera.
+- **Limitada a você.** Uma chave de IA nunca pode ver mais do que o usuário que a criou. As capacidades dela são um subconjunto das permissões desse usuário, revalidadas ao vivo a cada chamada.
+- **Segura por ambiente.** Uma chave é vinculada a produção ou sandbox pelo prefixo dela e não pode cruzar.
+- **Funciona hoje.** Sem passo de configuração do operador — crie uma chave no painel e conecte.
+- **Auditada.** Toda chamada que uma chave de IA faz é registrada.
+- **Aceleração da integração.** As ferramentas `docs:read` permitem que um agente de programação de IA consulte esquemas de endpoints, capacidades de provedores, códigos de erro e cartões de teste enquanto escreve a sua integração.
+
+## Crie uma chave de IA
+
+No painel do Therius, vá para **Developers → AI keys**:
+
+<Steps>
+  <Step title="Nova chave de IA">
+    Clique em **New AI key**. Dê a ela um rótulo e escolha o ambiente (**production** ou **sandbox**).
+  </Step>
+  <Step title="Conceda capacidades">
+    Selecione os grupos de capacidades que a chave pode usar. Você só pode conceder capacidades que o seu próprio papel permite — veja a tabela abaixo.
+  </Step>
+  <Step title="Copie a chave">
+    A chave completa (`ai_live_…` ou `ai_sandbox_…`) é mostrada **uma única vez** e não pode ser recuperada depois. Guarde-a em um gerenciador de segredos.
+  </Step>
+</Steps>
+
+As chaves usam por padrão um conjunto somente-leitura (`analytics:read`, `docs:read`) se você não conceder nada. Um administrador de cliente também pode emitir chaves para outros usuários dentro do mesmo cliente. Revogue uma chave a qualquer momento na mesma página — a revogação é imediata.
+
+Cada chave tem um limite de taxa de requisições (120 requisições/minuto por padrão).
+
+## Conecte um cliente MCP
+
+O endpoint MCP e a URL base REST são mostrados na página **Developers → AI keys**. Copie-os de lá. Os exemplos abaixo usam `https://ai.therius.com`.
+
+<CodeGroup>
+```bash Claude Code
+claude mcp add --transport http therius https://ai.therius.com/mcp \
+  --header "Authorization: Bearer <your-ai-key>"
+```
+
+```json Claude Desktop / Cursor (mcp.json)
+{
+  "mcpServers": {
+    "therius": {
+      "url": "https://ai.therius.com/mcp",
+      "headers": { "Authorization": "Bearer <your-ai-key>" }
+    }
+  }
+}
+```
+</CodeGroup>
+
+O servidor MCP fala JSON-RPC 2.0 sobre Streamable HTTP. O seu cliente descobre as ferramentas disponíveis automaticamente — ele verá apenas as ferramentas que as capacidades da sua chave permitem.
+
+Para conectores do ChatGPT ou uma ação de GPT personalizada, registre o descritor OpenAPI em `https://ai.therius.com/openapi.json` e autentique-se com a mesma chave como token Bearer.
+
+## Use a superfície de ferramentas REST
+
+Se você não usa MCP, as mesmas ferramentas estão disponíveis sobre REST simples:
+
+| Método e caminho | Propósito |
+|---|---|
+| `GET /v1/tools` | Lista as ferramentas que a sua chave pode chamar, com os esquemas de entrada delas. |
+| `POST /v1/tools/{tool}` | Chama uma ferramenta. O corpo JSON são os argumentos da ferramenta. |
+| `GET /openapi.json` | Descritor OpenAPI da superfície (para ações de GPT / conectores). |
+
+Autentique toda requisição com `Authorization: Bearer <your-ai-key>`.
+
+```bash
+curl https://ai.therius.com/v1/tools/find_auth_rate_anomalies \
+  -H "Authorization: Bearer ai_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "window_days": 7 }'
+```
+
+## Capacidades
+
+Uma chave carrega uma ou mais capacidades. Cada uma corresponde à permissão do painel que a ação equivalente precisa — você só pode conceder uma capacidade se o seu próprio papel tiver essa permissão, e o conjunto efetivo da chave é estreitado ao vivo se o seu papel mudar.
+
+| Capacidade | Concede | Requer permissão |
+|---|---|---|
+| `docs:read` | Busca na referência da API, esquemas de endpoints, capacidades de provedores, significados de códigos de recusa, cartões de teste de sandbox, trechos iniciais. Nenhum dado de lojista. | *(sempre permitido)* |
+| `analytics:read` | Analytics de taxa de autorização e detecção de anomalias. | `get_transaction` |
+| `payments:read` | Buscar um pagamento e a sua linha do tempo de ciclo de vida. | `get_transaction` |
+| `subscriptions:read` | Status de assinatura e estado de gestão de cobranças. | `get_subscriptions` |
+| `disputes:read` | Lista de disputas e prazos. | `get_disputes` |
+| `sandbox:write` | Scaffolding de integração de sandbox (limitado na build atual). | `edit_merchant` |
+| `actions:propose` | Produzir um reembolso em **rascunho** para um humano confirmar. | `edit_transaction` |
+| `routing:propose` | Produzir uma regra de roteamento em **rascunho** (validada + dry-run; não salva). | `edit_routing` |
+| `disputes:propose` | Reunir o contexto de evidência completo para uma disputa. | `manage_disputes` |
+| `fraud:propose` | Resumir por que uma revisão de fraude foi sinalizada. | `manage_fraud_reviews` |
+| `reconciliation:propose` | Classificar as correspondências prováveis para um registro de liquidação não correspondido. | `manage_reconciliation` |
+
+<Warning>
+  As capacidades `*:propose` nunca executam nada. Elas devolvem um rascunho ou um resumo de contexto; um humano aplica a mudança pelo painel.
+</Warning>
+
+## Escopo e segurança
+
+- **Limitada ao usuário.** A chave age como o usuário que a criou. Ela alcança apenas os lojistas atribuídos a esse usuário — nunca a plataforma inteira, a menos que o usuário seja administrador da plataforma.
+- **Teto de capacidades.** As capacidades de uma chave só podem estreitar as permissões do usuário. Uma concessão excessiva é rejeitada na criação; uma mudança de papel posterior estreita a chave novamente na requisição seguinte.
+- **Vinculada ao ambiente.** As chaves `ai_live_` alcançam dados de produção; as chaves `ai_sandbox_` alcançam dados de sandbox. Não há cruzamento.
+- **Nenhum dado de cartão ou segredo.** Os PANs, os CVVs e as credenciais de conexão são mascarados na camada de ferramentas e nunca são devolvidos.
+- **Auditada.** Toda chamada de ferramenta — nome da ferramenta, argumentos mascarados, quem chamou, carimbo de data/hora — é gravada no log de auditoria.
+
+Veja a [referência de ferramentas](/ai/tools) para cada ferramenta, os seus argumentos e a sua capacidade.

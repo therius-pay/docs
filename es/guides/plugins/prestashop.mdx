@@ -1,0 +1,69 @@
+---
+title: 'Therius para PrestaShop'
+sidebarTitle: 'PrestaShop'
+description: 'Instala y configura el módulo de pago de Therius para PrestaShop — claves de sandbox y producción, webhooks y reembolsos.'
+translationOf: guides/plugins/prestashop.mdx
+translationSourceHash: b248e6a4a392827547a7353568c0ba79938416b4701201a8d6d90a67b8d5eb37
+---
+
+<Note>
+  **Beta.** Este módulo está completo en funciones y revisado en código, pero aún no se ha verificado contra una instalación de PrestaShop en vivo. Pruébalo a fondo en tu propio entorno de staging antes de salir a producción.
+</Note>
+
+El módulo de Therius para PrestaShop agrega una opción **Therius Payments** al checkout, montando el [Widget de checkout](/sdk/checkout-widget) para tarjetas y métodos de pago alternativos.
+
+**Repositorio:** [`therius-pay/therius-plugin-prestashop`](https://github.com/therius-pay/therius-plugin-prestashop)
+
+## Requisitos
+
+- PrestaShop con acceso de admin para instalar módulos
+- Una cuenta de Therius con claves de API y una configuración de checkout
+
+## Instalación
+
+1. Copia la carpeta `therius-plugin-prestashop` en el directorio `modules/` de tu PrestaShop, nombrada `therius`.
+2. En el admin de PrestaShop, ve a **Módulos → Gestor de módulos**, encuentra **Therius Payments** y haz clic en **Instalar**.
+
+## Configuración
+
+<Steps>
+  ### Abre la configuración del módulo
+
+  En **Módulos → Gestor de módulos**, encuentra **Therius Payments** y haz clic en **Configurar**.
+
+  ### Ingresa tus datos
+
+  Completa **Merchant Code**, luego, por entorno:
+
+  - **Test:** Test Publishable Key, Test Private Key, Test Checkout Config ID, Test Webhook Secret.
+  - **Live:** Live Publishable Key, Live Private Key, Live Checkout Config ID, Live Webhook Secret.
+
+  ### Elige el entorno activo
+
+  Alterna **Test mode** — *Habilitado* enruta el checkout a `https://api-sandbox.therius.io` con las credenciales de Test; *Deshabilitado* enruta a `https://api.therius.io` con las credenciales de Live. Haz clic en **Guardar**.
+</Steps>
+
+## Webhooks
+
+<Warning>
+  Configurar esto no es opcional. Este checkout cobra la tarjeta **antes** de que exista la orden de PrestaShop — la orden normalmente la crea el navegador del comprador al hacer un post de vuelta después del pago. Si ese post nunca llega (pestaña cerrada, conexión caída), el webhook `payment.captured` / `payment.authorized` es la única forma en que la tienda se entera de que el cobro ocurrió y construye la orden faltante.
+</Warning>
+
+1. En el dashboard de Therius, ve a **Developers → Webhooks** y agrega un endpoint que apunte a:
+
+   ```
+   https://your-store-url/module/therius/webhook
+   ```
+
+   Crea un endpoint en modo **Sandbox** y uno en modo **Producción** si usas ambos.
+2. Suscríbete a: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.cancelled`, `payment.chargeback`, `payment.capture_failed`.
+3. Copia el secreto de firma de cada entorno en el campo correspondiente **Test Webhook Secret** / **Live Webhook Secret**.
+
+## Reembolsos
+
+Emite un reembolso creando un **reembolso parcial / vale de descuento** en la orden en el admin de PrestaShop. El módulo envía el reembolso a Therius con una clave de idempotencia para que una solicitud reintentada no haga un doble reembolso.
+
+## Limitaciones conocidas
+
+- **`payment.chargeback` se reconoce pero no se mapea a un cambio de estado de la orden** — PrestaShop no tiene un estado "en espera" integrado que este módulo use en otro lugar. El evento devuelve `200` y por lo demás se ignora.
+- **Una orden recuperada por webhook puede cotizarse a partir del total actual del carrito**, no del monto realmente cobrado, si el contenido del carrito cambia en el intervalo entre el cobro y la entrega del webhook. Esto es raro pero vale la pena revisarlo si el total de una orden recuperada no coincide con su monto de pago.

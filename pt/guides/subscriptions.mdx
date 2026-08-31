@@ -1,0 +1,175 @@
+---
+title: 'Crie faturamento recorrente com as assinaturas do Therius'
+sidebarTitle: 'Assinaturas'
+description: 'Crie planos, inscreva clientes em assinaturas, trate a gestão de cobranças e gerencie mudanças de plano, pausas e cancelamentos com a API de assinaturas do Therius.'
+translationOf: guides/subscriptions.mdx
+translationSourceHash: e51871ba964eba16171019d804c09ed3619e455f8bf8b2066ff2211556c9c25c
+---
+
+As assinaturas do Therius oferecem um motor completo de faturamento recorrente pronto para usar. Os planos definem o valor de faturamento, a moeda e o intervalo. As assinaturas inscrevem clientes individuais em um plano e armazenam o método de pagamento deles de forma segura. A partir daí, o Therius trata as renovações automáticas conforme programado, a lógica do período de teste, as novas tentativas de gestão de cobranças quando um pagamento falha, e os eventos de ciclo de vida que você pode escutar via webhooks — para que você foque no seu produto em vez dos casos extremos de faturamento.
+
+## Status de assinatura
+
+Toda assinatura passa por um conjunto definido de status ao longo da sua vida:
+
+| Status | Significado |
+|---|---|
+| `pending` | Criada, mas o primeiro pagamento ainda não foi cobrado |
+| `trialing` | Dentro do período de teste gratuito; nenhuma cobrança foi feita |
+| `active` | Faturando normalmente; o último pagamento teve sucesso |
+| `past_due` | A última renovação falhou; o Therius está tentando novamente conforme o cronograma de gestão de cobranças |
+| `suspended` | Todas as novas tentativas de gestão de cobranças se esgotaram; a assinatura está inativa até o método de pagamento ser atualizado |
+| `paused` | Pausada manualmente; nenhuma renovação é tentada |
+| `cancelled` | Cancelada de forma permanente; não pode ser reativada |
+| `completed` | Atingiu um número fixo de ciclos de faturamento e terminou naturalmente |
+
+---
+
+## Planos
+
+Um plano é o modelo que define quanto você cobra e com que frequência. Crie um plano uma vez e anexe a ele quantas assinaturas precisar.
+
+```json
+POST /subscription/plan
+
+{
+  "merchantCode": "MERCHANT_001",
+  "name": "Pro Monthly",
+  "amount": 2900,
+  "currency": "USD",
+  "exponent": 2,
+  "interval": "month",
+  "intervalCount": 1,
+  "trialPeriodDays": 14
+}
+```
+
+A resposta inclui um `id` de plano que você passa ao inscrever um cliente.
+
+<Warning>
+  Os campos `amount` e `interval` são **imutáveis** depois que um plano é criado. Se você precisar mudar o preço ou a frequência de faturamento, crie um novo plano e migre os assinantes existentes usando o endpoint de mudança de plano descrito abaixo.
+</Warning>
+
+---
+
+## Criar uma assinatura
+
+Inscrever um cliente é uma Cardholder Initiated Transaction (CIT), e uma CIT pode exigir 3D Secure. Passe o cartão de uma de duas formas:
+
+- **`card.nonceData` / `card.cardData`** — o Therius executa a CIT + a primeira cobrança aqui. Simples, mas essa CIT **não pode fazer um desafio de 3D Secure**, então um cartão que exige 3DS falha.
+- **`card.tokenData`** — um cartão que já concluiu a sua CIT (com 3DS) via `/payment/authorization` ou `/payment/purchase`. O Therius registra o mandato e, para o ciclo 1, cobra um MIT ou — se você passar `firstPaymentId` (o id do pagamento dessa CIT) — vincula o pagamento que você já fez. Este é o caminho confiável para cartões com 3DS. Veja a [referência do endpoint](/api-reference/subscriptions/create).
+
+Seja qual for a que você usar, o cliente precisa ter estado presente e consentindo o faturamento recorrente quando o cartão foi coletado.
+
+```json
+POST /subscription
+
+{
+  "merchantCode": "MERCHANT_001",
+  "planId": 42,
+  "customerEmail": "ada@example.com",
+  "customerName": "Ada Lovelace",
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce>" }
+  }
+}
+```
+
+A resposta inclui o `id` da assinatura, o seu `status` inicial (`trialing` se o plano tiver teste, caso contrário `pending` até o primeiro pagamento ser compensado), as datas de início e fim do período atual, e o objeto da primeira fatura.
+
+<Info>
+  Seja como for que você forneça o cartão — nonce do SDK, `cardData` bruto, ou um token `vt_...` — as regras das bandeiras de cartão exigem que o cliente esteja ativamente presente e consentindo quando o cartão dele é salvo pela primeira vez para cobranças recorrentes. Se você usar um nonce do SDK, ele precisa ser novo; você não pode reutilizar um nonce de uma sessão anterior.
+</Info>
+
+---
+
+## Gestão do ciclo de vida
+
+Depois que uma assinatura está ativa, use os endpoints a seguir para gerenciá-la. Todos os endpoints aceitam `POST` e exigem a sua chave de API.
+
+<CardGroup cols={2}>
+  <Card icon="pause" title="Pausar">
+    `POST /subscription/{id}/pause`
+
+    Suspende as renovações imediatamente. Nenhuma cobrança é tentada enquanto a assinatura está pausada. A data de faturamento é recalculada quando você retoma.
+  </Card>
+  <Card icon="play" title="Retomar">
+    `POST /subscription/{id}/resume`
+
+    Restaura uma assinatura pausada (recalcula a próxima data de faturamento) ou cobra novamente de imediato uma assinatura suspensa para trazê-la de volta a ativa.
+  </Card>
+  <Card icon="x" title="Cancelar">
+    `POST /subscription/{id}/cancel`
+
+    Cancela a assinatura de forma permanente. O Therius dispara o evento de webhook `subscription.cancelled`. Assinaturas canceladas não podem ser reativadas.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="Mudar de plano">
+    `POST /subscription/{id}/change-plan`
+
+    Migra o assinante para um plano diferente. Passe `"applyAt": "now"` para uma troca imediata proporcional, ou `"applyAt": "next_billing"` para mudar no fim do período atual.
+  </Card>
+  <Card icon="credit-card" title="Atualizar método de pagamento">
+    `POST /subscription/{id}/payment-method`
+
+    Substitui o cartão armazenado e o seu mandato. Mudar o cartão é uma CIT e pode precisar de 3D Secure — ou **registre** um cartão que você já fez a CIT em outro lugar (`card.tokenData`, sem cobrança, sem 3DS aqui), ou execute uma CIT de valor zero aqui (`card.nonceData` / `card.cardData`). Somente o caminho em modo CIT pode reativar uma assinatura `suspended`. Veja a [referência do endpoint](/api-reference/subscriptions/update-payment-method).
+  </Card>
+  <Card icon="rotate" title="Repetir pagamento">
+    `POST /subscription/{id}/retry-payment`
+
+    Enfileira uma tentativa de gestão de cobranças imediata para uma assinatura `past_due` sem esperar a próxima nova tentativa programada.
+  </Card>
+  <Card icon="calendar" title="Mover o dia de faturamento">
+    `POST /subscription/{id}/update-billing-day`
+
+    Define o dia do mês em que as renovações são cobradas. Aceita valores de 1 a 28.
+  </Card>
+</CardGroup>
+
+---
+
+## Gestão de cobranças
+
+Quando uma renovação programada falha — por exemplo, por fundos insuficientes ou um cartão expirado — o Therius move automaticamente a assinatura para `past_due` e começa a sequência de gestão de cobranças. As novas tentativas são espaçadas conforme os limites de nova tentativa das bandeiras de cartão e a configuração do seu comércio.
+
+Assim que todas as novas tentativas se esgotam, a assinatura passa para `suspended` e o Therius dispara um webhook `subscription.suspended`. Veja o [catálogo de eventos de webhook](/webhooks/events) para cada evento de assinatura que você pode assinar. Para reativar uma assinatura suspensa, o cliente precisa fornecer um novo método de pagamento:
+
+```json
+POST /subscription/{id}/payment-method
+
+{
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce from customer>" }
+  }
+}
+```
+
+O Therius tenta de imediato uma cobrança de recuperação. Se tiver sucesso, a assinatura volta para `active`.
+
+<Note>
+  Esse caminho de reativação executa a sua própria CIT e **não pode concluir um desafio de 3D Secure**. Se
+  o novo cartão exigir 3DS, execute você mesmo uma CIT + cobrança de recuperação com capacidade 3DS via
+  `/payment/purchase`, e depois registre o token resultante com `card.tokenData` — veja a
+  [referência de Atualizar cartão arquivado](/api-reference/subscriptions/update-payment-method).
+</Note>
+
+---
+
+## Assinaturas pai / filho
+
+Você pode vincular assinaturas entre si passando `parentSubscriptionId` ao criar uma filha. Isso é útil para complementos, expansões de assentos, ou qualquer modelo de faturamento onde vários itens de linha devam compartilhar um ciclo de vida.
+
+```json
+POST /subscription
+
+{
+  "merchantCode": "MERCHANT_001",
+  "planId": 99,
+  "parentSubscriptionId": "sub_abc123",
+  "propagateLifecycle": true,
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce>" }
+  }
+}
+```
+
+Defina `propagateLifecycle: true` para propagar em cascata as mudanças de status — pausar, retomar e cancelar — da assinatura pai para todas as suas filhas automaticamente. Quando `propagateLifecycle` é `false` (o padrão), cada assinatura gerencia o seu ciclo de vida de forma independente.

@@ -1,0 +1,169 @@
+---
+title: 'Crie um checkout de navegador seguro para PCI com o SDK JS do Therius'
+sidebarTitle: 'Checkout de navegador'
+description: 'Guia passo a passo para criar um checkout de navegador seguro para PCI com os campos hospedados do Therius ou o widget drop-in — os números de cartão nunca tocam o seu servidor.'
+translationOf: guides/browser-checkout.mdx
+translationSourceHash: edac302005303b8fe937f0d415ebb4875ccc1ed3bd6ee6ef7ccf85601c5319b6
+---
+
+Quando um cliente digita um número de cartão na sua página de checkout, esse número nunca deve passar pelo seu próprio servidor. Encaminhar dados de cartão brutos pelo seu backend amplia drasticamente o seu escopo de conformidade PCI DSS e cria uma responsabilidade direta se o seu servidor for comprometido. O SDK de JavaScript do Therius elimina esse risco renderizando os campos sensíveis dentro de iframes isolados hospedados na infraestrutura do Therius. A sua página nunca vê o número de cartão bruto — em vez disso, o SDK devolve um **nonce** de uso único e de curta duração que o seu servidor troca por uma cobrança. O nonce é inútil fora do contexto da sua conta de lojista e expira após 15 minutos.
+
+## Escolha o seu estilo de integração
+
+O Therius oferece duas formas de coletar os dados de cartão no navegador:
+
+<CardGroup cols={2}>
+  <Card icon="code" title="Opção A — Campos hospedados">
+    Monte inputs iframe individuais (número do cartão, validade, CVV) dentro do seu próprio formulário. Você controla 100 % do layout e do estilo, enquanto o Therius trata os dados sensíveis.
+  </Card>
+  <Card icon="window" title="Opção B — Widget de checkout">
+    Insira um formulário de pagamento totalmente pré-construído com suporte a cartões salvos, tratamento de 3DS e botões de carteira. O caminho mais rápido para um checkout em produção.
+  </Card>
+</CardGroup>
+
+## Passos de integração
+
+<Steps>
+
+  ### Instale o SDK
+
+  Instale via npm para projetos baseados em bundler:
+
+  ```bash
+  npm install @therius/sdk
+  ```
+
+  Ou carregue o SDK diretamente do CDN do Therius — sem passo de build:
+
+  ```html
+  <script src="https://api.therius.io/v1/sdk/js"></script>
+  ```
+
+  ### Crie uma sessão (no lado do servidor)
+
+  Antes de inicializar o SDK no navegador, o seu servidor precisa solicitar um **client token** à API do Therius. Esse token é limitado a uma única sessão de cliente e expira após 30 minutos. A sua chave de API privada nunca sai do seu servidor.
+
+  ```bash
+  curl -X POST https://api.therius.io/v1/sdk/session \
+    -H "Authorization: Bearer sk_live_your_key_here" \
+    -H "Content-Type: application/json" \
+    -d '{ "customerId": "customer-42", "country": "US" }'
+  ```
+
+  **Resposta:**
+
+  ```json
+  {
+    "clientToken": "eyJ...",
+    "expiresIn": 1800
+  }
+  ```
+
+  Devolva o `clientToken` ao seu frontend — por exemplo, insira-o no HTML renderizado no servidor da sua página ou entregue-o por uma rota de API leve.
+
+  <Note>
+    O `clientToken` contém um HMAC da sua chave pública. A sua chave privada bruta nunca é exposta ao navegador em nenhum ponto deste fluxo.
+  </Note>
+
+  ### Inicialize o SDK (navegador)
+
+  Passe o `clientToken` que você recebeu do seu servidor para `TheriusSDK`:
+
+  ```javascript
+  import { TheriusSDK } from '@therius/sdk'
+
+  const sdk = new TheriusSDK({ clientToken })
+  ```
+
+  Se você carregou o SDK via CDN, `TheriusSDK` está disponível no objeto global `window` — sem necessidade de import.
+
+  ### Monte a sua UI de pagamento
+
+  Escolha a abordagem que se ajusta à sua integração. Os passos 4a e 4b são mutuamente exclusivos.
+
+  <Tabs>
+    <Tab title="Opção A — Campos hospedados">
+
+      Chame `sdk.hostedFields()` com um mapa de strings de seletor CSS que apontam para os elementos contêineres no seu HTML. O Therius injeta um iframe seguro em cada contêiner.
+
+      ```javascript
+      const fields = sdk.hostedFields({
+        card_number: '#card-number',
+        expiry:      '#expiry',
+        cvv:         '#cvv',
+      })
+      ```
+
+      Quando o seu cliente envia o formulário, chame `sdk.createNonce()` para tokenizar os dados de cartão. Passe o nonce resultante ao seu servidor — nunca o registre nem o armazene em `localStorage`.
+
+      ```javascript
+      document.querySelector('#pay-button').addEventListener('click', async () => {
+        const { nonce } = await sdk.createNonce({ cardholderName: 'Ada Lovelace' })
+        // POST do nonce para o seu servidor
+        await fetch('/api/checkout', {
+          method: 'POST',
+          body: JSON.stringify({ nonce }),
+        })
+      })
+      ```
+
+      No seu servidor, troque o nonce por uma cobrança passando-o em `card.nonceData`:
+
+      ```bash
+      curl -X POST https://api.therius.io/v1/payment/purchase \
+        -H "Authorization: Bearer sk_live_your_key_here" \
+        -H "Idempotency-Key: <uuid>" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "merchantCode": "MERCHANT_001",
+          "orderCode": "ORDER-123",
+          "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
+          "card": { "nonceData": { "nonce": "<nonce>" } }
+        }'
+      ```
+
+    </Tab>
+    <Tab title="Opção B — Widget de checkout">
+
+      Chame `sdk.checkout()` para renderizar o formulário drop-in completo. Passe `vaultConsentEnabled: true` junto com um `customerId` (definido quando você criou a sessão do SDK) para exibir uma caixa de seleção **Salvar este cartão** e um seletor de cartões salvos para compradores recorrentes.
+
+      ```javascript
+      const checkout = sdk.checkout({
+        shopperId: sdk.sessionData().customerId,
+        vaultConsentEnabled: true,
+        onSavedMethodSelected: (token) => {
+          // O comprador escolheu um cartão salvo anteriormente.
+          // Cobre-o no lado do servidor usando o vault token.
+          sdk.authorizeToken(token)
+        },
+      })
+      ```
+
+      <Tip>
+        Se `vaultConsentEnabled` for `true` e `customerId` estiver definido na sessão, o widget exibe automaticamente uma caixa de seleção **Salvar este cartão** no primeiro uso e um seletor de cartões salvos para compradores recorrentes — sem código adicional.
+      </Tip>
+
+    </Tab>
+  </Tabs>
+
+  ### Trate 3DS / ação necessária
+
+  Alguns emissores de cartão exigem autenticação 3D Secure. Quando o seu servidor chama `/payment/purchase` com o nonce, o Therius pode devolver `status: "pending_action"` junto com um objeto `actionRequired`. Devolva esse objeto ao seu frontend e passe-o para `sdk.handleAction()` — o SDK gerencia o redirecionamento ou a janela de desafio do 3DS e resolve a promise com o `PaymentResult` final automaticamente.
+
+  ```javascript
+  // Depois que o seu servidor responder com actionRequired, passe-o ao SDK:
+  const finalResult = await sdk.handleAction(result.actionRequired)
+  // finalResult contém o status do pagamento concluído
+  ```
+
+</Steps>
+
+## Lembretes de segurança
+
+<Warning>
+  Nunca passe números de cartão brutos do navegador para o seu próprio servidor e depois os encaminhe ao Therius. Colete sempre os dados de cartão pelos campos hospedados ou pelo widget de checkout, e envie apenas o nonce resultante ao seu backend. Passar dados de cartão brutos pelo seu servidor coloca toda a sua infraestrutura no escopo do PCI DSS.
+</Warning>
+
+<Note>
+  Os nonces são de uso único e expiram após 15 minutos. Se o cliente demorar mais do que isso para concluir o checkout (por exemplo, se afastou), chame `sdk.createNonce()` novamente antes de enviar ao seu servidor.
+</Note>

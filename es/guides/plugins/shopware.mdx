@@ -1,0 +1,71 @@
+---
+title: 'Therius para Shopware 6'
+sidebarTitle: 'Shopware 6'
+description: 'Instala y configura el plugin de pago de Therius para Shopware 6 — claves de sandbox y producción, webhooks y comportamiento del checkout.'
+translationOf: guides/plugins/shopware.mdx
+translationSourceHash: 1116efca32a46b78544991a091ab8c7becfb0854d20de2a17cd9db0b2636a981
+---
+
+<Note>
+  **Beta.** Este plugin está completo en funciones y revisado en código, pero aún no se ha verificado contra una instalación de Shopware en vivo. Ver **Limitaciones conocidas** abajo antes de confiar en él, y prueba a fondo en tu propio entorno de staging.
+</Note>
+
+El plugin de Therius para Shopware 6 reemplaza las integraciones estándar de pasarela única con el [Widget de checkout](/sdk/checkout-widget), soportando tarjetas y métodos de pago alternativos locales con [enrutamiento inteligente](/concepts/smart-routing).
+
+**Repositorio:** [`therius-pay/therius-plugin-shopware`](https://github.com/therius-pay/therius-plugin-shopware)
+
+## Requisitos
+
+- Shopware 6 con acceso de admin para instalar extensiones
+- Una cuenta de Therius con claves de API y una configuración de checkout
+
+## Instalación
+
+1. Descarga el `.zip` del plugin.
+2. En el admin de Shopware, ve a **Extensiones → Mis extensiones → Subir extensión** y sube el `.zip`.
+3. Haz clic en **Instalar**, luego en **Activar**.
+
+## Configuración
+
+<Steps>
+  ### Abre la configuración del plugin
+
+  Ve a **Settings → Extensions → Therius Payment**.
+
+  ### Ingresa tus datos
+
+  Por entorno:
+
+  - **Test:** Test Publishable Key, Test Private Key, Test Checkout Config ID, Test Webhook Secret.
+  - **Live:** Live Publishable Key, Live Private Key, Live Checkout Config ID, Live Webhook Secret.
+
+  ### Elige el entorno activo
+
+  Alterna **Enable Test Mode** — *Habilitado* enruta el checkout a `https://api-sandbox.therius.io` con las credenciales de Test; *Deshabilitado* enruta a `https://api.therius.io` con las credenciales de Live. Guarda.
+</Steps>
+
+## Comportamiento del checkout
+
+Seleccionar Therius Payments en la página de confirmación no renderiza un formulario de tarjeta inline. Hacer clic en **Completar pedido** abre el Widget de checkout de Therius en un lightbox, obteniendo una sesión de checkout fresca en ese momento. Cualquier paso adicional que necesite el pago — un desafío de 3D Secure, un redirect de APM, un paso de verificación por microdepósito — ocurre dentro de ese mismo lightbox. Shopware solo crea la orden una vez que el pago tuvo éxito.
+
+## Webhooks
+
+<Warning>
+  Configura esto antes de tomar pagos en vivo. Sin ello, los pagos que requieren validación asíncrona quedan pendientes y los reembolsos hechos desde el dashboard de Therius no se reflejan en Shopware.
+</Warning>
+
+1. En el dashboard de Therius, ve a **Developers → Webhooks** y agrega un endpoint que apunte a:
+
+   ```
+   https://your-store.com/therius/webhook
+   ```
+
+   Crea un endpoint en modo **Sandbox** y uno en modo **Producción** si usas ambos.
+2. Suscríbete a: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.cancelled`, `payment.chargeback`, `payment.capture_failed`, `payment.cancel_failed`.
+3. Copia el secreto de firma de cada entorno en el campo correspondiente **Test Webhook Secret** / **Live Webhook Secret** de la configuración del plugin.
+
+## Limitaciones conocidas
+
+<Warning>
+  **Las actualizaciones de orden impulsadas por webhook no funcionan en la build actual.** El plugin coincide los webhooks entrantes contra el número de orden de Shopware, pero el identificador que envía a Therius en el momento del cobro es el token del carrito, no el eventual número de orden — así que las entregas para órdenes reales no coinciden y se registran como "unknown order". Hasta que se corrija esto, las capturas, los reembolsos, los contracargos y las cancelaciones realizados desde el dashboard de Therius **no** actualizan el estado de la orden de Shopware. Se espera que los reembolsos se inicien desde el dashboard de Therius en vez del admin de Shopware.
+</Warning>

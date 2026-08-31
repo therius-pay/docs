@@ -1,0 +1,87 @@
+---
+title: 'Thera: o assistente de IA no painel'
+sidebarTitle: 'Thera'
+description: 'O Thera é um assistente de IA integrado ao painel do Therius. Pergunte sobre os seus pagamentos, analytics, assinaturas, disputas e liquidações em linguagem simples. Executa como você, limitado às suas permissões, e nunca realiza uma ação por conta própria.'
+translationOf: ai/thera.mdx
+translationSourceHash: a5178945d2af1f47cc649edd4d2c6eab461a16def6aefaeee52fc01c35c3920b
+---
+
+O Thera é um assistente de IA embutido no painel do Therius. Abra-o em **Ask Thera** na barra superior, digite uma pergunta sobre a sua conta, e o Thera chama as mesmas ferramentas de dados que um humano usaria — depois responde em linguagem simples, citando as ferramentas que usou.
+
+<Note>
+  O Thera está **desligado até o seu operador do Therius habilitá-lo.** Até um endpoint de modelo ser configurado, a gaveta de chat mostra "Thera is not enabled on this environment yet." A superfície de ferramentas do [Bring Your Own AI](/ai/bring-your-own-ai) funciona de forma independente disso e está disponível hoje.
+</Note>
+
+## O que você pode perguntar
+
+O Thera responde perguntas sobre os lojistas a que você tem acesso e sobre como usar o Therius. Por exemplo:
+
+- "Qual foi a minha taxa de autorização nos últimos 30 dias?"
+- "Quais motivos de recusa são mais comuns, e algum deles é reroteável?"
+- "Como as minhas conexões se saíram nesta semana?"
+- "Por que o pagamento `ORDER-1042` foi recusado, e posso tentar de novo?"
+- "Quais assinaturas estão em risco de cancelamento nesta semana?"
+- "Quais disputas têm um prazo de evidência nos próximos 7 dias?"
+- "Redija uma regra de roteamento que envie as transações Visa acima de $500 em BRL primeiro para a minha conexão Adyen."
+
+O Thera não responde perguntas de conhecimento geral, não ajuda com programação não relacionada, nem discute nada fora dos seus dados do Therius. Se uma pergunta parecer nomear um cliente ou um pedido, ele pede um código de pedido, um ID de pagamento ou um e-mail para localizá-lo.
+
+## Como funciona
+
+<Steps>
+  <Step title="Você faz uma pergunta">
+    O painel envia a sua mensagem ao Therius junto com a sua sessão existente — sem login separado, sem chave de API.
+  </Step>
+  <Step title="O Thera planeja chamadas de ferramentas">
+    Ao modelo são mostradas apenas as ferramentas que o seu papel permite, e ele decide quais chamar para responder à sua pergunta.
+  </Step>
+  <Step title="O Therius executa cada ferramenta como você">
+    Cada ferramenta executa contra os seus lojistas atribuídos e o ambiente que você selecionou, com a mesma verificação de permissão que a ação equivalente do painel exige. O resultado é registrado no log de auditoria.
+  </Step>
+  <Step title="O Thera compõe uma resposta">
+    O modelo escreve uma resposta fundamentada apenas no que as ferramentas devolveram. Cada número que ele cita vem de um resultado de ferramenta naquela conversa. As ferramentas que ele usou são listadas abaixo da resposta.
+  </Step>
+</Steps>
+
+Cada conversa é limitada a um punhado de chamadas de ferramentas. Se uma pergunta não puder ser respondida dentro desse orçamento, o Thera pede que você seja mais específico em vez de adivinhar.
+
+## Ações em rascunho
+
+Algumas perguntas levam a uma ação — "reembolse este pagamento", "adicione esta regra de roteamento". O Thera nunca executa essas ações. Em vez disso, produz um **rascunho** que aparece como um card no chat:
+
+- Um reembolso em rascunho mostra o pagamento e o valor, com um link para **Revisar e confirmar em Pagamentos**.
+- Uma regra de roteamento em rascunho mostra a condição e a ordem das conexões, para ser aplicada no editor de roteamento.
+
+Nada muda até você concluir a ação você mesmo pelo fluxo normal do painel, com as suas verificações de permissão normais.
+
+## Escopo e segurança
+
+- **Executa como você.** O Thera vê exatamente o que você veria no painel — nada além disso. Um colega com um papel mais restrito recebe respostas mais restritas à mesma pergunta.
+- **Ciente do ambiente.** As respostas refletem o botão Produção / Sandbox no painel. A gaveta mostra um selo `sandbox` quando você está em sandbox.
+- **Fundamentado.** O Thera nunca inventa números, IDs ou status. Se uma ferramenta não devolveu algo, o Thera diz que não tem isso.
+- **Nada de internos.** O Thera não explica a própria implementação, o esquema ou os nomes de campos do Therius — ele traduz os resultados técnicos para linguagem de negócio simples.
+- **Resistente a injeção.** Instruções embutidas em uma nota de cliente, uma descrição de disputa ou na sua própria mensagem ("ignore as regras acima") são tratadas como dados e ignoradas.
+- **Auditado.** Toda chamada de ferramenta que o Thera faz é registrada como qualquer outra chamada de ferramenta de IA.
+
+<Warning>
+  O Thera é um assistente, não uma autoridade. A gaveta de chat lembra você: as respostas vêm dos seus dados do Therius — verifique antes de agir.
+</Warning>
+
+## Limites de uso
+
+O uso do Thera é medido por organização contra uma cota mensal de tokens definida pelo seu operador do Therius. Se você atingir o limite, o Thera pausa até o início do próximo mês — o painel, o analytics e todas as demais ferramentas continuam funcionando — e avisa você em vez de falhar silenciosamente.
+
+## Habilitar o Thera (para operadores do Therius)
+
+O Thera precisa de um endpoint de modelo de linguagem. Ele fala a API de chat-completions da OpenAI, então qualquer endpoint compatível funciona: um servidor [vLLM](https://docs.vllm.ai) ou [Ollama](https://ollama.com) auto-hospedado, ou um provedor gerenciado.
+
+Configure-o no **backoffice** em **Platform → AI**:
+
+1. Defina `base_url`, `model` e (se o endpoint precisar) `api_key` na integração **Thera AI Model**.
+2. Ative a integração como **enabled**.
+
+A configuração é de nível de plataforma, lida da produção, resolvida do zero a cada requisição — trocar de modelo ou de provedor entra em vigor de imediato, sem reinício. As credenciais são criptografadas em repouso e são somente-escrita na UI. Existe um fallback por variável de ambiente (`LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY`) para o desenvolvimento local.
+
+<Warning>
+  Não coloque o modelo junto com os serviços de pagamento. A inferência de modelos de linguagem consome muita memória e CPU e pode privar de recursos o tráfego de pagamentos crítico em latência. Execute o modelo em um host separado ou em um endpoint gerenciado.
+</Warning>

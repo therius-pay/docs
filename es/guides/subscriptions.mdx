@@ -1,0 +1,175 @@
+---
+title: 'Crea facturación recurrente con las suscripciones de Therius'
+sidebarTitle: 'Suscripciones'
+description: 'Crea planes, inscribe clientes en suscripciones, maneja la gestión de cobros y administra cambios de plan, pausas y cancelaciones con la API de suscripciones de Therius.'
+translationOf: guides/subscriptions.mdx
+translationSourceHash: e51871ba964eba16171019d804c09ed3619e455f8bf8b2066ff2211556c9c25c
+---
+
+Las suscripciones de Therius te dan un motor completo de facturación recurrente listo para usar. Los planes definen el monto de facturación, la moneda y el intervalo. Las suscripciones inscriben a clientes individuales en un plan y almacenan su método de pago de forma segura. A partir de ahí, Therius maneja las renovaciones automáticas según lo programado, la lógica del período de prueba, los reintentos de gestión de cobros cuando un pago falla, y los eventos de ciclo de vida que puedes escuchar vía webhooks — para que te concentres en tu producto en vez de en los casos límite de facturación.
+
+## Estados de suscripción
+
+Cada suscripción atraviesa un conjunto definido de estados a lo largo de su vida:
+
+| Estado | Significado |
+|---|---|
+| `pending` | Creada pero el primer pago aún no se ha cobrado |
+| `trialing` | Dentro del período de prueba gratuito; no se ha hecho ningún cobro |
+| `active` | Facturando normalmente; el último pago tuvo éxito |
+| `past_due` | La última renovación falló; Therius está reintentando según el calendario de gestión de cobros |
+| `suspended` | Se agotaron todos los reintentos de gestión de cobros; la suscripción está inactiva hasta que se actualice el método de pago |
+| `paused` | Pausada manualmente; no se intentan renovaciones |
+| `cancelled` | Cancelada de forma permanente; no se puede reactivar |
+| `completed` | Alcanzó una cantidad fija de ciclos de facturación y terminó de forma natural |
+
+---
+
+## Planes
+
+Un plan es la plantilla que define cuánto cobras y con qué frecuencia. Crea un plan una vez y adjúntale tantas suscripciones como necesites.
+
+```json
+POST /subscription/plan
+
+{
+  "merchantCode": "MERCHANT_001",
+  "name": "Pro Monthly",
+  "amount": 2900,
+  "currency": "USD",
+  "exponent": 2,
+  "interval": "month",
+  "intervalCount": 1,
+  "trialPeriodDays": 14
+}
+```
+
+La respuesta incluye un `id` de plan que pasas al inscribir a un cliente.
+
+<Warning>
+  Los campos `amount` e `interval` son **inmutables** después de crear un plan. Si necesitas cambiar el precio o la frecuencia de facturación, crea un plan nuevo y migra a los suscriptores existentes usando el endpoint de cambio de plan descrito abajo.
+</Warning>
+
+---
+
+## Crear una suscripción
+
+Inscribir a un cliente es una Cardholder Initiated Transaction (CIT), y una CIT puede requerir 3D Secure. Pasa la tarjeta de una de dos formas:
+
+- **`card.nonceData` / `card.cardData`** — Therius ejecuta la CIT + el primer cobro aquí. Simple, pero esta CIT **no puede hacer un desafío de 3D Secure**, así que una tarjeta que requiere 3DS falla.
+- **`card.tokenData`** — una tarjeta que ya completó su CIT (con 3DS) vía `/payment/authorization` o `/payment/purchase`. Therius registra el mandato y, para el ciclo 1, o bien cobra un MIT o — si pasas `firstPaymentId` (el id de pago de esa CIT) — enlaza el pago que ya hiciste. Esta es la ruta confiable para tarjetas con 3DS. Ver la [referencia del endpoint](/api-reference/subscriptions/create).
+
+Sea cual sea la que uses, el cliente debe haber estado presente y consintiendo la facturación recurrente cuando se recolectó la tarjeta.
+
+```json
+POST /subscription
+
+{
+  "merchantCode": "MERCHANT_001",
+  "planId": 42,
+  "customerEmail": "ada@example.com",
+  "customerName": "Ada Lovelace",
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce>" }
+  }
+}
+```
+
+La respuesta incluye el `id` de la suscripción, su `status` inicial (`trialing` si el plan tiene prueba, de lo contrario `pending` hasta que el primer pago se acredite), las fechas de inicio y fin del período actual, y el objeto de la primera factura.
+
+<Info>
+  Sea como sea que suministres la tarjeta — nonce del SDK, `cardData` sin procesar, o un token `vt_...` — las reglas de las banderas de tarjeta requieren que el cliente esté activamente presente y consintiendo cuando su tarjeta se guarda por primera vez para cobros recurrentes. Si usas un nonce del SDK, debe ser fresco; no puedes reutilizar un nonce de una sesión anterior.
+</Info>
+
+---
+
+## Gestión del ciclo de vida
+
+Después de que una suscripción esté activa, usa los siguientes endpoints para administrarla. Todos los endpoints aceptan `POST` y requieren tu clave de API.
+
+<CardGroup cols={2}>
+  <Card icon="pause" title="Pausar">
+    `POST /subscription/{id}/pause`
+
+    Suspende las renovaciones de inmediato. No se intentan cobros mientras la suscripción está pausada. La fecha de facturación se recalcula cuando reanudas.
+  </Card>
+  <Card icon="play" title="Reanudar">
+    `POST /subscription/{id}/resume`
+
+    Restaura una suscripción pausada (recalcula la próxima fecha de facturación) o vuelve a cobrar de inmediato una suscripción suspendida para devolverla a activa.
+  </Card>
+  <Card icon="x" title="Cancelar">
+    `POST /subscription/{id}/cancel`
+
+    Cancela la suscripción de forma permanente. Therius dispara el evento de webhook `subscription.cancelled`. Las suscripciones canceladas no se pueden reactivar.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="Cambiar de plan">
+    `POST /subscription/{id}/change-plan`
+
+    Migra al suscriptor a un plan diferente. Pasa `"applyAt": "now"` para un cambio inmediato prorrateado, o `"applyAt": "next_billing"` para cambiar al final del período actual.
+  </Card>
+  <Card icon="credit-card" title="Actualizar método de pago">
+    `POST /subscription/{id}/payment-method`
+
+    Reemplaza la tarjeta almacenada y su mandato. Cambiar la tarjeta es una CIT y puede necesitar 3D Secure — o bien **registra** una tarjeta que ya CIT'aste en otro lugar (`card.tokenData`, sin cobro, sin 3DS aquí), o ejecuta una CIT de valor cero aquí (`card.nonceData` / `card.cardData`). Solo la ruta en modo CIT puede reactivar una suscripción `suspended`. Ver la [referencia del endpoint](/api-reference/subscriptions/update-payment-method).
+  </Card>
+  <Card icon="rotate" title="Reintentar pago">
+    `POST /subscription/{id}/retry-payment`
+
+    Encola un intento de gestión de cobros inmediato para una suscripción `past_due` sin esperar el próximo reintento programado.
+  </Card>
+  <Card icon="calendar" title="Mover día de facturación">
+    `POST /subscription/{id}/update-billing-day`
+
+    Establece el día del mes en el que se cobran las renovaciones. Acepta valores 1–28.
+  </Card>
+</CardGroup>
+
+---
+
+## Gestión de cobros
+
+Cuando una renovación programada falla — por ejemplo, por fondos insuficientes o una tarjeta expirada — Therius mueve automáticamente la suscripción a `past_due` y comienza la secuencia de gestión de cobros. Los reintentos se espacian según los topes de reintento de las banderas de tarjeta y tu configuración de comercio.
+
+Una vez agotados todos los reintentos, la suscripción pasa a `suspended` y Therius dispara un webhook `subscription.suspended`. Ver el [catálogo de eventos de webhook](/webhooks/events) para cada evento de suscripción al que te puedes suscribir. Para reactivar una suscripción suspendida, el cliente debe proporcionar un nuevo método de pago:
+
+```json
+POST /subscription/{id}/payment-method
+
+{
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce from customer>" }
+  }
+}
+```
+
+Therius intenta de inmediato un cobro de recuperación. Si tiene éxito, la suscripción vuelve a `active`.
+
+<Note>
+  Esta ruta de reactivación ejecuta su propia CIT y **no puede completar un desafío de 3D Secure**. Si
+  la nueva tarjeta requiere 3DS, ejecuta tú mismo una CIT + cobro de recuperación con capacidad 3DS vía
+  `/payment/purchase`, y luego registra el token resultante con `card.tokenData` — ver la
+  [referencia de Actualizar tarjeta archivada](/api-reference/subscriptions/update-payment-method).
+</Note>
+
+---
+
+## Suscripciones padre / hijo
+
+Puedes enlazar suscripciones entre sí pasando `parentSubscriptionId` al crear una hija. Esto es útil para complementos, ampliaciones de asientos, o cualquier modelo de facturación donde varios ítems de línea deban compartir un ciclo de vida.
+
+```json
+POST /subscription
+
+{
+  "merchantCode": "MERCHANT_001",
+  "planId": 99,
+  "parentSubscriptionId": "sub_abc123",
+  "propagateLifecycle": true,
+  "card": {
+    "nonceData": { "nonce": "<fresh nonce>" }
+  }
+}
+```
+
+Establece `propagateLifecycle: true` para propagar en cascada los cambios de estado — pausar, reanudar y cancelar — desde la suscripción padre a todas sus hijas automáticamente. Cuando `propagateLifecycle` es `false` (el valor por defecto), cada suscripción administra su ciclo de vida de forma independiente.

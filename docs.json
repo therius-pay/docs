@@ -211,10 +211,39 @@
                 ]
               },
               {
+                "group": "Guías",
+                "pages": [
+                  "es/guides/browser-checkout",
+                  "es/guides/subscriptions",
+                  "es/guides/alternative-payment-methods",
+                  "es/guides/stored-credentials",
+                  "es/guides/testing"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "es/webhooks/overview",
                   "es/webhooks/events"
+                ]
+              },
+              {
+                "group": "Asistente de IA",
+                "pages": [
+                  "es/ai/overview",
+                  "es/ai/thera",
+                  "es/ai/bring-your-own-ai",
+                  "es/ai/tools"
+                ]
+              },
+              {
+                "group": "Plugins de e-commerce",
+                "pages": [
+                  "es/guides/plugins/overview",
+                  "es/guides/plugins/woocommerce",
+                  "es/guides/plugins/magento",
+                  "es/guides/plugins/prestashop",
+                  "es/guides/plugins/shopware"
                 ]
               }
             ]
@@ -248,10 +277,39 @@
                 ]
               },
               {
+                "group": "Guias",
+                "pages": [
+                  "pt/guides/browser-checkout",
+                  "pt/guides/subscriptions",
+                  "pt/guides/alternative-payment-methods",
+                  "pt/guides/stored-credentials",
+                  "pt/guides/testing"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "pt/webhooks/overview",
                   "pt/webhooks/events"
+                ]
+              },
+              {
+                "group": "Assistente de IA",
+                "pages": [
+                  "pt/ai/overview",
+                  "pt/ai/thera",
+                  "pt/ai/bring-your-own-ai",
+                  "pt/ai/tools"
+                ]
+              },
+              {
+                "group": "Plugins de e-commerce",
+                "pages": [
+                  "pt/guides/plugins/overview",
+                  "pt/guides/plugins/woocommerce",
+                  "pt/guides/plugins/magento",
+                  "pt/guides/plugins/prestashop",
+                  "pt/guides/plugins/shopware"
                 ]
               }
             ]

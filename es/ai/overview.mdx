@@ -1,0 +1,61 @@
+---
+title: 'Therius AI: Thera y Bring Your Own AI'
+sidebarTitle: 'Descripción general'
+description: 'Therius expone tus datos de pagos, analítica, enrutamiento, disputas y conciliación a la IA — ya sea a través de Thera, el asistente en el dashboard, o conectando tu propio agente de IA por MCP. Ningún dato de tarjeta ni secreto llega jamás a un modelo.'
+translationOf: ai/overview.mdx
+translationSourceHash: 3a2d37290e27725e10ed39db92b4e07d04a4b97c46fa3484fa7136b075ae836b
+---
+
+Therius convierte sus datos de orquestación en algo sobre lo que una IA puede razonar: tasas de autorización, razones de rechazo, decisiones de enrutamiento, salud de suscripciones, plazos de disputas y coincidencia de liquidaciones. Hay dos formas de usarlo, y comparten las mismas herramientas, el mismo modelo de permisos y las mismas barreras de protección.
+
+<CardGroup cols={2}>
+  <Card icon="sparkles" title="Thera" href="/ai/thera">
+    Un asistente de IA integrado en el dashboard de Therius. Haz preguntas en lenguaje natural sobre los comercios a los que tienes acceso. Se ejecuta como tú, limitado a tus permisos.
+  </Card>
+  <Card icon="plug" title="Bring Your Own AI" href="/ai/bring-your-own-ai">
+    Conecta Claude, Cursor, ChatGPT o cualquier cliente MCP a Therius con una clave de IA limitada al usuario. Tu suscripción de IA, tu modelo — Therius no aloja nada en esta ruta.
+  </Card>
+</CardGroup>
+
+## ¿Cuál debería usar?
+
+| | Thera | Bring Your Own AI |
+|---|---|---|
+| Dónde se ejecuta | Dentro del dashboard de Therius | En tu propia herramienta de IA (Claude, Cursor, ChatGPT, un agente personalizado) |
+| Quién aloja el modelo | Tú — Therius apunta a un endpoint compatible con OpenAI que proporcionas | Tú — tu suscripción de IA existente |
+| Disponibilidad | Apagado hasta que tu operador de Therius configure un endpoint de modelo | Disponible hoy; crea una clave de IA en el dashboard |
+| Autenticación | Tu sesión del dashboard (JWT de admin) | Una clave de IA (`ai_live_…` / `ai_sandbox_…`) como token Bearer |
+| Interfaz | Panel de chat en el dashboard | MCP (Streamable HTTP) y una superficie de herramientas REST |
+| Ideal para | Preguntas del día a día mientras trabajas en el dashboard | Construir flujos de trabajo de IA, ayuda con la integración, traer datos a tu propio agente |
+
+## Garantías compartidas
+
+Ambas rutas se construyen sobre las mismas reglas:
+
+- **Tu alcance, nunca más amplio.** Una solicitud de IA solo puede alcanzar los comercios que tienes asignados y solo puede llamar a las herramientas que tu rol de Therius permite. Therius aplica el alcance en cada llamada — el modelo no puede ampliarlo, y revocar un rol despoja de inmediato la capacidad correspondiente de cualquier clave de IA que hayas emitido.
+- **Aislamiento de entornos.** Los datos de producción y de sandbox nunca se mezclan. Una clave de IA de sandbox (`ai_sandbox_…`) alcanza solo datos de sandbox; Thera responde según el entorno que hayas seleccionado en el dashboard.
+- **Ningún dato de tarjeta, ningún secreto.** Los números de tarjeta completos, los CVV y las credenciales de conexión nunca se envían a un modelo — se enmascaran en la capa de herramientas independientemente del modelo que uses.
+- **Solo lectura y borrador.** Ninguna herramienta de IA captura dinero, emite un reembolso, cambia una regla de enrutamiento o resuelve una disputa por sí sola. Las acciones que cambian el estado se devuelven como **borradores** para que un humano los revise y confirme a través del flujo normal del dashboard.
+- **La entrada no confiable se trata como datos.** El texto dentro de los resultados de las herramientas (nombres de clientes, notas de disputas) y el propio prompt se tratan como datos, no como instrucciones.
+- **Rastro de auditoría completo.** Cada llamada a una herramienta de IA se registra — quién la llamó, qué herramienta, con qué argumentos y cuándo.
+
+## Qué puede ver y hacer la IA
+
+El mismo conjunto de herramientas respalda a Thera y a la superficie MCP/REST. La disponibilidad de cada herramienta depende de los permisos detrás de tu sesión o clave de IA.
+
+| Área | Qué hace |
+|---|---|
+| **Analítica** | Tasa de autorización sobre un período, desgloses por conexión, emisor, país y razón de rechazo; detección de anomalías de tasa de autorización contra una línea base reciente. |
+| **Pagos** | Buscar un pago por código de orden, ID, correo del cliente o últimos 4; explicar su ciclo de vida y cada transición de estado. |
+| **Enrutamiento** | Explicar por qué un pago se enrutó a una conexión dada; redactar una regla de enrutamiento a partir de una solicitud en lenguaje natural (validada y ejecutada en seco contra el historial real — tú aún haces clic en **Guardar**). |
+| **Suscripciones** | Estado de suscripción, estado de gestión de cobros y por qué falló una renovación. |
+| **Disputas** | Disputas abiertas, plazos de evidencia y el contexto completo de pago/cronología/suscripción de una disputa. |
+| **Conciliación** | Clasificar las coincidencias de pago más probables para un registro de liquidación no coincidido. |
+| **Fraude** | Resumir por qué se marcó una revisión y los números reales detrás de la regla que se activó. |
+| **Integración y docs** | Buscar en la referencia de la API, obtener el esquema de un endpoint, listar capacidades de proveedores, obtener tarjetas de prueba de sandbox, generar un snippet inicial. |
+
+Ver la [referencia de herramientas](/ai/tools) para la lista completa y el permiso que necesita cada una.
+
+<Note>
+  Algunas capacidades aún están madurando. Las reglas de enrutamiento en borrador y el contexto de evidencia de disputas se recopilan por ti, pero un humano siempre compone y aplica el cambio final. Las herramientas de andamiaje de sandbox son limitadas en la build actual. La [referencia de herramientas](/ai/tools) marca lo que está totalmente en producción.
+</Note>

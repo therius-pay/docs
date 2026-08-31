@@ -1,0 +1,85 @@
+---
+title: 'Referência de ferramentas do Therius AI'
+sidebarTitle: 'Referência de ferramentas'
+description: 'Cada ferramenta disponível para o Thera e para um agente de IA conectado, o que ela devolve, e a capacidade e a permissão que ela exige.'
+translationOf: ai/tools.mdx
+translationSourceHash: 43ebf44308cb945e71f7d1339903bad6429c7356068e7b524144e2c88ef89eb3
+---
+
+Estas são as ferramentas que dão suporte tanto ao [Thera](/ai/thera) quanto à superfície do [Bring Your Own AI](/ai/bring-your-own-ai). Uma ferramenta só é visível — e só chamável — quando a sua sessão ou chave de IA tem a capacidade listada, que por sua vez exige a permissão do painel listada.
+
+Todas as ferramentas são **somente-leitura ou somente-rascunho**. Nenhuma captura dinheiro, salva uma regra de roteamento, resolve uma disputa ou muda qualquer estado.
+
+## Analytics
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `get_auth_rate` | Resumo da taxa de autorização e quebra por conexão ao longo de uma janela de tempo. | `analytics:read` |
+| `get_routing_performance` | Taxa de autorização por conexão, latência p95 e mix de volume da visão de resultados recentes. | `analytics:read` |
+| `get_settlement_summary` | Valores capturados vs. liquidados/reembolsados por moeda ao longo de uma janela de tempo. | `analytics:read` |
+| `find_auth_rate_anomalies` | Sinaliza a queda da taxa de autorização de uma conexão contra a sua própria linha de base recente, com os motivos de recusa reroteáveis anexados. | `analytics:read` |
+| `get_decline_breakdown` | Pagamentos recusados agrupados por motivo de recusa, com o significado legível e a marca de reroteável. <sup>Somente superadmin.</sup> | `analytics:read` |
+| `search_payments` | Buscar pagamentos recentes (mascarados — apenas bandeira e últimos 4). Filtrar por status, moeda, código de pedido. | `payments:read` |
+
+## Pagamentos e roteamento
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `find_payment` | Encontrar pagamentos por código de pedido, ID de pagamento, e-mail do cliente ou últimos 4 do cartão (resultados mascarados). | `payments:read` |
+| `get_payment_timeline` | A linha do tempo completa da transação para um pagamento — mudanças de status, respostas do provedor, motivos de recusa. | `payments:read` |
+| `explain_routing_decision` | Qual conexão um pagamento usou e como as conexões do lojista se saíram recentemente — o contexto sobre o qual o Therius roteia. | `analytics:read` |
+| `propose_routing_rule` | Uma regra de roteamento em **rascunho** a partir de condições estruturadas e uma lista ordenada de conexões, executada em dry-run contra os últimos 30 dias de pagamentos. Nunca salva — você a aplica no editor de roteamento. | `routing:propose` |
+
+## Assinaturas
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `get_subscription` | O status, o plano, as datas de faturamento e o estado de gestão de cobranças de uma assinatura. | `subscriptions:read` |
+| `explain_dunning` | Por que uma assinatura está vencida: contagem de tentativas de gestão de cobranças, estado de nova tentativa da bandeira e o horário da próxima nova tentativa. | `subscriptions:read` |
+
+## Disputas
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `get_dispute` | O status, o tipo, o valor, o motivo e o prazo de evidência de uma disputa. | `disputes:read` |
+| `list_disputes_due_soon` | Disputas abertas cujo prazo de evidência cai dentro de N dias (padrão 7). | `disputes:read` |
+| `get_dispute_evidence_context` | O contexto completo de pagamento, linha do tempo, cartão e histórico de assinatura por trás de uma disputa, além de qualquer evidência já redigida. Somente-leitura — você compõe e envia a evidência. | `disputes:propose` |
+
+## Fraude e conciliação
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `get_fraud_review_context` | Por trás de uma revisão de fraude pendente: qual regra a sinalizou, os valores de sinal reais (contagem de velocidade vs. limiar, risco de BIN, faixa de valor) e o histórico de revisões anteriores do comprador/IP. Somente-leitura — você aprova ou recusa. | `fraud:propose` |
+| `find_settlement_match_candidates` | Para um registro de liquidação não correspondido, pagamentos candidatos classificados por correspondência de valor, proximidade de data e sobreposição de referência do adquirente. Somente-leitura — você clica em Match ou Dismiss. | `reconciliation:propose` |
+
+## Ações (somente rascunho)
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `propose_refund` | Um reembolso em **rascunho** para um pagamento, para você revisar e confirmar no painel. Não reembolsa nada por conta própria. | `actions:propose` |
+
+## Integração e documentação
+
+Estas ferramentas não expõem nenhum dado de lojista e estão sempre disponíveis com `docs:read`.
+
+| Ferramenta | Devolve | Capacidade |
+|---|---|---|
+| `search_docs` | Buscar na referência da API (endpoints, campos, auth), fundamentada na especificação OpenAPI ao vivo. | `docs:read` |
+| `get_endpoint` | O esquema de requisição/resposta de um endpoint. | `docs:read` |
+| `list_providers` | Provedores de pagamento para os quais o Therius pode rotear, com capacidades de alto nível. | `docs:read` |
+| `get_provider_capabilities` | Os recursos suportados de um provedor — 3DS, carteiras, multicaptura, disputas, recorrente. | `docs:read` |
+| `get_test_cards` | Cartões de teste de sandbox e os resultados que eles disparam. | `docs:read` |
+| `generate_integration_snippet` | Um trecho inicial para um purchase de servidor ou verificação de webhook, em curl, Node ou Python. | `docs:read` |
+| `explain_error` | O significado de um código de recusa ou motivo do Therius/ISO, e se ele é passível de nova tentativa ou de reroteamento. <sup>Somente superadmin.</sup> | `docs:read` |
+
+## Scaffolding de sandbox
+
+| Ferramenta | Status | Capacidade |
+|---|---|---|
+| `create_sandbox_key` | Emite uma nova chave de API de sandbox para um lojista que você tem atribuído. Não destrutiva; mostrada uma vez. | `sandbox:write` |
+| `run_test_purchase` | Executa um purchase de sandbox real de ponta a ponta usando uma chave efêmera que é revogada imediatamente depois. | `sandbox:write` |
+| `simulate_webhook` | Planejada — não implementada na build atual. Use o controle **Send test event** do painel. | `sandbox:write` |
+
+<Note>
+  Esta lista reflete as ferramentas disponíveis hoje. Novas ferramentas são adicionadas conforme a camada de IA cresce; um cliente MCP conectado sempre vê o conjunto atual pela descoberta de ferramentas.
+</Note>

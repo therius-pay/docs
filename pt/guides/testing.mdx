@@ -1,0 +1,117 @@
+---
+title: 'Cartões de teste e cenários de sandbox para o Therius'
+sidebarTitle: 'Testes'
+description: 'Cada cartão de teste de sandbox, motivo de recusa e cenário de 3D Secure para a API do Therius — além de como os fluxos de APM e de assinatura se comportam no sandbox.'
+translationOf: guides/testing.mdx
+translationSourceHash: e23c617d49f0157308cc57db60727eba798dfcbe8025a9c18e2d4e9f2f8219d0
+---
+
+O sandbox do Therius (`https://api-sandbox.therius.io/v1`, chaves `sk_sandbox_...`) é um ambiente totalmente isolado. As requisições são tratadas pelo **provedor de sandbox do Therius** integrado, que simula respostas sem tocar em uma rede de cartão — nenhum dinheiro real se move. Esta página lista os dados de teste que impulsionam cada resultado simulado.
+
+<Note>
+  Os números de cartão abaixo se aplicam ao provedor de sandbox do Therius integrado. Se você configurou um **provedor real em modo sandbox/teste** (por exemplo, chaves de teste da Stripe), o conjunto de cartões de teste próprio desse provedor se aplica no lugar — use os números da documentação dele.
+</Note>
+
+## Usar os cartões de teste
+
+- Envie a requisição com uma chave `sk_sandbox_...`, ou adicione o cabeçalho `X-Environment: sandbox`.
+- Use **qualquer validade futura** (por exemplo `12/29`) e **qualquer CVV de 3 dígitos** (por exemplo `123`).
+- American Express exige um CVV de **4 dígitos** (por exemplo `1234`).
+
+## Aprovações
+
+| Número do cartão | Rede | Observações |
+|---|---|---|
+| `4111111111111111` | Visa | Aprovação padrão |
+| `5500005555555559` | Mastercard | Aprovação padrão |
+| `374251018720955` | Amex | CVV de 4 dígitos obrigatório |
+| `6011111111111117` | Discover | Aprovação padrão |
+| `3530111333300000` | JCB | Aprovação padrão |
+
+## Recusas
+
+Cada um destes números de cartão devolve um status `declined` com um `refusalCode` correspondente — veja [Pagamentos recusados](/concepts/declined-payments) para a referência completa de códigos.
+
+| Número do cartão | Motivo da recusa |
+|---|---|
+| `4000000000000002` | Recusa genérica (do not honor) |
+| `4000000000009995` | Fundos insuficientes |
+| `4000000000000069` | Cartão expirado |
+| `4000000000000127` | CVC incorreto |
+| `4000000000009235` | Suspeita de fraude |
+| `4000000000001341` | Velocidade do cartão excedida |
+
+## 3D Secure
+
+O 3DS é habilitado por **rota**, não por cartão — a decisão de step-up é tomada por um passo de 3D Secure no pipeline de roteamento. A rota de sandbox semeada por padrão envia os BINs abaixo pelo simulador de 3DS integrado e depois ao gateway de sandbox, então esses cartões funcionam de imediato.
+
+| Número do cartão | Resultado | Cenário |
+|---|---|---|
+| `4000003220000000` | `captured` | Sem atrito — autenticado inline (ECI 05 + CAVV), nenhum desafio exibido |
+| `4000002500003155` | `pending_3ds` | Desafio — devolve um `sessionId` e `challengeUrl`; conclua com `POST /payment/resume` |
+| `4000000000003055` | `declined` | A autenticação 3DS falhou (motivo: "3DS authentication failed") |
+
+### Percorrendo o cartão de desafio
+
+<Steps>
+  <Step title="Envie o purchase">
+    Cobre `4000002500003155`. A resposta é:
+
+    ```json
+    {
+      "status": "pending_3ds",
+      "sessionId": "sbx3ds-ok-...",
+      "actionRequired": {
+        "type": "redirect",
+        "url": "https://.../3ds/challenge?token=..."
+      }
+    }
+    ```
+  </Step>
+  <Step title="Envie o comprador para a URL do desafio">
+    Redirecione para `actionRequired.url`. O simulador de sandbox trata o desafio como concluído instantaneamente — nenhuma interação é necessária.
+  </Step>
+  <Step title="Retome o pagamento">
+    Chame `POST /payment/resume` com `{ "sessionId": "..." }` e o seu cabeçalho `Authorization: Bearer sk_sandbox_...` — o prefixo `sk_sandbox_` roteia para o sandbox. As sessões são de uso único e expiram após 15 minutos. Um resume bem-sucedido devolve o `PaymentResponse` final com `status: "captured"`.
+  </Step>
+</Steps>
+
+<Note>
+  O gateway de sandbox **recusa** os dois BINs de 3DS (`40000032200`, `40000025000`) se eles chegarem sem dados de ECI/CAVV — então uma aprovação prova que o handoff de 3DS realmente aconteceu, em vez de o passo ter sido silenciosamente pulado.
+</Note>
+
+## Métodos de pagamento alternativos
+
+Envie um bloco `apm` em vez de `card`. Nenhum número de cartão é necessário. Cada método devolve uma resposta de sandbox determinística:
+
+| `apm.method` | Resposta de sandbox |
+|---|---|
+| `pix` | `{ "status": "pending", "qrCode": "00020126..." }` |
+| `boleto` | `{ "status": "pending", "barCode": "34191.00008 ...", "boletoUrl": "https://..." }` |
+| `oxxo` | `{ "status": "pending", "voucherReference": "OXXO123..." }` |
+| `ach` | `{ "status": "captured" }` |
+| `pse` | `{ "status": "pending", "redirectUrl": "https://..." }` |
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-APM-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "pix",
+  "apm": {
+    "method": "pix",
+    "customerName": "Alice Smith",
+    "customerEmail": "alice@example.com"
+  }
+}
+```
+
+## Assinaturas no sandbox
+
+- Crie uma assinatura com qualquer cartão de aprovação acima. Ela é armazenada no banco de dados do sandbox, totalmente separada da produção.
+- O worker de gestão de cobranças processa as assinaturas de sandbox conforme o cronograma do sandbox.
+- As entregas de webhook para eventos de sandbox são gravadas no log de entregas do sandbox e marcadas com `"environment": "sandbox"` na carga.
+
+## Idempotência no sandbox
+
+O cabeçalho `Idempotency-Key` é opcional no sandbox, mas se comporta exatamente como em produção — repetir com a mesma chave devolve a primeira resposta em cache. Adquira o hábito aqui para que o seu código de produção já esteja correto. Veja [Idempotência](/idempotency).

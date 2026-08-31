@@ -1,0 +1,206 @@
+---
+title: 'Aceite métodos de pagamento alternativos (APMs) com o Therius'
+sidebarTitle: 'Métodos alternativos'
+description: 'Adicione Pix, ACH, iDEAL, Klarna e mais de 40 métodos de pagamento pelo mesmo endpoint de purchase — basta mudar o campo paymentMethod.'
+translationOf: guides/alternative-payment-methods.mdx
+translationSourceHash: 8fe083913298b8d08a2c1d30e019bfd427f8a4176eb3acb3d3ad30e0ec5bc955
+---
+
+Todo método de pagamento alternativo (APM) do catálogo do Therius passa pelo mesmo endpoint `POST /payment/purchase` que uma cobrança de cartão padrão. Você não precisa de uma integração diferente por método — você troca de método de pagamento definindo o campo `paymentMethod` e fornecendo uma carga específica do método em `apm`. Isso significa que você pode adicionar Pix no Brasil, ACH nos EUA e Klarna na Europa sem tocar na sua lógica central de checkout.
+
+<Note>
+  Cada APM exige que primeiro seja habilitada na sua conta uma conexão que o suporte. Verifique a página **Conexões** no seu painel para ver o que está ativo, e entre em contato com o Therius para adicionar um método de que você precise — nenhuma mudança de integração é necessária do seu lado depois que ele é habilitado.
+</Note>
+
+## Formato base da requisição
+
+Todas as requisições de APM compartilham a mesma estrutura de nível superior. As únicas coisas que mudam entre os métodos são `paymentMethod`, `amount.currency`, e os campos dentro de `apm`.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": {
+    "currency": "<see method table>",
+    "value": 5000,
+    "exponent": 2
+  },
+  "paymentMethod": "<code>",
+  "apm": {
+    /* method-specific fields */
+  }
+}
+```
+
+---
+
+## Métodos de redirecionamento vs. de débito direto
+
+Os APMs se dividem em duas categorias amplas conforme como o cliente autoriza o pagamento.
+
+<CardGroup cols={2}>
+  <Card icon="arrow-up-right-from-square" title="Métodos de redirecionamento">
+    O cliente é redirecionado a uma página de terceiros (por exemplo, o banco dele ou o PayPal) para autorizar o pagamento. Inclua `apm.returnUrl` e `apm.cancelUrl` na sua requisição. A API responde com `status: "pending_action"` e `actionRequired.url`.
+  </Card>
+  <Card icon="building-columns" title="Métodos de débito direto">
+    Os dados da conta bancária são coletados antecipadamente — sem redirecionamento. Passe campos de conta como `bankAccountNumber` e `bankRoutingNumber` (ACH) ou IBAN (SEPA) diretamente dentro do objeto `apm`.
+  </Card>
+</CardGroup>
+
+### Tratar o redirecionamento
+
+Quando um método devolve `status: "pending_action"`, você precisa enviar o seu cliente para `actionRequired.url` para concluir a autorização.
+
+<Tabs>
+  <Tab title="SDK JS">
+    Passe o objeto `actionRequired` diretamente para `sdk.handleAction()`. O SDK gerencia o ciclo de vida do redirecionamento e resolve a promise com o `PaymentResult` final assim que o cliente retorna.
+
+    ```javascript
+    const result = await sdk.purchase(payload)
+
+    if (result.status === 'pending_action') {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+      // finalResult.status será 'approved' ou 'declined'
+    }
+    ```
+  </Tab>
+  <Tab title="Redirecionamento no lado do servidor">
+    Redirecione o navegador do cliente para `actionRequired.url`. Após a autorização, o cliente é encaminhado para o seu `apm.returnUrl` com os parâmetros de consulta `orderId` e `status`. Verifique o status final chamando `GET /payment/inquiry/{orderId}`.
+
+    ```bash
+    # Inclua as URLs de retorno e de cancelamento na sua requisição de purchase
+    curl -X POST https://api.therius.io/v1/payment/purchase \
+      -H "Authorization: Bearer sk_live_your_key_here" \
+      -H "Idempotency-Key: <uuid>" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "merchantCode": "MERCHANT_001",
+        "orderCode": "ORDER-001",
+        "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+        "paymentMethod": "ideal",
+        "apm": {
+          "returnUrl": "https://yoursite.com/checkout/return",
+          "cancelUrl": "https://yoursite.com/checkout/cancel"
+        }
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Métodos suportados
+
+| Método | Código | Moeda | Observações |
+|---|---|---|---|
+| Pix | `pix` | BRL | QR code instantâneo; somente Brasil |
+| ACH | `ach` | USD | Transferência bancária; liquidação em 1–4 dias |
+| iDEAL | `ideal` | EUR | Método online mais usado nos Países Baixos |
+| SEPA Direct Debit | `sepa_debit` | EUR | Zona do euro, mais GB, CH e NO |
+| Klarna | `klarna` | USD / EUR / GBP | Compre agora, pague depois |
+| Boleto | `boleto` | BRL | Comprovante bancário; somente Brasil |
+| OXXO | `oxxo` | MXN | Comprovante em dinheiro; somente México |
+| PayPal | `paypal` | USD / EUR / GBP | |
+| Alipay | `alipay` | CNY + 13 moedas | |
+| GrabPay | `grabpay` | MYR / SGD / PHP | Sudeste Asiático |
+
+<Tip>
+  Abra a aba **Conexões** no seu painel do Therius para navegar pelo catálogo completo de mais de 40 métodos. Cada entrada inclui os campos `apm` exigidos e uma requisição de exemplo pronta para executar que você pode copiar diretamente.
+</Tip>
+
+---
+
+## Exemplos específicos por método
+
+<Tabs>
+  <Tab title="Pix">
+    O Pix gera um QR code de pagamento instantâneo. A resposta inclui uma URL de imagem do QR code e uma string de código para copiar e colar em `actionRequired`. A liquidação é imediata.
+
+    ```json
+    {
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-PIX-001",
+      "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+      "paymentMethod": "pix",
+      "apm": {
+        "returnUrl": "https://yoursite.com/checkout/return"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="ACH">
+    O ACH coleta os dados da conta bancária do cliente diretamente — sem redirecionamento. Inclua `apm.tokenize: true` com um `shopper.id` para salvar a conta para uso futuro.
+
+    ```json
+    {
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-ACH-001",
+      "amount": { "currency": "USD", "value": 10000, "exponent": 2 },
+      "paymentMethod": "ach",
+      "shopper": { "id": "customer-42" },
+      "apm": {
+        "bankAccountNumber": "000123456789",
+        "bankRoutingNumber": "021000021",
+        "accountType": "checking",
+        "accountHolderName": "Ada Lovelace",
+        "tokenize": true
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="iDEAL">
+    O iDEAL redireciona o cliente para o banco holandês dele para autorizar. Opcionalmente passe `apm.issuerId` para pré-selecionar um banco e pular a tela de seleção de banco.
+
+    ```json
+    {
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-IDEAL-001",
+      "amount": { "currency": "EUR", "value": 2500, "exponent": 2 },
+      "paymentMethod": "ideal",
+      "apm": {
+        "returnUrl": "https://yoursite.com/checkout/return",
+        "cancelUrl": "https://yoursite.com/checkout/cancel"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Klarna">
+    A Klarna suporta fluxos de pagar depois e de pagar em parcelas. Passe o locale do cliente para garantir que o produto Klarna correto seja oferecido.
+
+    ```json
+    {
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "ORDER-KLARNA-001",
+      "amount": { "currency": "USD", "value": 7500, "exponent": 2 },
+      "paymentMethod": "klarna",
+      "apm": {
+        "locale": "en-US",
+        "returnUrl": "https://yoursite.com/checkout/return",
+        "cancelUrl": "https://yoursite.com/checkout/cancel"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Tokenização de ACH
+
+Para pagamentos ACH você pode salvar a conta bancária para uso futuro passando `apm.tokenize: true` junto com um `shopper.id`. O Therius devolve um vault token na resposta que você pode passar a cobranças ACH posteriores sem pedir ao cliente para digitar novamente os dados da conta dele.
+
+```json
+{
+  "shopper": { "id": "customer-42" },
+  "apm": {
+    "bankAccountNumber": "000123456789",
+    "bankRoutingNumber": "021000021",
+    "accountHolderName": "Ada Lovelace",
+    "tokenize": true
+  }
+}
+```
+
+<Note>
+  A tokenização de ACH está sujeita às regras da NACHA. Garanta que você exiba ao cliente o mandato de autorização de conta bancária exigido antes de enviar a requisição.
+</Note>

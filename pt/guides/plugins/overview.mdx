@@ -1,0 +1,56 @@
+---
+title: 'Plugins de e-commerce para o Therius'
+sidebarTitle: 'Visão geral'
+description: 'Plugins oficiais do Therius para WooCommerce, Magento 2, PrestaShop e Shopware 6 — instale, conecte as suas chaves, configure webhooks e comece a aceitar pagamentos com roteamento inteligente.'
+translationOf: guides/plugins/overview.mdx
+translationSourceHash: e6feafa7a5fe380322cc9ca9971e2b8dc7389bce391f2da6fea79c5921fea993
+---
+
+O Therius disponibiliza plugins para as principais plataformas de e-commerce para que você possa aceitar pagamentos — cartões mais quaisquer métodos de pagamento alternativos que a sua configuração de checkout habilitar — sem construir uma integração de API você mesmo. Cada plugin monta o [Widget de checkout](/sdk/checkout-widget), então você tem 3D Secure, cartões salvos e botões de carteira de fábrica, e cada transação passa pelo [roteamento inteligente](/concepts/smart-routing) e uma única [camada de webhooks](/webhooks/overview).
+
+## Plugins disponíveis
+
+| Plataforma | Repositório | Status |
+|---|---|---|
+| WooCommerce (WordPress) | [`therius-pay/therius-plugin-woocommerce`](https://github.com/therius-pay/therius-plugin-woocommerce) | Estável |
+| Magento 2 | [`therius-pay/therius-plugin-magento`](https://github.com/therius-pay/therius-plugin-magento) | Estável |
+| PrestaShop | [`therius-pay/therius-plugin-prestashop`](https://github.com/therius-pay/therius-plugin-prestashop) | Beta |
+| Shopware 6 | [`therius-pay/therius-plugin-shopware`](https://github.com/therius-pay/therius-plugin-shopware) | Beta |
+
+<Note>
+  Os plugins **Beta** estão completos em recursos e passam pela revisão de código, mas ainda não foram verificados contra uma instalação de loja ao vivo. Teste a fundo no seu próprio ambiente de staging antes de entrar em produção. Veja a página de cada plugin para as suas limitações conhecidas específicas.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="WooCommerce" href="/guides/plugins/woocommerce" icon="wordpress" />
+  <Card title="Magento 2" href="/guides/plugins/magento" icon="m" />
+  <Card title="PrestaShop" href="/guides/plugins/prestashop" icon="bag-shopping" />
+  <Card title="Shopware 6" href="/guides/plugins/shopware" icon="cart-shopping" />
+</CardGroup>
+
+## O que todo plugin faz da mesma forma
+
+**Dois ambientes, dois conjuntos de chaves.** Cada plugin armazena as suas credenciais de Sandbox e de Produção lado a lado. Um único botão **Modo de teste** decide qual conjunto é usado no checkout — Sandbox roteia para `https://api-sandbox.therius.io`, Produção para `https://api.therius.io`. Você nunca precisa trocar as chaves para se mover entre ambientes.
+
+**Chaves que você configura** (a partir do seu painel do Therius):
+
+| Campo | De onde vem |
+|---|---|
+| Chave publicável (`pub_...`) | Dashboard → Developers → API Keys |
+| Chave privada (`sk_...`) | Dashboard → Developers → API Keys — mantenha-a apenas no lado do servidor |
+| Checkout Config ID | Dashboard → Checkout Builder (seleciona quais métodos de pagamento e estilo o widget mostra) |
+| Segredo de assinatura de webhook | Mostrado quando você cria o endpoint de webhook (veja abaixo) |
+
+**Os webhooks são obrigatórios, não opcionais.** A chamada de checkout diz o resultado no momento da cobrança, mas a confirmação de captura, os reembolsos, os cancelamentos e os chargebacks acontecem todos *depois* dessa resposta. Sem um webhook configurado, os pedidos que foram apenas autorizados ficam sem resolução, e os reembolsos ou disputas tratados pelo painel do Therius nunca se refletem no pedido da loja.
+
+1. No painel do Therius, vá para **Developers → Webhooks** e adicione um endpoint. A página de cada plugin lista a URL exata para aquela plataforma. Crie um endpoint em modo **Sandbox** e um em modo **Produção** se você usar os dois.
+2. Assine ao menos: `payment.captured`, `payment.refused`, `payment.refunded`, `payment.cancelled`, `payment.chargeback` (veja a [lista completa de eventos](/webhooks/events)).
+3. Copie o segredo de assinatura de cada ambiente no campo correspondente da configuração do plugin.
+
+Todo webhook recebido é verificado com `X-Therius-Signature` (`HMAC-SHA256` sobre o corpo bruto) antes de qualquer coisa ser aplicada — requisições sem assinatura ou com assinatura incorreta são rejeitadas com `401`. As entregas são refeitas e podem chegar mais de uma vez; os plugins as deduplicam.
+
+**Reembolsos.** Um reembolso emitido pelo admin da loja chama o Therius e depois aguarda o webhook `payment.refunded` para mover o pedido ao seu estado reembolsado. Os registros de reembolso do próprio plugin são criados de imediato pela plataforma; o webhook mantém o Therius e a loja sincronizados.
+
+## Construir a sua própria integração em vez disso
+
+Se a sua plataforma não estiver listada, ou você precisar de controle total sobre o checkout, integre a API diretamente — comece com o [Quickstart](/quickstart) e o [guia de Checkout de navegador](/guides/browser-checkout).

@@ -1,0 +1,67 @@
+---
+title: 'Therius para WooCommerce'
+sidebarTitle: 'WooCommerce'
+description: 'Instala y configura el plugin de pago de Therius para WooCommerce — claves de sandbox y producción, webhooks y reembolsos.'
+translationOf: guides/plugins/woocommerce.mdx
+translationSourceHash: ca07a86fd9f0c4bd0f6686784a2af679d295d5f0ca1181745b3fb7fb97c6469e
+---
+
+El plugin de Therius para WooCommerce agrega una pasarela **Therius Payments** a tu tienda. Monta el [Widget de checkout](/sdk/checkout-widget) para que los compradores puedan pagar con tarjeta o cualquier método de pago alternativo que tu [configuración de checkout](/concepts/environments) habilite, con 3D Secure manejado inline. Soporta tanto el checkout clásico (shortcode) como los más nuevos Cart & Checkout Blocks — WooCommerce usa el que ejecute tu tienda, sin nada que configurar.
+
+**Repositorio:** [`therius-pay/therius-plugin-woocommerce`](https://github.com/therius-pay/therius-plugin-woocommerce)
+
+## Requisitos
+
+- WordPress con WooCommerce instalado y activo
+- Una cuenta de Therius con claves de API y una configuración de checkout
+
+## Instalación
+
+<Tabs>
+  <Tab title="Subir un .zip">
+    1. Descarga el plugin y comprime la carpeta `therius-plugin-woocommerce`.
+    2. En el admin de WordPress, ve a **Plugins → Añadir nuevo → Subir plugin**.
+    3. Elige el `.zip` y haz clic en **Instalar ahora**, luego en **Activar plugin**.
+  </Tab>
+  <Tab title="Sistema de archivos / FTP">
+    1. Copia la carpeta `therius-plugin-woocommerce` en `wp-content/plugins/`.
+    2. En el admin de WordPress, ve a **Plugins**, encuentra **Therius Payment Orchestration** y haz clic en **Activar**.
+  </Tab>
+</Tabs>
+
+## Configuración
+
+<Steps>
+  ### Abre los ajustes de la pasarela
+
+  Ve a **WooCommerce → Ajustes → Pagos**, encuentra **Therius Payments** y haz clic en **Gestionar**. Marca **Habilitar Therius Payments**.
+
+  ### Elige un entorno e ingresa las claves
+
+  - **Sandbox:** marca **Habilitar modo de prueba**, luego completa **Test Publishable Key** y **Test Private Key**. Las transacciones enrutan a `https://api-sandbox.therius.io`.
+  - **Producción:** desmarca **Habilitar modo de prueba**, luego completa **Live Publishable Key** y **Live Private Key**. Las transacciones enrutan a `https://api.therius.io`.
+
+  ### Guarda
+
+  Haz clic en **Guardar cambios**.
+</Steps>
+
+## Webhooks
+
+<Warning>
+  Configura esto antes de tomar pagos en vivo. Sin ello, las órdenes autorizadas pero no capturadas quedan **En espera** indefinidamente, y los reembolsos o contracargos desde el dashboard de Therius nunca se reflejan en la orden de WooCommerce.
+</Warning>
+
+1. En el dashboard de Therius, ve a **Developers → Webhooks** y agrega un endpoint que apunte a:
+
+   ```
+   https://your-store.com/?wc-api=WC_Gateway_Therius
+   ```
+
+   La URL exacta también se muestra en la página de ajustes del plugin. Crea un endpoint en modo **Sandbox** y uno en modo **Producción** si usas ambos.
+2. Suscríbete al menos a: `payment.captured`, `payment.refused`, `payment.refunded`, `payment.cancelled`, `payment.chargeback`.
+3. Copia el secreto de firma de cada entorno en el campo **Test Webhook Signing Secret** / **Live Webhook Signing Secret** del plugin.
+
+## Reembolsos
+
+Reembolsa una orden desde **WooCommerce → Pedidos → (pedido) → Reembolsar**. El plugin llama a Therius y agrega una nota al pedido; el pedido pasa a **Reembolsado** una vez que el webhook `payment.refunded` lo confirma. Los reembolsos parciales se soportan hasta el monto capturado.

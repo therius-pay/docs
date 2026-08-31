@@ -1,0 +1,71 @@
+---
+title: 'Therius para Shopware 6'
+sidebarTitle: 'Shopware 6'
+description: 'Instale e configure o plugin de pagamento do Therius para Shopware 6 — chaves de sandbox e produção, webhooks e comportamento do checkout.'
+translationOf: guides/plugins/shopware.mdx
+translationSourceHash: 1116efca32a46b78544991a091ab8c7becfb0854d20de2a17cd9db0b2636a981
+---
+
+<Note>
+  **Beta.** Este plugin está completo em recursos e revisado em código, mas ainda não foi verificado contra uma instalação do Shopware ao vivo. Veja **Limitações conhecidas** abaixo antes de confiar nele, e teste a fundo no seu próprio ambiente de staging.
+</Note>
+
+O plugin do Therius para Shopware 6 substitui as integrações padrão de gateway único pelo [Widget de checkout](/sdk/checkout-widget), suportando cartões e métodos de pagamento alternativos locais com [roteamento inteligente](/concepts/smart-routing).
+
+**Repositório:** [`therius-pay/therius-plugin-shopware`](https://github.com/therius-pay/therius-plugin-shopware)
+
+## Requisitos
+
+- Shopware 6 com acesso de admin para instalar extensões
+- Uma conta do Therius com chaves de API e uma configuração de checkout
+
+## Instalação
+
+1. Baixe o `.zip` do plugin.
+2. No admin do Shopware, vá para **Extensões → Minhas extensões → Enviar extensão** e envie o `.zip`.
+3. Clique em **Instalar**, depois em **Ativar**.
+
+## Configuração
+
+<Steps>
+  ### Abra a configuração do plugin
+
+  Vá para **Settings → Extensions → Therius Payment**.
+
+  ### Insira os seus dados
+
+  Por ambiente:
+
+  - **Test:** Test Publishable Key, Test Private Key, Test Checkout Config ID, Test Webhook Secret.
+  - **Live:** Live Publishable Key, Live Private Key, Live Checkout Config ID, Live Webhook Secret.
+
+  ### Escolha o ambiente ativo
+
+  Alterne **Enable Test Mode** — *Habilitado* roteia o checkout para `https://api-sandbox.therius.io` com as credenciais de Test; *Desabilitado* roteia para `https://api.therius.io` com as credenciais de Live. Salve.
+</Steps>
+
+## Comportamento do checkout
+
+Selecionar Therius Payments na página de confirmação não renderiza um formulário de cartão inline. Clicar em **Concluir pedido** abre o Widget de checkout do Therius em um lightbox, buscando uma sessão de checkout nova naquele momento. Qualquer passo extra de que o pagamento precise — um desafio de 3D Secure, um redirecionamento de APM, um passo de verificação por microdepósito — acontece dentro desse mesmo lightbox. O Shopware só cria o pedido depois que o pagamento tem sucesso.
+
+## Webhooks
+
+<Warning>
+  Configure isto antes de receber pagamentos ao vivo. Sem isso, os pagamentos que exigem validação assíncrona ficam pendentes e os reembolsos feitos pelo painel do Therius não se refletem no Shopware.
+</Warning>
+
+1. No painel do Therius, vá para **Developers → Webhooks** e adicione um endpoint apontando para:
+
+   ```
+   https://your-store.com/therius/webhook
+   ```
+
+   Crie um endpoint em modo **Sandbox** e um em modo **Produção** se você usar os dois.
+2. Assine: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.cancelled`, `payment.chargeback`, `payment.capture_failed`, `payment.cancel_failed`.
+3. Copie o segredo de assinatura de cada ambiente no campo correspondente **Test Webhook Secret** / **Live Webhook Secret** da configuração do plugin.
+
+## Limitações conhecidas
+
+<Warning>
+  **As atualizações de pedido dirigidas por webhook não estão funcionando na build atual.** O plugin faz a correspondência dos webhooks recebidos contra o número do pedido do Shopware, mas o identificador que ele envia ao Therius no momento da cobrança é o token do carrinho, não o eventual número do pedido — então as entregas para pedidos reais não correspondem e são registradas como "unknown order". Até isso ser corrigido, as capturas, os reembolsos, os chargebacks e os cancelamentos realizados pelo painel do Therius **não** atualizam o status do pedido do Shopware. Espera-se que os reembolsos sejam iniciados pelo painel do Therius em vez do admin do Shopware.
+</Warning>
