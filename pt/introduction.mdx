@@ -1,0 +1,71 @@
+---
+title: "Therius: API de pagamentos unificada para cartões e carteiras"
+sidebarTitle: "Introdução"
+description: "O Therius é uma API de pagamentos unificada para cartões, carteiras e métodos de pagamento alternativos/locais. Saiba o que o Therius faz e como ele se encaixa na sua integração."
+translationOf: introduction.mdx
+translationSourceHash: e03e17746fb748aad5e7b1bdac3b451b5b090855a96bd207e235798f82f68617
+---
+
+O Therius é uma API de pagamentos que consolida todos os principais métodos de pagamento por trás de um único endpoint REST. Seja para aceitar cartões Visa, Mastercard e Amex, carteiras digitais como Apple Pay e Google Pay, ou alternativas regionais como Pix, ACH, iDEAL e Klarna, você envia uma única requisição ao Therius e ele cuida do roteamento, da autenticação e da liquidação para você.
+
+## Principais recursos
+
+<CardGroup cols={2}>
+  <Card title="Um único endpoint unificado" icon="arrow-right-arrow-left">
+    Envie todos os métodos de pagamento — cartões, carteiras e mais de 40 APMs — por uma única requisição `POST /payment/purchase`. Sem malabarismo de SDK para cada método.
+  </Card>
+
+  <Card title="Roteamento inteligente e failover" icon="route">
+    Roteie cada transação entre seus adquirentes conectados por valor, moeda, BIN do cartão e mais, com nova tentativa em cascata automática em recusas temporárias. Configurado no painel, não no código.
+  </Card>
+
+  <Card title="Ciclo de vida completo do pagamento" icon="rotate">
+    Autorize, capture, reembolse e cancele pela mesma API. O fluxo de duas etapas autorizar-e-depois-capturar é compatível com produtos físicos e entrega postergada.
+  </Card>
+
+  <Card title="Tokenização de cartão" icon="vault">
+    Tokenize um cartão durante o primeiro pagamento ou pelo endpoint de tokens independente. Cobre clientes recorrentes sem coletar os dados do cartão novamente.
+  </Card>
+
+  <Card title="3D Secure (3DS2)" icon="shield-check">
+    O Therius cuida de todo o fluxo do 3DS2 — coleta de dados do dispositivo, redirecionamentos de desafio e verificação do resultado — automaticamente. Você só precisa tratar a pausa `pending_3ds`.
+  </Card>
+
+  <Card title="Assinaturas" icon="calendar-days">
+    Crie planos com intervalos de faturamento, períodos de teste e regras de gestão de cobranças. O Therius refaz os pagamentos de assinatura que falham e avisa você por webhooks.
+  </Card>
+
+  <Card title="Webhooks" icon="bell">
+    Receba eventos de pagamento, disputa e assinatura enviados ao seu servidor por HTTPS — assinados, com novas tentativas em uma programação de espera crescente e reenviáveis pelo painel.
+  </Card>
+
+  <Card title="SDK de JS" icon="browser">
+    Colete os dados do cartão no navegador com o SDK de JS do Therius. Os dados do cartão são criptografados no lado do cliente e enviados diretamente ao Therius — seu servidor nunca vê um PAN sem criptografia.
+  </Card>
+
+  <Card title="Assistente de IA" icon="sparkles">
+    Pergunte sobre seus pagamentos, análises, roteamento e disputas em linguagem natural — com a Thera no painel, ou conectando seu próprio agente de IA via MCP. Nenhum dado de cartão ou segredo chega a um modelo.
+  </Card>
+</CardGroup>
+
+<Note>
+  Números de cartão sem criptografia nunca devem passar pelo seu servidor vindos do navegador. Use o SDK de JS do Therius para coletar os dados do cartão no lado do cliente. O SDK criptografa o cartão e o troca por um nonce que seu servidor envia à API no lugar do número do cartão.
+</Note>
+
+## Para onde ir em seguida
+
+Comece pelo guia de início rápido se quiser disparar um pagamento real (de sandbox) em menos de cinco minutos. Leia o guia de autenticação para entender como funcionam as chaves de API e o token de sessão do SDK de JS. Consulte a visão geral do SDK quando estiver pronto para incorporar um formulário de pagamento. Ao conectar seu backend, configure os [webhooks](/webhooks/overview) para que os resultados assíncronos cheguem ao seu servidor, e mantenha a referência de [testes](/guides/testing) à mão para os cartões de teste de sandbox.
+
+<CardGroup cols={3}>
+  <Card title="Início rápido" icon="bolt" href="/quickstart">
+    Faça seu primeiro pagamento de teste com um único comando curl.
+  </Card>
+
+  <Card title="Autenticação" icon="key" href="/authentication">
+    Entenda as chaves de API, os ambientes e o token de cliente do SDK.
+  </Card>
+
+  <Card title="Visão geral do SDK" icon="code" href="/sdk/overview">
+    Incorpore um formulário de pagamento seguro para PCI no seu frontend.
+  </Card>
+</CardGroup>

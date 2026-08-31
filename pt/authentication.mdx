@@ -1,0 +1,86 @@
+---
+title: 'Autenticação da API do Therius — chaves e ambientes'
+sidebarTitle: 'Autenticação'
+description: 'Saiba como funcionam as chaves de API do Therius, como enviá-las nas requisições, a diferença entre credenciais de produção e de sandbox, e como gerar tokens de sessão do SDK.'
+translationOf: authentication.mdx
+translationSourceHash: 228a4bab784f3a7a0021bb4f14aa253d40790a47b45d4e4bd9f71d457e36ccf4
+---
+
+Todos os endpoints da API do Therius exigem uma credencial. Chamadas servidor a servidor enviam sua chave privada como token `Bearer` no cabeçalho `Authorization`. O que você nunca deve fazer é expor uma chave privada de API em código de frontend ou passá-la por um cliente não confiável — integrações no navegador usam um token de cliente do SDK de curta duração em vez disso (veja abaixo).
+
+## Tipos de chave de API
+
+O Therius emite quatro tipos de credenciais. O prefixo de cada chave diz exatamente o que ela é e para qual ambiente aponta.
+
+| Prefixo da chave | Tipo | Usada por | Ambiente |
+|---|---|---|---|
+| `sk_live_xxx` | Chave privada | Seu servidor | Produção |
+| `sk_sandbox_xxx` | Chave privada | Seu servidor | Sandbox |
+| `pub_live_xxx` | Chave pública | SDK de JS (JWT do token de cliente) | Produção |
+| `pub_sandbox_xxx` | Chave pública | SDK de JS (JWT do token de cliente) | Sandbox |
+
+**Chaves privadas** (`sk_live_xxx`, `sk_sandbox_xxx`) autenticam todos os endpoints de pagamento. Mantenha-as somente no seu servidor — em variáveis de ambiente, não no código-fonte.
+
+**Chaves públicas** (`pub_live_xxx`, `pub_sandbox_xxx`) são embutidas dentro do JWT do token de cliente de curta duração que seu servidor gera e passa ao navegador. O navegador nunca vê uma chave privada sem criptografia.
+
+**Token de cliente do SDK (JWT)** — um token de curta duração (válido por 30 minutos) que seu servidor cria chamando `POST /sdk/session` com sua chave privada. É a única credencial que o navegador chega a ter. Se o token expirar, seu servidor gera um novo.
+
+## Como enviar as credenciais
+
+Envie sua chave privada como token `Bearer` no cabeçalho `Authorization` em toda requisição do lado do servidor. Ela não é aceita no corpo da requisição nem na query string.
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "merchantCode": "MERCHANT_001", ... }'
+```
+
+<Note>
+  O prefixo da chave determina o ambiente automaticamente. Uma chave que começa com `sk_sandbox_` sempre é roteada para o sandbox — você não precisa de um indicador de ambiente separado nem de um caminho de código diferente.
+</Note>
+
+## Fluxo do token de sessão do SDK
+
+O SDK de JS exige um JWT de token de cliente, não uma chave de API sem criptografia. Este é o fluxo:
+
+1. Seu navegador solicita uma sessão de pagamento ao seu servidor.
+2. Seu servidor chama `POST /sdk/session` com sua chave privada e recebe um JWT `clientToken` de curta duração.
+3. Seu servidor passa o `clientToken` ao navegador.
+4. O navegador inicializa o SDK de JS do Therius com o `clientToken`.
+
+Sua chave privada nunca sai do seu servidor. Se precisar atualizar a sessão (por exemplo, após 30 minutos), seu servidor gera um novo token.
+
+```bash
+# Seu servidor gera um token de cliente
+curl -X POST https://api.therius.io/v1/sdk/session \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```json
+{
+  "clientToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+Passe o `clientToken` ao inicializador do SDK de JS — nunca o registre nem o armazene além da sessão atual do navegador.
+
+## Erros de autenticação comuns
+
+| Status | Código | Significado |
+|---|---|---|
+| `401 Unauthorized` | `AUTH_MISSING` / `AUTH_INVALID` | A chave está ausente, malformada ou foi revogada. Verifique se você está enviando a chave correta para o ambiente de destino. |
+| `403 Forbidden` | `AUTH_INSUFFICIENT_SCOPE` | A chave é válida mas não tem permissão para esta operação. Por exemplo, usar uma chave pública em um endpoint de pagamento do lado do servidor. |
+
+## Dicas de segurança
+
+<Warning>
+  Nunca embuta uma chave privada (`sk_live_xxx` ou `sk_sandbox_xxx`) em JavaScript de frontend, no binário de um app móvel ou em um repositório público. Trate as chaves privadas como você trata as senhas de banco de dados.
+</Warning>
+
+- Armazene as chaves em variáveis de ambiente ou em um gerenciador de segredos (por exemplo, AWS Secrets Manager, HashiCorp Vault).
+- Rotacione as chaves imediatamente se suspeitar de um vazamento — gere uma nova chave no painel do Therius e desative a antiga.
+- Use a chave de menor privilégio para cada integração: o SDK de JS só precisa do token de cliente; seu servidor cuida de todo o resto.
+- Audite o uso das chaves no painel do Therius para detectar padrões de chamadas inesperados cedo.

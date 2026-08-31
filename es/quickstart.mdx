@@ -1,0 +1,147 @@
+---
+title: 'Inicio rápido de Therius: tu primer pago en 5 minutos'
+sidebarTitle: 'Inicio rápido'
+description: 'Realiza un pago real de sandbox con la API de Therius en menos de cinco minutos — sin SDK, sin configuración de frontend. Solo una clave y un comando curl.'
+translationOf: quickstart.mdx
+translationSourceHash: f65ba464eaac96e12658b2382b70302788436e73ec83e66217c89e67107c4aca
+---
+
+El sandbox de Therius es un entorno de pruebas totalmente aislado — las solicitudes llegan a un stub de proveedor de prueba, no se mueve dinero real y no interviene ninguna red de tarjetas. Tu clave de sandbox comienza con `sk_sandbox_...` y toda cuenta de Therius incluye una por defecto. Todo lo que construyas aquí funciona de forma idéntica en producción; solo cambias la clave y la URL base cuando estés listo para salir a producción.
+
+<Warning>
+  El encabezado `Idempotency-Key` es obligatorio en producción. Reintentar un timeout de red sin él puede cobrarle dos veces a un cliente. Los ejemplos siguientes lo incluyen para que adoptes el hábito desde el principio.
+</Warning>
+
+## Pasos
+
+<Steps>
+  <Step title="Obtén una clave de sandbox">
+    Inicia sesión en tu panel de Therius y copia la clave etiquetada como **Sandbox Secret Key**. Se ve así: `sk_sandbox_xxxxxxxxxxxx`.
+
+    Toda solicitud a `https://api-sandbox.therius.io/v1` envía esta clave como `Authorization: Bearer sk_sandbox_...`. El prefijo de la clave (`sk_sandbox_`) le indica a Therius que enrute la solicitud al entorno de sandbox automáticamente — sin configuración adicional.
+  </Step>
+
+  <Step title="Realiza tu primera compra">
+    Pega el siguiente comando en tu terminal, reemplazando `sk_sandbox_your_key_here` por tu clave de sandbox real.
+
+    ```bash
+    curl -X POST https://api-sandbox.therius.io/v1/payment/purchase \
+      -H "Authorization: Bearer sk_sandbox_your_key_here" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{
+        "merchantCode": "MERCHANT_001",
+        "orderCode": "QUICKSTART-001",
+        "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
+        "card": {
+          "cardData": {
+            "cardNumber": "4111111111111111",
+            "cardholderName": "Ada Lovelace",
+            "expiryMonth": "12",
+            "expiryYear": "2030",
+            "cvv": "123"
+          }
+        }
+      }'
+    ```
+
+    Algunas cosas a tener en cuenta sobre esta solicitud:
+
+    - **Tarjetas de prueba** — `4111111111111111` siempre resulta en una aprobación de sandbox. Usa `4000000000000002` para simular un rechazo.
+    - **`amount.value`** siempre va en unidades menores. `1999` significa $19.99 en USD. Para monedas sin decimales como JPY o CLP, `1999` significa ¥1999.
+    - **`amount.exponent`** es la cantidad de posiciones decimales: `2` para USD/EUR, `0` para JPY/CLP.
+
+    Una respuesta exitosa se ve así:
+
+    ```json
+    {
+      "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+      "status": "captured",
+      "paymentCode": "PAY-abc123xyz",
+      "orderCode": "QUICKSTART-001",
+      "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
+    }
+    ```
+
+    Guarda el `id` — es el identificador de este pago, usado como el segmento de ruta `{id}` para capturar, reembolsar y cancelar. (`paymentCode` es una referencia para consultas y conciliación.)
+  </Step>
+
+  <Step title="Consulta el pago">
+    Recupera cualquier pago pasando su `id` (o su `paymentCode`) a `GET /payment/inquiry/{id}`.
+
+    ```bash
+    curl https://api-sandbox.therius.io/v1/payment/inquiry/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e \
+      -H "Authorization: Bearer sk_sandbox_your_key_here"
+    ```
+
+    La respuesta devuelve la misma estructura `PaymentResponse` que la compra original, incluido el `status` actual y todos los detalles del monto.
+  </Step>
+
+  <Step title="Tokeniza una tarjeta">
+    Para guardar una tarjeta para un cliente que regresa, agrega `"tokenize": true` y un `shopper.id` a tu solicitud de compra. Therius almacena la tarjeta en su bóveda y devuelve un token en la respuesta.
+
+    ```json
+    {
+      "merchantCode": "MERCHANT_001",
+      "orderCode": "QUICKSTART-002",
+      "amount": { "currency": "USD", "value": 1999, "exponent": 2 },
+      "shopper": { "id": "shopper-42" },
+      "card": {
+        "cardData": {
+          "cardNumber": "4111111111111111",
+          "cardholderName": "Ada Lovelace",
+          "expiryMonth": "12",
+          "expiryYear": "2030",
+          "cvv": "123",
+          "tokenize": true
+        }
+      }
+    }
+    ```
+
+    La respuesta incluye un campo `token` (p. ej., `vt_abc123`). En solicitudes futuras para este cliente, pasa `card.tokenData.token` en lugar de `card.cardData` — sin necesidad del número de tarjeta.
+
+    ```json
+    {
+      "card": {
+        "tokenData": {
+          "token": "vt_abc123"
+        }
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Sal a producción">
+    Cuando estés listo para aceptar pagos reales, haz dos cambios:
+
+    1. Reemplaza `sk_sandbox_...` por tu clave de producción `sk_live_...`.
+    2. Dirige tus solicitudes a `https://api.therius.io/v1` en lugar de `https://api-sandbox.therius.io/v1`.
+
+    No se requiere ningún otro cambio de código. El prefijo de la clave selecciona el entorno automáticamente.
+
+    <Warning>
+      Confirma que toda solicitud que modifica datos en tu código de producción envía un encabezado `Idempotency-Key` antes de salir a producción.
+    </Warning>
+  </Step>
+</Steps>
+
+## Qué sigue
+
+<CardGroup cols={3}>
+  <Card icon="book" title="Referencia de API" href="/api-reference">
+    Explora cada endpoint — compra, autorización, captura, reembolso, cancelación, suscripciones y más.
+  </Card>
+  <Card icon="code" title="SDK de JS" href="/sdk/overview">
+    Incorpora un formulario de tarjeta seguro para PCI en tu frontend sin que los datos de tarjeta sin cifrar pasen por tu servidor.
+  </Card>
+  <Card icon="plug" title="Conexiones" href="/connections">
+    Conecta adquirentes, procesadores y proveedores de pago alternativos a tu cuenta de Therius.
+  </Card>
+  <Card icon="bell" title="Webhooks" href="/webhooks/overview">
+    Recibe eventos de pago y suscripción en tu servidor, con verificación de firma.
+  </Card>
+  <Card icon="flask-vial" title="Pruebas" href="/guides/testing">
+    Cada tarjeta de prueba de sandbox, motivo de rechazo y escenario de 3D Secure en una sola tabla.
+  </Card>
+</CardGroup>

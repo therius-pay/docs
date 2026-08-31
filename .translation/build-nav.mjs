@@ -16,6 +16,10 @@
  */
 import fs from 'node:fs';
 
+// A page is only wired into a locale's nav once its .mdx actually exists — so
+// batches can land incrementally without Mintlify 404ing on nav entries.
+const exists = (loc, page) => fs.existsSync(`${loc}/${page}.mdx`);
+
 const LABELS = {
   es: {
     "Documentation": "Documentación", "API Reference": "Referencia de API", "JS SDK": "SDK de JS", "Connections": "Conexiones",
@@ -44,19 +48,26 @@ if (!en.tabs) { console.error('no en tabs found'); process.exit(1); }
 const translate = (tree, loc) => {
   const L = LABELS[loc];
   const walk = (node) => {
-    if (Array.isArray(node)) return node.map(walk);
+    if (Array.isArray(node)) return node.map(walk).filter(Boolean);
     if (node && typeof node === 'object') {
       const out = {};
       for (const [k, v] of Object.entries(node)) {
         if (k === 'tab' || k === 'group' || k === 'anchor') out[k] = L[v] || v;
-        else if (k === 'pages') out[k] = v.map((p) => (typeof p === 'string' ? `${loc}/${p}` : walk(p)));
-        else out[k] = walk(v);
+        else if (k === 'pages') {
+          out[k] = v
+            .map((p) => (typeof p === 'string' ? (exists(loc, p) ? `${loc}/${p}` : null) : walk(p)))
+            .filter(Boolean);
+        } else out[k] = walk(v);
       }
+      // prune empty groups/tabs
+      if (Array.isArray(out.pages) && out.pages.length === 0 && !out.groups) return null;
+      if (Array.isArray(out.groups) && out.groups.length === 0) return null;
       return out;
     }
     return node;
   };
-  return walk(JSON.parse(JSON.stringify(tree)));
+  const t = walk(JSON.parse(JSON.stringify(tree)));
+  return Array.isArray(t) ? t.filter(Boolean) : t;
 };
 
 d.navigation = {

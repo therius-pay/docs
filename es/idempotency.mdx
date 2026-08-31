@@ -1,0 +1,85 @@
+---
+title: 'Idempotencia: reintenta pagos sin duplicados de forma segura'
+sidebarTitle: 'Idempotencia'
+description: 'Evita cobros duplicados usando el encabezado Idempotency-Key en todas las llamadas que modifican datos en la API de Therius. Conoce cómo funciona la idempotencia y las mejores prácticas.'
+translationOf: idempotency.mdx
+translationSourceHash: 658585d059efa82d1184b65ad2c42c04d30f8cb46b8756cba9117fa4321672e1
+---
+
+Cuando envías una solicitud de pago por la red, puedes encontrarte con una situación en la que tu conexión se cae antes de recibir una respuesta. En ese punto no puedes saber si el servidor procesó el pago o no. Si reintentas la solicitud sin una clave de idempotencia, corres el riesgo de cobrarle dos veces al cliente. El encabezado `Idempotency-Key` resuelve esto: te permite reintentar una solicitud cualquier número de veces con la garantía de que Therius la procesará exactamente una vez.
+
+## Cómo funciona
+
+Todos los endpoints que modifican datos aceptan un encabezado de solicitud `Idempotency-Key`:
+
+- `POST /payment/purchase`
+- `POST /payment/authorization`
+- `POST /payment/{id}/capture`
+- `POST /payment/{id}/refund`
+- `POST /payment/{id}/cancel`
+- `POST /payment/{id}/cancel_or_refund`
+- `POST /payment/resume`
+- `POST /subscription`
+
+El valor debe ser un **UUID v4** que generes por operación lógica (un UUID por compra, uno por reembolso, y así). Así maneja Therius la clave durante los reintentos:
+
+1. **Primera solicitud** — Therius reserva la clave, procesa el pago y almacena la respuesta `2xx` asociada a la clave.
+2. **Reintento con la misma clave** — Therius detecta el duplicado, omite el procesamiento y devuelve la respuesta en caché de inmediato.
+3. **Solicitud concurrente con la misma clave** — Si llega una segunda solicitud con la misma clave mientras la primera aún está en curso, Therius devuelve `409 Conflict` con un encabezado `Retry-After: 1`. Espera un segundo y reintenta.
+4. **Endpoint equivocado, misma clave** — Reutilizar una clave en un endpoint diferente devuelve `422 Unprocessable Entity`.
+
+<Note>
+  Solo se almacenan en caché las respuestas `2xx`. Si una solicitud falla con un estado `4xx` o `5xx`, la clave no se guarda — puedes reintentar con una clave nueva (o la misma clave, si el error fue transitorio y quieres volver a intentar la misma operación).
+</Note>
+
+Las claves expiran después de **24 horas**. Tras la expiración, el mismo UUID puede reutilizarse libremente, pero de todos modos deberías generar un UUID nuevo para cualquier operación nueva.
+
+## Ejemplos de código
+
+### Bash / cURL
+
+```bash
+# Genera un UUID por solicitud
+IDEM_KEY=$(uuidgen)
+
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $IDEM_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+Si el comando expira por timeout, vuelve a ejecutarlo con el mismo valor de `$IDEM_KEY`. Therius devolverá el resultado en caché si la solicitud original tuvo éxito.
+
+### JavaScript
+
+```javascript
+import { v4 as uuidv4 } from 'uuid';
+
+const response = await fetch('https://api.therius.io/v1/payment/purchase', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer sk_live_your_key_here',
+    'Idempotency-Key': uuidv4(),
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ /* ... */ }),
+});
+```
+
+Almacena el UUID junto con el pedido en tu base de datos antes de enviar la solicitud. Si la llamada `fetch` lanza un error de red, recupera el UUID almacenado y reintenta con él — no generes uno nuevo.
+
+## Mejores prácticas
+
+<Warning>
+  En producción el encabezado `Idempotency-Key` no es opcional. Envía siempre uno en cada llamada que modifica datos. Omitirlo en un endpoint de pago en un entorno de producción es un error de configuración, no un descuido menor.
+</Warning>
+
+<Tip>
+  Al reintentar tras un timeout, reutiliza exactamente el mismo UUID que enviaste originalmente. Therius devuelve el resultado en caché sin volver a procesar el pago, de modo que a tu cliente se le cobra exactamente una vez.
+</Tip>
+
+- **Genera la clave antes de la solicitud, no después.** Guárdala con el registro del pedido para poder recuperarla si necesitas reintentar.
+- **Un UUID por operación lógica.** Una compra y su posterior reembolso son dos operaciones distintas — cada una recibe su propio UUID.
+- **No reutilices claves entre endpoints.** Una clave usada para `POST /payment/purchase` no puede usarse para `POST /payment/{id}/refund`.
+- **No compartas claves entre clientes ni pedidos.** Cada clave debe ser globalmente única para una sola operación.

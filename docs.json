@@ -183,6 +183,44 @@
             ]
           }
         ]
+      },
+      {
+        "language": "es",
+        "tabs": [
+          {
+            "tab": "Documentación",
+            "groups": [
+              {
+                "group": "Primeros pasos",
+                "pages": [
+                  "es/introduction",
+                  "es/quickstart",
+                  "es/authentication",
+                  "es/idempotency"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "pt",
+        "tabs": [
+          {
+            "tab": "Documentação",
+            "groups": [
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "pt/introduction",
+                  "pt/quickstart",
+                  "pt/authentication",
+                  "pt/idempotency"
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   },
