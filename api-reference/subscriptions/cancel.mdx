@@ -17,9 +17,19 @@ openapi: "POST /subscription/{id}/cancel"
 
 **Endpoint:** `POST /subscription/{id}/cancel`
 
-**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass `key` in the request body.
+### Headers
 
-**Idempotency:** You may pass an `Idempotency-Key` header to safely retry the request.
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
+</ParamField>
 
 ### Path Parameters
 
@@ -28,10 +38,6 @@ openapi: "POST /subscription/{id}/cancel"
 </ParamField>
 
 ### Request Body
-
-<ParamField body="key" type="string">
-  Your private API key. Use this as an alternative to the `Authorization` header.
-</ParamField>
 
 <ParamField body="merchantCode" type="string">
   Your merchant account identifier.

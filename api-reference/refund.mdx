@@ -15,9 +15,13 @@ Use `POST /payment/{id}/refund` to return funds to a cardholder after a payment 
 
 **Endpoint:** `POST https://api.therius.io/v1/payment/{id}/refund`
 
+### Path Parameters
+
 <ParamField path="id" type="string" required>
   The Therius payment `id` from the authorization/purchase response.
 </ParamField>
+
+### Headers
 
 <ParamField header="Authorization" type="string">
   Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
@@ -31,9 +35,7 @@ Use `POST /payment/{id}/refund` to return funds to a cardholder after a payment 
   Must be `application/json`.
 </ParamField>
 
-<ParamField body="key" type="string">
-  Your merchant private API key. Alternatively, use the `Authorization` header.
-</ParamField>
+### Request Body
 
 <ParamField body="merchantCode" type="string" required>
   Your merchant identifier.

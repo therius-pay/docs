@@ -11,6 +11,8 @@ Use `GET /payment/inquiry/{id}` to retrieve the current status and details of an
 
 **Endpoint:** `GET https://api.therius.io/v1/payment/inquiry/{id}`
 
+### Headers
+
 <ParamField header="Authorization" type="string">
   Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox). Required for most requests.
 </ParamField>
@@ -18,6 +20,8 @@ Use `GET /payment/inquiry/{id}` to retrieve the current status and details of an
 <ParamField header="X-Environment" type="string">
   Set to `"sandbox"` when querying the sandbox environment without an API key. Useful for client-side status polling where you don't want to expose your secret key.
 </ParamField>
+
+### Path Parameters
 
 <ParamField path="id" type="string" required>
   The `paymentCode` (e.g. `"PC-1234567890"`) or the internal payment UUID. Both uniquely identify a single payment.

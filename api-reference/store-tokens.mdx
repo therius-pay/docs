@@ -17,11 +17,21 @@ openapi: "POST /token"
 
 **Endpoint:** `POST /token`
 
-**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass your private key as the `key` field in the request body.
+### Headers
 
-<ParamField body="key" type="string">
-  Your private API key. Use this instead of the `Authorization` header if you prefer body-based authentication.
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
+</ParamField>
+
+### Request Body
 
 <ParamField body="merchantCode" type="string">
   Your unique merchant account identifier.

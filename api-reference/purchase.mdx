@@ -11,8 +11,10 @@ openapi: "POST /payment/purchase"
 
 **Endpoint:** `POST https://api.therius.io/v1/payment/purchase`
 
+### Headers
+
 <ParamField header="Authorization" type="string">
-  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox). Required unless you pass `key` in the request body.
+  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -23,9 +25,7 @@ openapi: "POST /payment/purchase"
   Must be `application/json`.
 </ParamField>
 
-<ParamField body="key" type="string">
-  Your merchant private API key. You can pass this in the body instead of the `Authorization` header, but the header is preferred.
-</ParamField>
+### Request Body
 
 <ParamField body="merchantCode" type="string" required>
   Your merchant identifier, issued when your account is created.

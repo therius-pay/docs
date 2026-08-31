@@ -13,11 +13,13 @@ openapi: "GET /subscription"
 
 **Endpoint:** `GET /subscription`
 
-**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+### Headers
 
-<ParamField query="key" type="string">
-  Your private API key. Required when not using the `Authorization: Bearer` header.
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
+
+### Query Parameters
 
 <ParamField query="merchantCode" type="string">
   Your merchant account identifier. Required if your API key is associated with multiple merchant accounts.

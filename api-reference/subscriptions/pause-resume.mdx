@@ -19,17 +19,27 @@ Pausing a subscription stops all renewal attempts without cancelling it, preserv
 
 **Endpoint:** `POST /subscription/{id}/pause`
 
-**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass `key` in the request body.
+### Headers
 
-**Idempotency:** You may pass an `Idempotency-Key` header.
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
+</ParamField>
+
+### Path Parameters
 
 <ParamField path="id" type="string" required>
   The UUID of the subscription to pause.
 </ParamField>
 
-<ParamField body="key" type="string">
-  Your private API key.
-</ParamField>
+### Request Body
 
 <ParamField body="merchantCode" type="string">
   Your merchant account identifier.
@@ -65,17 +75,27 @@ On success, Therius fires `subscription.resumed`. If a `suspended` subscription 
 
 **Endpoint:** `POST /subscription/{id}/resume`
 
-**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass `key` in the request body.
+### Headers
 
-**Idempotency:** You may pass an `Idempotency-Key` header.
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
+</ParamField>
+
+### Path Parameters
 
 <ParamField path="id" type="string" required>
   The UUID of the subscription to resume.
 </ParamField>
 
-<ParamField body="key" type="string">
-  Your private API key.
-</ParamField>
+### Request Body
 
 <ParamField body="merchantCode" type="string">
   Your merchant account identifier.

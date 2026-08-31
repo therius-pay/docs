@@ -34,10 +34,6 @@ When a purchase or authorization returns `status: "pending_3ds"`, the cardholder
   The session ID from the `pending_3ds` payment response. This value uniquely identifies the paused payment session and serves as the authentication credential for this endpoint.
 </ParamField>
 
-<ParamField body="key" type="string">
-  Your merchant private API key. Optional — only used to select the sandbox vs. production environment when the environment cannot be inferred from the `sessionId` prefix.
-</ParamField>
-
 ## Response
 
 The response is a full `paymentResponse` object with the final payment status.

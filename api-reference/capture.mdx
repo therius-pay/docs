@@ -17,9 +17,13 @@ An `id` that does not exist, or that belongs to another merchant, returns `404`.
 
 **Endpoint:** `POST https://api.therius.io/v1/payment/{id}/capture`
 
+### Path Parameters
+
 <ParamField path="id" type="string" required>
   The Therius payment `id` from the authorization/purchase response.
 </ParamField>
+
+### Headers
 
 <ParamField header="Authorization" type="string">
   Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
@@ -33,9 +37,7 @@ An `id` that does not exist, or that belongs to another merchant, returns `404`.
   Must be `application/json`.
 </ParamField>
 
-<ParamField body="key" type="string">
-  Your merchant private API key. Alternatively, use the `Authorization` header.
-</ParamField>
+### Request Body
 
 <ParamField body="merchantCode" type="string" required>
   Your merchant identifier.

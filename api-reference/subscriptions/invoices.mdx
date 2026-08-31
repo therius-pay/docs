@@ -15,15 +15,19 @@ Therius creates one invoice per billing cycle. Each invoice records the charge a
 
 **Endpoint:** `GET /subscription/{id}/invoice`
 
-**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
+
+### Path Parameters
 
 <ParamField path="id" type="string" required>
   The UUID of the subscription whose invoices you want to list.
 </ParamField>
 
-<ParamField query="key" type="string">
-  Your private API key. Required when not using the `Authorization: Bearer` header.
-</ParamField>
+### Query Parameters
 
 <ParamField query="merchantCode" type="string">
   Your merchant account identifier.
@@ -85,13 +89,19 @@ curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?key=sk_liv
 
 **Endpoint:** `GET /subscription/invoice/{id}`
 
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
+
+### Path Parameters
+
 <ParamField path="id" type="string" required>
   The UUID of the invoice to retrieve.
 </ParamField>
 
-<ParamField query="key" type="string">
-  Your private API key. Required when not using the `Authorization: Bearer` header.
-</ParamField>
+### Query Parameters
 
 <ParamField query="merchantCode" type="string">
   Your merchant account identifier.

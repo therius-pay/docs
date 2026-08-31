@@ -601,9 +601,6 @@
                                     "amount"
                                 ],
                                 "properties": {
-                                    "key": {
-                                        "type": "string"
-                                    },
                                     "merchantCode": {
                                         "type": "string"
                                     },
@@ -683,9 +680,6 @@
                                     "amount"
                                 ],
                                 "properties": {
-                                    "key": {
-                                        "type": "string"
-                                    },
                                     "merchantCode": {
                                         "type": "string"
                                     },
@@ -767,9 +761,6 @@
                                     "amount"
                                 ],
                                 "properties": {
-                                    "key": {
-                                        "type": "string"
-                                    },
                                     "merchantCode": {
                                         "type": "string"
                                     },
@@ -824,9 +815,6 @@
                                     "merchantCode"
                                 ],
                                 "properties": {
-                                    "key": {
-                                        "type": "string"
-                                    },
                                     "merchantCode": {
                                         "type": "string"
                                     },
@@ -879,9 +867,6 @@
                                     "amount"
                                 ],
                                 "properties": {
-                                    "key": {
-                                        "type": "string"
-                                    },
                                     "merchantCode": {
                                         "type": "string"
                                     },
@@ -936,9 +921,6 @@
                                     "merchantCode"
                                 ],
                                 "properties": {
-                                    "key": {
-                                        "type": "string"
-                                    },
                                     "merchantCode": {
                                         "type": "string"
                                     },

@@ -13,11 +13,21 @@ Plans define the billing terms for subscriptions — amount, currency, interval,
 
 **Endpoint:** `POST /subscription/plan`
 
-**Authentication:** `Authorization: Bearer sk_live_xxx` header, or pass `key` in the request body.
+### Headers
 
-<ParamField body="key" type="string">
-  Your private API key.
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
+</ParamField>
+
+### Request Body
 
 <ParamField body="merchantCode" type="string">
   Your merchant account identifier.

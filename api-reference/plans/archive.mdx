@@ -17,18 +17,16 @@ openapi: "DELETE /subscription/plan/{id}"
 
 **Endpoint:** `DELETE /subscription/plan/{id}`
 
-**Authentication:** Pass your private API key as the `key` query parameter, or use the `Authorization: Bearer sk_live_xxx` header.
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
 
 ### Path Parameters
 
 <ParamField path="id" type="integer" required>
   The integer ID of the plan to archive.
-</ParamField>
-
-### Query Parameters
-
-<ParamField query="key" type="string" required>
-  Your private API key.
 </ParamField>
 
 ## Response
