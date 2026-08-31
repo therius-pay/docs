@@ -1,0 +1,89 @@
+---
+title: 'Widget de checkout: configuração de um formulário de pagamento drop-in seguro para PCI'
+sidebarTitle: 'Widget de checkout'
+description: 'Incorpore o Widget de checkout do Therius para um formulário de cartão pronto com suporte a cartões salvos. Insira-o com duas linhas de código — sem construir formulários.'
+translationOf: sdk/checkout-widget.mdx
+translationSourceHash: 3162c061221b324a14b62b3db053fc431b64314c94e6a5e9d5170460f137ec91
+---
+
+O Widget de checkout é um formulário de pagamento totalmente renderizado e seguro para PCI que você insere na sua página. Ele trata os inputs de cartão, a exibição de cartões salvos e a caixa de seleção de consentimento "Salvar este cartão" — sem que você construa nenhum HTML de formulário. Se você quer controle total sobre o layout e o estilo, use os [Campos hospedados](/sdk/hosted-fields) em vez disso.
+
+## Configuração básica
+
+Chame `sdk.checkout()` depois de inicializar o SDK. O widget se monta no DOM automaticamente.
+
+```javascript
+const checkout = sdk.checkout({
+  shopperId: sdk.sessionData().customerId,
+  vaultConsentEnabled: true,
+  onSavedMethodSelected: (token) => {
+    // Um comprador recorrente escolheu um cartão salvo
+    // Cobre-o diretamente usando sdk.authorizeToken(token)
+  },
+})
+```
+
+Para montar o widget em um elemento específico, passe um seletor CSS:
+
+```javascript
+const checkout = sdk.checkout({
+  container: '#checkout-container',
+  vaultConsentEnabled: true,
+})
+```
+
+## Seletor de cartões salvos
+
+Se a sessão foi criada com um `customerId` e esse comprador tem cartões previamente colocados no vault, o widget renderiza automaticamente um seletor de cartões acima do formulário de cartão novo. Os cartões são exibidos como `brand / last 4 / expiry` — nenhum PAN é devolvido ao navegador.
+
+Quando o comprador seleciona um cartão salvo, `onSavedMethodSelected` é disparado com o token do cartão. Cobre-o de imediato sem um nonce:
+
+```javascript
+const checkout = sdk.checkout({
+  onSavedMethodSelected: async (token) => {
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+```
+
+A lista de cartões salvos é suportada por `GET /sdk/vaulted-methods` e é limitada ao próprio comprador da sessão — o navegador não pode enumerar os cartões de um comprador diferente.
+
+<Tip>
+  Combine `vaultConsentEnabled: true` com um `customerId` na sua chamada a `POST /sdk/session` para a melhor experiência de comprador recorrente. Quando há um `shopperId` presente na sessão, a caixa de seleção "Salvar este cartão" aparece automaticamente.
+</Tip>
+
+## Cobrar um cartão novo pelo widget
+
+Para um cartão novo inserido pelo widget, recupere o nonce depois que o comprador envia o formulário e use-o da mesma forma que com os campos hospedados:
+
+```javascript
+checkout.on('submit', async ({ nonce }) => {
+  const result = await sdk.authorize(nonce)
+  if (result.actionRequired) {
+    const finalResult = await sdk.handleAction(result.actionRequired)
+  }
+})
+```
+
+Como alternativa, chame `sdk.authorize(nonce)` diretamente depois do envio do widget para deixar o SDK gerenciar o ciclo completo de autorizar-e-ação em uma única chamada.
+
+## Tratamento de 3DS
+
+O 3DS é tratado de forma idêntica aos campos hospedados. Se o resultado da cobrança incluir `actionRequired`, passe-o para `sdk.handleAction`:
+
+```javascript
+if (result.actionRequired) {
+  const finalResult = await sdk.handleAction(result.actionRequired)
+}
+```
+
+`sdk.handleAction` abre o iframe do desafio de 3DS, aguarda a conclusão e resolve com o `PaymentResult` final. Você não precisa escrever lógica separada para tipos de desafio diferentes.
+
+<Note>
+  `vaultConsentEnabled` só mostra a caixa de seleção "Salvar este cartão" quando há um `shopperId` presente na sessão. Se nenhum `customerId` foi passado para `POST /sdk/session`, a caixa de seleção é ocultada independentemente dessa configuração.
+</Note>

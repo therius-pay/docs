@@ -1,0 +1,68 @@
+---
+title: 'Click to Pay: cartões salvos em nível de rede da Visa e da Mastercard'
+sidebarTitle: 'Click to Pay'
+description: 'Adicione o Click to Pay ao seu checkout com o SDK do Therius. Suporta cartões salvos em nível de rede da Visa e da Mastercard via CyberSource sem redigitação de cartão.'
+translationOf: sdk/click-to-pay.mdx
+translationSourceHash: 4e59d050e16abac4fa07d90b5d5bdc340aee41816fee14042aa8e3b3408a592c
+---
+
+O Click to Pay é o esquema de cartões salvos em nível de rede da Visa e da Mastercard. Os titulares de cartão que se cadastraram com o emissor deles podem se autenticar e pagar sem digitar os dados do cartão — a folha de pagamento é fornecida pela rede de cartão, não pela sua página. O Therius suporta o Click to Pay via CyberSource.
+
+## Adicione o Click to Pay à sua página
+
+Importe `createClickToPayButton` e aponte-o para um elemento contêiner. O SDK renderiza o botão do Click to Pay e gerencia o fluxo de autenticação inteiramente.
+
+```javascript
+import { createClickToPayButton } from '@therius/sdk'
+
+createClickToPayButton({
+  clientToken,
+  container: '#ctp-button',
+})
+```
+
+Quando o comprador conclui o fluxo de autenticação do Click to Pay, o SDK devolve um nonce. Passe esse nonce ao seu servidor para concluir a cobrança.
+
+## Cobre o nonce no seu servidor
+
+Envie o nonce como `card.nonceData.nonce` em `POST /payment/purchase`, exatamente como você faria com um nonce de campos hospedados:
+
+```json
+{
+  "paymentMethod": "click_to_pay",
+  "card": {
+    "nonceData": {
+      "nonce": "<nonce from createClickToPayButton>"
+    }
+  }
+}
+```
+
+O seu servidor envia isso para `POST /v1/payment/purchase` com a sua chave de API privada. A resposta tem o formato padrão de `PaymentResult`.
+
+## Tratamento do resultado
+
+Se a cobrança devolver `actionRequired`, trate-o com `sdk.handleAction` no navegador:
+
+```javascript
+createClickToPayButton({
+  clientToken,
+  container: '#ctp-button',
+  onNonce: async (nonce) => {
+    const result = await sdk.authorize(nonce)
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+```
+
+`sdk.handleAction` trata qualquer passo fora de banda — incluindo os desafios de 3DS que as redes do Click to Pay podem disparar — e resolve com o `PaymentResult` final.
+
+## Disponibilidade e pré-requisitos
+
+<Note>
+  A disponibilidade do Click to Pay depende do cadastro do titular do cartão com o emissor dele e da sua conexão CyberSource configurada. Se o comprador não cadastrou o cartão dele no esquema do Click to Pay, o botão não aparece para esse comprador.
+</Note>
+
+Verifique a página de [Connections](/connections/cards-wallets) para mais detalhes sobre como habilitar a conexão CyberSource que impulsiona o Click to Pay na sua conta do Therius.

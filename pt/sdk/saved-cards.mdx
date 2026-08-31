@@ -1,0 +1,94 @@
+---
+title: 'Cartões salvos: fluxo de checkout de um clique para compradores recorrentes'
+sidebarTitle: 'Cartões salvos'
+description: 'Permita que compradores recorrentes paguem com um cartão salvo. Defina customerId na sessão do SDK para habilitar o seletor do vault e cobrar tokens salvos sem redigitação.'
+translationOf: sdk/saved-cards.mdx
+translationSourceHash: dedef3e0298b87f5892e7e421af28a7eb7e579cd0c6238e05129e819c184dcde
+---
+
+O Therius permite que você ofereça aos compradores recorrentes um checkout de um clique colocando o cartão deles no vault durante o primeiro pagamento e apresentando-o nas visitas seguintes. O fluxo de cartão salvo é totalmente limitado à sessão — uma sessão nunca pode acessar os cartões de outro comprador. A colocação no vault e a recuperação são vinculadas ao `customerId` que você fornece ao criar a sessão do SDK no seu servidor.
+
+## Como funciona
+
+<Steps>
+  <Step title="Primeira visita — coloque o cartão no vault">
+    Passe `customerId` para `POST /sdk/session` quando o comprador chega ao checkout. Quando ele conclui o pagamento, inclua `card.nonceData.tokenize: true` e `shopper.id` na sua requisição de cobrança no lado do servidor. O Therius coloca o cartão no vault sob esse ID de comprador.
+
+    ```json
+    {
+      "card": {
+        "nonceData": {
+          "nonce": "<nonce>",
+          "tokenize": true
+        }
+      },
+      "shopper": {
+        "id": "customer-42"
+      }
+    }
+    ```
+
+    A resposta da cobrança inclui um `token` que você pode armazenar contra o comprador no seu próprio banco de dados como referência.
+  </Step>
+  <Step title="Visita de retorno — recupere os cartões salvos">
+    Passe o mesmo `customerId` para `POST /sdk/session`. O Widget de checkout mostra automaticamente os cartões salvos do comprador. Para recuperá-los de forma programática, chame `sdk.getSavedMethods()`:
+
+    ```javascript
+    // O JWT da sessão limita esta chamada ao próprio comprador da sessão
+    // — nenhum ID de comprador fornecido pelo cliente é necessário
+    const savedMethods = await sdk.getSavedMethods()
+    ```
+
+    Cada método salvo é devolvido como:
+
+    ```json
+    {
+      "brand": "visa",
+      "last4": "4242",
+      "expiryMonth": "12",
+      "expiryYear": "2027",
+      "token": "tok_..."
+    }
+    ```
+
+    Um PAN bruto nunca é devolvido ao navegador.
+  </Step>
+  <Step title="Cobre o cartão salvo">
+    Passe o token para `sdk.authorizeToken()` com o valor do pagamento. Nenhuma redigitação do cartão é necessária.
+
+    ```javascript
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+    ```
+  </Step>
+</Steps>
+
+## Escopo do token e segurança
+
+- **Os cartões salvos são devolvidos como `{ brand, last4, expiryMonth, expiryYear, token }`** — nunca um PAN utilizável. A sua UI pode exibir os dados de cartão com segurança.
+- **Os cartões são limitados ao lojista** — um token criado sob uma conta de lojista não pode ser usado em outra.
+- **A recuperação de métodos do vault é resolvida puramente a partir do JWT da sessão** — o navegador não pode enumerar os cartões de um comprador diferente fornecendo um ID diferente. O escopo é aplicado no lado do servidor pelo Therius.
+
+## Usar cartões salvos com o Widget de checkout
+
+Quando há um `customerId` definido na sessão, o [Widget de checkout](/sdk/checkout-widget) trata a exibição e a seleção de cartões salvos automaticamente. Passe `onSavedMethodSelected` para receber o token quando um comprador recorrente escolhe um cartão:
+
+```javascript
+const checkout = sdk.checkout({
+  vaultConsentEnabled: true,
+  onSavedMethodSelected: async (token) => {
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+  },
+})
+```
+
+<Note>
+  O endpoint `GET /sdk/vaulted-methods` que suporta a recuperação de cartões salvos também é acessível diretamente se você preferir chamá-lo do seu próprio código de front-end. O JWT da sessão no cabeçalho `Authorization` limita os resultados ao comprador da sessão automaticamente.
+</Note>

@@ -1,0 +1,112 @@
+---
+title: 'Campos hospedados: integração de um formulário de cartão personalizado e seguro para PCI'
+sidebarTitle: 'Campos hospedados'
+description: 'Use os campos hospedados do Therius para renderizar inputs de cartão dentro de iframes que a sua página controla. Obtenha um nonce de uso único para cobrar no seu servidor — sem PAN no seu DOM.'
+translationOf: sdk/hosted-fields.mdx
+translationSourceHash: 4ffd861b6e46456a1db89e40931b4759ae710643f4055f228e1b448f7512068f
+---
+
+Os campos hospedados permitem que você construa um formulário de cartão totalmente personalizado mantendo os números de cartão brutos fora do seu DOM. Cada campo — número do cartão, validade e CVV — é renderizado dentro de um iframe hospedado pelo Therius. O seu JavaScript nunca vê o PAN; ele só recebe um nonce de uso único que o seu servidor usa para concluir a cobrança.
+
+## Configure os contêineres de campos
+
+Adicione elementos contêineres vazios ao seu formulário. O Therius substitui cada contêiner por um iframe seguro em tempo de execução.
+
+```html
+<form id="payment-form">
+  <div id="card-number"></div>  <!-- O iframe do Therius é renderizado aqui -->
+  <div id="expiry"></div>
+  <div id="cvv"></div>
+  <button type="submit">Pay</button>
+</form>
+```
+
+## Inicialize os campos hospedados
+
+Depois que o SDK é inicializado, chame `sdk.hostedFields()` com um mapa de nomes de campo para seletores CSS.
+
+```javascript
+const fields = sdk.hostedFields({
+  card_number: '#card-number',   // Seletor CSS para o elemento contêiner
+  expiry: '#expiry',
+  cvv: '#cvv',
+})
+```
+
+Cada seletor aponta para um dos elementos contêineres `<div>` acima. O SDK injeta um iframe em cada contêiner e o comprador digita diretamente nele.
+
+## Colete um nonce ao enviar o formulário
+
+Quando o comprador envia o formulário, chame `sdk.createNonce()` para tokenizar os dados de cartão retidos nos iframes. O SDK devolve um nonce de curta duração — não o número do cartão.
+
+```javascript
+document.getElementById('payment-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+
+  const { nonce } = await sdk.createNonce({
+    cardholderName: 'Ada Lovelace',
+  })
+
+  // Envie o nonce ao seu servidor — nunca o registre nem o armazene
+  const response = await fetch('/api/charge', {
+    method: 'POST',
+    body: JSON.stringify({ nonce }),
+  })
+})
+```
+
+<Note>
+  O nonce é de uso único e expira após um período curto. Crie um novo nonce para cada tentativa de pagamento — não reutilize nonces de tentativas falhas ou abandonadas.
+</Note>
+
+## Cobre o nonce no seu servidor
+
+O seu servidor passa o nonce como `card.nonceData.nonce` ao chamar `POST /payment/purchase`.
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "orderCode": "ORDER-123",
+    "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+    "card": { "nonceData": { "nonce": "<nonce>" } }
+  }'
+```
+
+## Salve o cartão para pagamentos futuros
+
+Para colocar o cartão no vault durante o pagamento, adicione `tokenize: true` e um `shopper.id` à requisição de cobrança no lado do servidor:
+
+```json
+{
+  "card": {
+    "nonceData": {
+      "nonce": "<nonce>",
+      "tokenize": true
+    }
+  },
+  "shopper": {
+    "id": "customer-42"
+  }
+}
+```
+
+A resposta inclui um `token` que o comprador pode usar para futuros checkouts de um clique. Veja [Cartões salvos](/sdk/saved-cards) para o fluxo completo de comprador recorrente.
+
+## Trate os desafios de 3DS
+
+Alguns cartões exigem um desafio de 3DS antes de o pagamento poder ser autorizado. Chame `sdk.authorize(nonce)` no navegador em vez de enviar o nonce diretamente ao seu servidor, depois trate qualquer ação necessária:
+
+```javascript
+const result = await sdk.authorize(nonce)
+
+if (result.actionRequired) {
+  // sdk.handleAction abre o iframe de 3DS e aguarda a conclusão
+  const finalResult = await sdk.handleAction(result.actionRequired)
+  // finalResult tem o mesmo formato de PaymentResult que a API REST
+}
+```
+
+`sdk.handleAction` é o único ponto de entrada para todos os passos fora de banda — desafios de 3DS, redirecionamentos e exibições de vouchers. Você não precisa de caminhos de código separados para tipos de ação diferentes.

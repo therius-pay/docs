@@ -1,0 +1,102 @@
+---
+title: 'Descripción general del SDK JS de Therius: integración de pagos en el navegador'
+sidebarTitle: 'Descripción general'
+description: 'El SDK JS de Therius recolecta datos de tarjeta en iframes alojados para que los números de tarjeta sin procesar nunca toquen tu servidor. Soporta campos alojados, botones de wallet y APM.'
+translationOf: sdk/overview.mdx
+translationSourceHash: 8e9ef8d030d3ab707197dae1b214171ad55da1d2fc47cc961abb471501f8623a
+---
+
+El SDK JS de Therius es el complemento del lado del navegador para la API de pagos de Therius. Renderiza los campos de tarjeta dentro de iframes alojados por Therius, así que un PAN sin procesar nunca transita por tu servidor — solo recibes un nonce de un solo uso o un `PaymentResult` final. Tu página de checkout controla el diseño y el estilo; Therius controla lo que pasa dentro de cada campo.
+
+## Cuándo usar el SDK
+
+<CardGroup cols={2}>
+  <Card icon="credit-card" title="Campos alojados">
+    Usa campos alojados o el Widget de checkout al aceptar tarjetas directamente desde un navegador. Tu DOM nunca contiene un número de tarjeta sin procesar.
+  </Card>
+  <Card icon="wallet" title="Botones de wallet">
+    Usa botones de wallet para Apple Pay y Google Pay. La hoja de pago nativa maneja la autenticación; Therius descifra el resultado del lado del servidor.
+  </Card>
+  <Card icon="hand-pointer" title="Click to Pay">
+    Usa Click to Pay para las tarjetas guardadas a nivel de red de Visa y Mastercard. Los titulares de tarjeta se autentican sin volver a ingresar los datos.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="Redirects de APM">
+    Usa `sdk.purchaseApm` para métodos de pago alternativos basados en redirect como iDEAL, Klarna y Pix.
+  </Card>
+</CardGroup>
+
+<Note>
+  Para integraciones de servidor a servidor — servicios de backend o apps nativas móviles — usa la API REST directamente. El SDK JS es solo para navegador.
+</Note>
+
+## Instalación
+
+<CodeGroup>
+```bash npm
+npm install @therius/sdk
+```
+```bash yarn
+yarn add @therius/sdk
+```
+</CodeGroup>
+
+O carga el SDK vía CDN sin ningún paso de build:
+
+```html
+<script src="https://api.therius.io/v1/sdk/js"></script>
+```
+
+## Inicialización
+
+Importa e inicializa el SDK con un `clientToken` obtenido de tu servidor. Tu clave de API privada nunca sale del backend.
+
+```javascript
+import { TheriusSDK } from '@therius/sdk'
+
+// clientToken viene de POST /sdk/session en tu servidor
+const sdk = new TheriusSDK({ clientToken })
+```
+
+<Warning>
+  `TheriusSDK` lanza una excepción de inmediato si falta `clientToken` — no hay un estado silencioso a medio inicializar. Pasa siempre un token válido antes de llamar a cualquier método del SDK.
+</Warning>
+
+## Flujo de integración
+
+<Steps>
+  <Step title="El servidor crea la sesión del SDK">
+    Tu servidor llama a `POST /sdk/session` con tu clave de API privada y recibe un `clientToken` de corta duración.
+  </Step>
+  <Step title="El navegador recibe el clientToken">
+    Pasa el token al navegador — por ejemplo, como JSON inline en tu plantilla HTML o como respuesta JSON a una solicitud AJAX.
+  </Step>
+  <Step title="El SDK se inicializa">
+    El navegador construye `new TheriusSDK({ clientToken })`. El SDK ya está listo para renderizar campos y procesar pagos.
+  </Step>
+  <Step title="El SDK renderiza los campos de tarjeta en iframes alojados">
+    Cada campo de tarjeta (número, vencimiento, CVV) se renderiza dentro de un iframe alojado por Therius. Tu JavaScript y tu DOM nunca ven el PAN.
+  </Step>
+  <Step title="El usuario completa la tarjeta — el SDK crea un nonce de un solo uso">
+    Cuando el comprador envía el formulario, llama a `sdk.createNonce()`. El SDK devuelve un nonce de corta duración que representa los datos de tarjeta.
+  </Step>
+  <Step title="El nonce se envía a tu servidor — el servidor cobra vía API">
+    Tu página hace un post del nonce a tu backend. Tu servidor luego llama a `POST /payment/purchase` con el nonce para completar el cobro.
+  </Step>
+</Steps>
+
+## Próximos pasos
+
+<CardGroup cols={2}>
+  <Card icon="key" title="Bootstrap de sesión" href="/sdk/session-bootstrap">
+    Aprende cómo intercambiar tu clave de API privada por un client token en tu servidor.
+  </Card>
+  <Card icon="rectangle-list" title="Campos alojados" href="/sdk/hosted-fields">
+    Construye un formulario de tarjeta totalmente personalizado manteniendo los números de tarjeta sin procesar fuera de tu DOM.
+  </Card>
+  <Card icon="table-columns" title="Widget de checkout" href="/sdk/checkout-widget">
+    Inserta un formulario de pago listo para usar con soporte de tarjetas guardadas en dos líneas de código.
+  </Card>
+  <Card icon="mobile" title="Botones de wallet" href="/sdk/wallet-buttons">
+    Agrega Apple Pay y Google Pay a tu checkout con `createWalletButton`.
+  </Card>
+</CardGroup>

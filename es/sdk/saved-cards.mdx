@@ -1,0 +1,94 @@
+---
+title: 'Tarjetas guardadas: flujo de checkout de un clic para compradores recurrentes'
+sidebarTitle: 'Tarjetas guardadas'
+description: 'Permite que los compradores recurrentes paguen con una tarjeta guardada. Establece customerId en la sesión del SDK para habilitar el selector del vault y cobrar tokens guardados sin reingreso.'
+translationOf: sdk/saved-cards.mdx
+translationSourceHash: dedef3e0298b87f5892e7e421af28a7eb7e579cd0c6238e05129e819c184dcde
+---
+
+Therius te permite ofrecer a los compradores recurrentes un checkout de un clic depositando su tarjeta en el vault durante el primer pago y presentándola en las visitas posteriores. El flujo de tarjeta guardada está totalmente limitado a la sesión — una sesión nunca puede acceder a las tarjetas de otro comprador. El depósito en el vault y la recuperación están ligados al `customerId` que suministras al crear la sesión del SDK en tu servidor.
+
+## Cómo funciona
+
+<Steps>
+  <Step title="Primera visita — deposita la tarjeta en el vault">
+    Pasa `customerId` a `POST /sdk/session` cuando el comprador llega al checkout. Cuando completa el pago, incluye `card.nonceData.tokenize: true` y `shopper.id` en tu solicitud de cobro del lado del servidor. Therius deposita la tarjeta en el vault bajo ese ID de comprador.
+
+    ```json
+    {
+      "card": {
+        "nonceData": {
+          "nonce": "<nonce>",
+          "tokenize": true
+        }
+      },
+      "shopper": {
+        "id": "customer-42"
+      }
+    }
+    ```
+
+    La respuesta del cobro incluye un `token` que puedes almacenar contra el comprador en tu propia base de datos como referencia.
+  </Step>
+  <Step title="Visita de regreso — recupera las tarjetas guardadas">
+    Pasa el mismo `customerId` a `POST /sdk/session`. El Widget de checkout muestra automáticamente las tarjetas guardadas del comprador. Para recuperarlas de forma programática, llama a `sdk.getSavedMethods()`:
+
+    ```javascript
+    // El JWT de la sesión limita esta llamada al propio comprador de la sesión
+    // — no se necesita ningún ID de comprador suministrado por el cliente
+    const savedMethods = await sdk.getSavedMethods()
+    ```
+
+    Cada método guardado se devuelve como:
+
+    ```json
+    {
+      "brand": "visa",
+      "last4": "4242",
+      "expiryMonth": "12",
+      "expiryYear": "2027",
+      "token": "tok_..."
+    }
+    ```
+
+    Nunca se devuelve un PAN sin procesar al navegador.
+  </Step>
+  <Step title="Cobra la tarjeta guardada">
+    Pasa el token a `sdk.authorizeToken()` con el monto del pago. No se requiere reingreso de la tarjeta.
+
+    ```javascript
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+    ```
+  </Step>
+</Steps>
+
+## Alcance del token y seguridad
+
+- **Las tarjetas guardadas se devuelven como `{ brand, last4, expiryMonth, expiryYear, token }`** — nunca un PAN utilizable. Tu UI puede mostrar los datos de tarjeta de forma segura.
+- **Las tarjetas están limitadas al comercio** — un token creado bajo una cuenta de comercio no se puede usar en otra.
+- **La recuperación de métodos del vault se resuelve puramente a partir del JWT de la sesión** — el navegador no puede enumerar las tarjetas de un comprador diferente suministrando un ID diferente. Therius aplica el alcance del lado del servidor.
+
+## Usar tarjetas guardadas con el Widget de checkout
+
+Cuando hay un `customerId` establecido en la sesión, el [Widget de checkout](/sdk/checkout-widget) maneja la visualización y selección de tarjetas guardadas automáticamente. Pasa `onSavedMethodSelected` para recibir el token cuando un comprador recurrente elige una tarjeta:
+
+```javascript
+const checkout = sdk.checkout({
+  vaultConsentEnabled: true,
+  onSavedMethodSelected: async (token) => {
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+  },
+})
+```
+
+<Note>
+  El endpoint `GET /sdk/vaulted-methods` que respalda la recuperación de tarjetas guardadas también es accesible directamente si prefieres llamarlo desde tu propio código de front-end. El JWT de la sesión en el encabezado `Authorization` limita los resultados al comprador de la sesión automáticamente.
+</Note>

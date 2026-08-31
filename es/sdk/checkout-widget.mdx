@@ -1,0 +1,89 @@
+---
+title: 'Widget de checkout: configuración de un formulario de pago drop-in seguro para PCI'
+sidebarTitle: 'Widget de checkout'
+description: 'Incrusta el Widget de checkout de Therius para un formulario de tarjeta listo para usar con soporte de tarjetas guardadas. Insértalo con dos líneas de código — sin construir formularios.'
+translationOf: sdk/checkout-widget.mdx
+translationSourceHash: 3162c061221b324a14b62b3db053fc431b64314c94e6a5e9d5170460f137ec91
+---
+
+El Widget de checkout es un formulario de pago totalmente renderizado y seguro para PCI que insertas en tu página. Maneja los inputs de tarjeta, la visualización de tarjetas guardadas y la casilla de consentimiento "Guardar esta tarjeta" — sin que construyas ningún HTML de formulario. Si quieres control total sobre el diseño y el estilo, usa los [Campos alojados](/sdk/hosted-fields) en su lugar.
+
+## Configuración básica
+
+Llama a `sdk.checkout()` después de inicializar el SDK. El widget se monta a sí mismo en el DOM automáticamente.
+
+```javascript
+const checkout = sdk.checkout({
+  shopperId: sdk.sessionData().customerId,
+  vaultConsentEnabled: true,
+  onSavedMethodSelected: (token) => {
+    // Un comprador recurrente eligió una tarjeta guardada
+    // Cóbrala directamente usando sdk.authorizeToken(token)
+  },
+})
+```
+
+Para montar el widget en un elemento específico, pasa un selector CSS:
+
+```javascript
+const checkout = sdk.checkout({
+  container: '#checkout-container',
+  vaultConsentEnabled: true,
+})
+```
+
+## Selector de tarjetas guardadas
+
+Si la sesión se creó con un `customerId` y ese comprador tiene tarjetas previamente depositadas en el vault, el widget renderiza automáticamente un selector de tarjetas encima del formulario de tarjeta nueva. Las tarjetas se muestran como `brand / last 4 / expiry` — nunca se devuelve ningún PAN al navegador.
+
+Cuando el comprador selecciona una tarjeta guardada, `onSavedMethodSelected` se dispara con el token de la tarjeta. Cóbrala de inmediato sin un nonce:
+
+```javascript
+const checkout = sdk.checkout({
+  onSavedMethodSelected: async (token) => {
+    const result = await sdk.authorizeToken(token, {
+      amount: { currency: 'USD', value: 4999, exponent: 2 },
+    })
+    if (result.actionRequired) {
+      const finalResult = await sdk.handleAction(result.actionRequired)
+    }
+  },
+})
+```
+
+La lista de tarjetas guardadas está respaldada por `GET /sdk/vaulted-methods` y está limitada al propio comprador de la sesión — el navegador no puede enumerar las tarjetas de un comprador diferente.
+
+<Tip>
+  Combina `vaultConsentEnabled: true` con un `customerId` en tu llamada a `POST /sdk/session` para la mejor experiencia de comprador recurrente. Cuando hay un `shopperId` presente en la sesión, la casilla "Guardar esta tarjeta" aparece automáticamente.
+</Tip>
+
+## Cobrar una tarjeta nueva desde el widget
+
+Para una tarjeta nueva ingresada a través del widget, recupera el nonce después de que el comprador envía el formulario y úsalo de la misma forma que con los campos alojados:
+
+```javascript
+checkout.on('submit', async ({ nonce }) => {
+  const result = await sdk.authorize(nonce)
+  if (result.actionRequired) {
+    const finalResult = await sdk.handleAction(result.actionRequired)
+  }
+})
+```
+
+Alternativamente, llama a `sdk.authorize(nonce)` directamente después del envío del widget para dejar que el SDK administre el ciclo completo de autorizar-y-acción en una sola llamada.
+
+## Manejo de 3DS
+
+3DS se maneja de forma idéntica a los campos alojados. Si el resultado del cobro incluye `actionRequired`, pásalo a `sdk.handleAction`:
+
+```javascript
+if (result.actionRequired) {
+  const finalResult = await sdk.handleAction(result.actionRequired)
+}
+```
+
+`sdk.handleAction` abre el iframe del desafío de 3DS, espera a que se complete y resuelve con el `PaymentResult` final. No necesitas escribir lógica separada para diferentes tipos de desafío.
+
+<Note>
+  `vaultConsentEnabled` solo muestra la casilla "Guardar esta tarjeta" cuando hay un `shopperId` presente en la sesión. Si no se pasó ningún `customerId` a `POST /sdk/session`, la casilla se oculta independientemente de este ajuste.
+</Note>

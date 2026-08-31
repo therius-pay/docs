@@ -247,6 +247,34 @@
                 ]
               }
             ]
+          },
+          {
+            "tab": "SDK de JS",
+            "groups": [
+              {
+                "group": "Descripción general",
+                "pages": [
+                  "es/sdk/overview",
+                  "es/sdk/session-bootstrap"
+                ]
+              },
+              {
+                "group": "Recolección de tarjeta",
+                "pages": [
+                  "es/sdk/hosted-fields",
+                  "es/sdk/checkout-widget",
+                  "es/sdk/saved-cards"
+                ]
+              },
+              {
+                "group": "Billeteras y más",
+                "pages": [
+                  "es/sdk/wallet-buttons",
+                  "es/sdk/click-to-pay",
+                  "es/sdk/apm-redirects"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -310,6 +338,34 @@
                   "pt/guides/plugins/magento",
                   "pt/guides/plugins/prestashop",
                   "pt/guides/plugins/shopware"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "SDK de JS",
+            "groups": [
+              {
+                "group": "Visão geral",
+                "pages": [
+                  "pt/sdk/overview",
+                  "pt/sdk/session-bootstrap"
+                ]
+              },
+              {
+                "group": "Coleta de cartão",
+                "pages": [
+                  "pt/sdk/hosted-fields",
+                  "pt/sdk/checkout-widget",
+                  "pt/sdk/saved-cards"
+                ]
+              },
+              {
+                "group": "Carteiras e mais",
+                "pages": [
+                  "pt/sdk/wallet-buttons",
+                  "pt/sdk/click-to-pay",
+                  "pt/sdk/apm-redirects"
                 ]
               }
             ]

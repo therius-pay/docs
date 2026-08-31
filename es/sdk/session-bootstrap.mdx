@@ -1,0 +1,72 @@
+---
+title: 'Bootstrap de sesión del SDK: intercambia la clave por un client token'
+sidebarTitle: 'Bootstrap de sesión'
+description: 'Crea un client token JWT de corta duración llamando a POST /sdk/session desde tu servidor. Pasa el token al navegador para inicializar el SDK JS de Therius.'
+translationOf: sdk/session-bootstrap.mdx
+translationSourceHash: 5780e395c7252284c854e1b7cf6b07cafc203621ced591db9810802f5612729e
+---
+
+Antes de usar el SDK JS en el navegador, tu servidor debe intercambiar tu clave de API privada por un client token JWT de corta duración. Este token es lo que recibe el navegador — tu clave privada sin procesar nunca sale de tu servidor. Cada token está limitado a una sola sesión de checkout y expira después de 30 minutos.
+
+## Crea una sesión en tu servidor
+
+Llama a `POST /sdk/session` desde tu backend con tu clave de API privada en el encabezado `Authorization`.
+
+```bash
+curl -X POST https://api.therius.io/v1/sdk/session \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "customerId": "customer-42", "country": "US" }'
+```
+
+La respuesta incluye el `clientToken` y su vida útil en segundos:
+
+```json
+{
+  "clientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 1800
+}
+```
+
+## Pasa el token al navegador
+
+Entrega el `clientToken` a tu front-end. Los enfoques comunes incluyen:
+
+- **JSON inline** — insértalo en tu plantilla HTML cuando la página se renderiza en el servidor.
+- **Respuesta de API** — devuélvelo desde un endpoint ligero `/api/checkout-session` que tu SPA llama al cargar la página.
+
+El navegador no necesita decodificar ni inspeccionar el token — lo pasa directamente a `new TheriusSDK({ clientToken })`.
+
+## Parámetros opcionales de la solicitud
+
+| Parámetro | Tipo | Descripción |
+|---|---|---|
+| `country` | string | Código de país ISO de dos letras. Requerido para una sesión de checkout completa con un `sessionId`. |
+| `customerId` | string | Asocia la sesión con un comprador recurrente. Habilita las funciones de tarjeta guardada. |
+| `amount` | object | Precompleta el monto de la sesión — útil para las hojas de pago de wallet. |
+| `currency` | string | Código de moneda ISO de tres letras emparejado con `amount`. |
+| `orderCode` | string | Tu referencia de orden interna, adjuntada a la sesión para la conciliación. |
+
+## Inicializa el SDK en el navegador
+
+Una vez que el navegador tiene el token, inicializa el SDK:
+
+```javascript
+import { TheriusSDK } from '@therius/sdk'
+
+const sdk = new TheriusSDK({ clientToken })
+```
+
+El SDK valida el token de inmediato. Si el token falta o está mal formado, `TheriusSDK` lanza una excepción de forma síncrona.
+
+## Vida útil del token
+
+Los client tokens expiran después de **30 minutos**. Crea un token fresco para cada nueva sesión de checkout — no caches ni reutilices tokens entre sesiones o cargas de página.
+
+<Warning>
+  Nunca llames a `POST /sdk/session` desde el navegador. Requiere tu clave de API privada (`sk_live_...`). Exponer esa clave del lado del cliente permitiría a cualquiera crear sesiones y hacer cobros contra tu cuenta. Haz siempre esta llamada solo desde tu backend.
+</Warning>
+
+## Referencia
+
+Ver la [referencia de la API POST /sdk/session](/api-reference/sdk-session) para la referencia completa de campos, incluidos los códigos de error y las reglas de validación.

@@ -1,0 +1,76 @@
+---
+title: 'Redirecionamentos de APM: iDEAL, Klarna e Pix com o SDK'
+sidebarTitle: 'Redirecionamentos de APM'
+description: 'Use sdk.purchaseApm e sdk.handleAction para processar APMs baseados em redirecionamento como Pix, iDEAL e Klarna com tratamento automático do redirecionamento e resolução do resultado.'
+translationOf: sdk/apm-redirects.mdx
+translationSourceHash: d7a2b33bd811d3cb68193cfdc31a3253a80883d7969e0d9f234076f2ffb56eea
+---
+
+Os métodos de pagamento alternativos (APMs) baseados em redirecionamento — como Pix, iDEAL, Boleto e Klarna — devolvem um status `pending_action` com uma URL de redirecionamento. O `sdk.handleAction` do SDK JS gerencia o redirecionamento automaticamente e resolve com o `PaymentResult` final assim que o comprador conclui ou cancela o passo fora de banda. Você escreve um único caminho de código; o SDK trata o fluxo específico de cada método.
+
+## Cobre um APM pelo navegador
+
+Chame `sdk.purchaseApm()` com o nome do método de pagamento, o valor e as URLs de retorno. Se o método exigir um redirecionamento, o resultado inclui `actionRequired`.
+
+```javascript
+const result = await sdk.purchaseApm({
+  method: 'ideal',
+  amount: { currency: 'EUR', value: 5000, exponent: 2 },
+  returnUrl: 'https://yourshop.com/payment/return',
+  cancelUrl: 'https://yourshop.com/payment/cancel',
+})
+
+if (result.actionRequired) {
+  // Abre o redirecionamento em um popup ou iframe e aguarda a resolução
+  const finalResult = await sdk.handleAction(result.actionRequired)
+}
+```
+
+`handleAction` abre o redirecionamento do APM em um popup ou iframe gerenciado, faz polling para detectar a conclusão e resolve com o `PaymentResult` final — o mesmo formato devolvido por todos os outros métodos de cobrança do Therius.
+
+## `sdk.handleAction` — um ponto de entrada para todos os passos fora de banda
+
+`handleAction` é o único ponto de entrada para cada tipo de ação que a API do Therius pode devolver. Você não precisa de caminhos de código separados por ação:
+
+<CardGroup cols={2}>
+  <Card icon="shield-halved" title="Desafios de 3DS">
+    Abre o iframe do desafio de 3DS e aguarda o titular do cartão concluir a autenticação antes de resolver.
+  </Card>
+  <Card icon="arrow-up-right-from-square" title="Redirecionamentos de APM">
+    Gerencia iDEAL, PayPal, Klarna e outros métodos baseados em redirecionamento em um popup ou iframe.
+  </Card>
+  <Card icon="receipt" title="Vouchers">
+    Exibe as instruções dos vouchers de Boleto, Konbini e Multibanco e aguarda o evento de pagamento.
+  </Card>
+  <Card icon="circle-check" title="Resolução final">
+    Sempre resolve com o mesmo formato de `PaymentResult` — o seu tratador de sucesso/falha é o mesmo independentemente do tipo de ação.
+  </Card>
+</CardGroup>
+
+```javascript
+// O mesmo padrão funciona para cartões (3DS), APMs (redirecionamento) e vouchers
+const finalResult = await sdk.handleAction(result.actionRequired)
+```
+
+## Métodos de APM suportados
+
+Métodos comuns que você pode passar para `sdk.purchaseApm`:
+
+| String do método | Método de pagamento |
+|---|---|
+| `ideal` | iDEAL (Países Baixos) |
+| `klarna` | Klarna (Pay Now / Pay Later) |
+| `paypal` | PayPal |
+| `pix` | Pix (Brasil) |
+| `boleto` | Boleto Bancário (Brasil) |
+| `multibanco` | Multibanco (Portugal) |
+
+Verifique a aba [Connections](/connections/overview) para a lista completa de métodos suportados e os campos exigidos por método.
+
+## Integração de APM no lado do servidor (sem SDK)
+
+Se você está integrando a partir de um servidor ou de um app nativo móvel em vez de um navegador, chame `POST /payment/purchase` diretamente do seu backend com os campos específicos do APM. O seu servidor trata o redirecionamento de `actionRequired.url` encaminhando o comprador para essa URL em um navegador in-app ou uma resposta de redirecionamento.
+
+<Tip>
+  Se você está construindo um app móvel, chame `POST /payment/purchase` no lado do servidor e trate o redirecionamento no navegador in-app do seu app. O `handleAction` do SDK é apenas para navegador e depende de `window.open` e `postMessage` para rastrear o resultado do redirecionamento.
+</Tip>
