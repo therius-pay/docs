@@ -1,0 +1,9 @@
+export const SchemaLangNote = ({ lang }) => {
+  const text = {
+    es: "Los nombres de campos y el esquema de solicitud/respuesta que se muestran a continuación están en inglés — se generan a partir de la especificación OpenAPI. El texto explicativo de esta página está traducido.",
+    pt: "Os nomes dos campos e o esquema de requisição/resposta exibidos abaixo estão em inglês — são gerados a partir da especificação OpenAPI. O texto explicativo desta página está traduzido.",
+  }[lang] || "Field names and the request/response schema shown below are in English — they are generated from the OpenAPI specification.";
+  return (
+    <Note>{text}</Note>
+  );
+};

@@ -19,162 +19,167 @@
     }
   },
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Documentation",
-        "groups": [
+        "language": "en",
+        "tabs": [
           {
-            "group": "Get Started",
-            "pages": [
-              "introduction",
-              "quickstart",
-              "authentication",
-              "idempotency"
+            "tab": "Documentation",
+            "groups": [
+              {
+                "group": "Get Started",
+                "pages": [
+                  "introduction",
+                  "quickstart",
+                  "authentication",
+                  "idempotency"
+                ]
+              },
+              {
+                "group": "Core Concepts",
+                "pages": [
+                  "concepts/payment-lifecycle",
+                  "concepts/smart-routing",
+                  "concepts/declined-payments",
+                  "concepts/tokenization",
+                  "concepts/3d-secure",
+                  "concepts/environments"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "guides/browser-checkout",
+                  "guides/subscriptions",
+                  "guides/alternative-payment-methods",
+                  "guides/stored-credentials",
+                  "guides/testing"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "webhooks/overview",
+                  "webhooks/events"
+                ]
+              },
+              {
+                "group": "AI Assistant",
+                "pages": [
+                  "ai/overview",
+                  "ai/thera",
+                  "ai/bring-your-own-ai",
+                  "ai/tools"
+                ]
+              },
+              {
+                "group": "E-Commerce Plugins",
+                "pages": [
+                  "guides/plugins/overview",
+                  "guides/plugins/woocommerce",
+                  "guides/plugins/magento",
+                  "guides/plugins/prestashop",
+                  "guides/plugins/shopware"
+                ]
+              }
             ]
           },
           {
-            "group": "Core Concepts",
-            "pages": [
-              "concepts/payment-lifecycle",
-              "concepts/smart-routing",
-              "concepts/declined-payments",
-              "concepts/tokenization",
-              "concepts/3d-secure",
-              "concepts/environments"
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "Payments",
+                "pages": [
+                  "api-reference/purchase",
+                  "api-reference/authorize",
+                  "api-reference/capture",
+                  "api-reference/refund",
+                  "api-reference/cancel",
+                  "api-reference/cancel-or-refund",
+                  "api-reference/resume",
+                  "api-reference/inquiry"
+                ]
+              },
+              {
+                "group": "Tokenization",
+                "pages": [
+                  "api-reference/store-tokens"
+                ]
+              },
+              {
+                "group": "Subscriptions",
+                "pages": [
+                  "api-reference/subscriptions/create",
+                  "api-reference/subscriptions/list",
+                  "api-reference/subscriptions/get",
+                  "api-reference/subscriptions/cancel",
+                  "api-reference/subscriptions/pause-resume",
+                  "api-reference/subscriptions/change-plan",
+                  "api-reference/subscriptions/update-payment-method",
+                  "api-reference/subscriptions/invoices"
+                ]
+              },
+              {
+                "group": "Plans",
+                "pages": [
+                  "api-reference/plans/create",
+                  "api-reference/plans/list",
+                  "api-reference/plans/update",
+                  "api-reference/plans/archive"
+                ]
+              },
+              {
+                "group": "SDK Session",
+                "pages": [
+                  "api-reference/sdk-session"
+                ]
+              }
+            ],
+            "openapi": "openapi.json"
+          },
+          {
+            "tab": "JS SDK",
+            "groups": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "sdk/overview",
+                  "sdk/session-bootstrap"
+                ]
+              },
+              {
+                "group": "Card Collection",
+                "pages": [
+                  "sdk/hosted-fields",
+                  "sdk/checkout-widget",
+                  "sdk/saved-cards"
+                ]
+              },
+              {
+                "group": "Wallets & More",
+                "pages": [
+                  "sdk/wallet-buttons",
+                  "sdk/click-to-pay",
+                  "sdk/apm-redirects"
+                ]
+              }
             ]
           },
           {
-            "group": "Guides",
-            "pages": [
-              "guides/browser-checkout",
-              "guides/subscriptions",
-              "guides/alternative-payment-methods",
-              "guides/stored-credentials",
-              "guides/testing"
-            ]
-          },
-          {
-            "group": "Webhooks",
-            "pages": [
-              "webhooks/overview",
-              "webhooks/events"
-            ]
-          },
-          {
-            "group": "AI Assistant",
-            "pages": [
-              "ai/overview",
-              "ai/thera",
-              "ai/bring-your-own-ai",
-              "ai/tools"
-            ]
-          },
-          {
-            "group": "E-Commerce Plugins",
-            "pages": [
-              "guides/plugins/overview",
-              "guides/plugins/woocommerce",
-              "guides/plugins/magento",
-              "guides/plugins/prestashop",
-              "guides/plugins/shopware"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "Payments",
-            "pages": [
-              "api-reference/purchase",
-              "api-reference/authorize",
-              "api-reference/capture",
-              "api-reference/refund",
-              "api-reference/cancel",
-              "api-reference/cancel-or-refund",
-              "api-reference/resume",
-              "api-reference/inquiry"
-            ]
-          },
-          {
-            "group": "Tokenization",
-            "pages": [
-              "api-reference/store-tokens"
-            ]
-          },
-          {
-            "group": "Subscriptions",
-            "pages": [
-              "api-reference/subscriptions/create",
-              "api-reference/subscriptions/list",
-              "api-reference/subscriptions/get",
-              "api-reference/subscriptions/cancel",
-              "api-reference/subscriptions/pause-resume",
-              "api-reference/subscriptions/change-plan",
-              "api-reference/subscriptions/update-payment-method",
-              "api-reference/subscriptions/invoices"
-            ]
-          },
-          {
-            "group": "Plans",
-            "pages": [
-              "api-reference/plans/create",
-              "api-reference/plans/list",
-              "api-reference/plans/update",
-              "api-reference/plans/archive"
-            ]
-          },
-          {
-            "group": "SDK Session",
-            "pages": [
-              "api-reference/sdk-session"
-            ]
-          }
-        ],
-        "openapi": "openapi.json"
-      },
-      {
-        "tab": "JS SDK",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "sdk/overview",
-              "sdk/session-bootstrap"
-            ]
-          },
-          {
-            "group": "Card Collection",
-            "pages": [
-              "sdk/hosted-fields",
-              "sdk/checkout-widget",
-              "sdk/saved-cards"
-            ]
-          },
-          {
-            "group": "Wallets & More",
-            "pages": [
-              "sdk/wallet-buttons",
-              "sdk/click-to-pay",
-              "sdk/apm-redirects"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Connections",
-        "groups": [
-          {
-            "group": "Payment Methods",
-            "pages": [
-              "connections/overview",
-              "connections/cards-wallets",
-              "connections/bank-transfers",
-              "connections/vouchers-cash",
-              "connections/buy-now-pay-later",
-              "connections/apac-methods",
-              "connections/latam-methods"
+            "tab": "Connections",
+            "groups": [
+              {
+                "group": "Payment Methods",
+                "pages": [
+                  "connections/overview",
+                  "connections/cards-wallets",
+                  "connections/bank-transfers",
+                  "connections/vouchers-cash",
+                  "connections/buy-now-pay-later",
+                  "connections/apac-methods",
+                  "connections/latam-methods"
+                ]
+              }
             ]
           }
         ]

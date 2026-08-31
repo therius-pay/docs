@@ -1,0 +1,23 @@
+name: Translations up to date
+
+on:
+  pull_request:
+    paths:
+      - '**/*.mdx'
+      - 'docs.json'
+  push:
+    branches: [main]
+    paths:
+      - '**/*.mdx'
+      - 'docs.json'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check es/ and pt/ translations against their English sources
+        run: node .translation/check-staleness.mjs
