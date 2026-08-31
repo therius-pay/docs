@@ -1,7 +1,7 @@
 ---
-title: 'Therius: Unified Payment API for Cards and Wallets'
-sidebarTitle: 'Introduction'
-description: 'Therius is a unified payment API for cards, wallets, and 40+ alternative methods. Learn what Therius does and how it fits your integration.'
+title: "Therius: Unified Payment API for Cards and Wallets"
+sidebarTitle: "Introduction"
+description: "Therius is a unified payment API for cards, wallets, and alternative/local payment methods. Learn what Therius does and how it fits your integration."
 ---
 
 Therius is a payment API that consolidates every major payment method behind a single REST endpoint. Whether you need to accept Visa, Mastercard, and Amex cards, digital wallets like Apple Pay and Google Pay, or regional alternatives such as Pix, ACH, iDEAL, and Klarna — you send one request to Therius and it handles the routing, authentication, and settlement for you.
@@ -9,32 +9,36 @@ Therius is a payment API that consolidates every major payment method behind a s
 ## Key Capabilities
 
 <CardGroup cols={2}>
-  <Card icon="arrow-right-arrow-left" title="Single Unified Endpoint">
-    Send all payment methods — cards, wallets, and 40+ APMs — through one `POST /payment/purchase` request. No per-method SDK juggling.
+  <Card title="Single Unified Endpoint" icon="arrow-right-arrow-left">
+    Send all payment methods — cards, wallets, and 40\+ APMs — through one `POST /payment/purchase` request. No per-method SDK juggling.
   </Card>
-  <Card icon="route" title="Smart Routing & Failover">
+
+  <Card title="Smart Routing & Failover" icon="route">
     Route each transaction across your connected acquirers by amount, currency, card BIN, and more — with automatic cascading retry on soft declines. Configured in the dashboard, not in code.
   </Card>
-  <Card icon="rotate" title="Full Payment Lifecycle">
+
+  <Card title="Full Payment Lifecycle" icon="rotate">
     Authorize, capture, refund, and cancel from the same API. Two-step authorize-then-capture is supported for physical goods and delayed fulfillment.
   </Card>
-  <Card icon="vault" title="Card Tokenization">
+
+  <Card title="Card Tokenization" icon="vault">
     Tokenize a card during the first payment or via the standalone token endpoint. Charge returning shoppers without collecting card details again.
   </Card>
-  <Card icon="shield-check" title="3D Secure (3DS2)">
+
+  <Card title="3D Secure (3DS2)" icon="shield-check">
     Therius handles the full 3DS2 flow — device data collection, challenge redirects, and result verification — automatically. You only need to handle the `pending_3ds` pause.
   </Card>
-  <Card icon="calendar-days" title="Subscriptions">
+
+  <Card title="Subscriptions" icon="calendar-days">
     Create plans with billing intervals, trials, and dunning rules. Therius retries failed subscription payments and notifies you via webhooks.
   </Card>
-  <Card icon="bell" title="Webhooks">
+
+  <Card title="Webhooks" icon="bell">
     Get payment, dispute, and subscription events pushed to your server over HTTPS — signed, retried on a back-off schedule, and replayable from the dashboard.
   </Card>
-  <Card icon="browser" title="JS SDK">
+
+  <Card title="JS SDK" icon="browser">
     Collect card details in the browser using the Therius JS SDK. Card data is encrypted client-side and sent directly to Therius — your server never sees a raw PAN.
-  </Card>
-  <Card icon="sparkles" title="AI Assistant">
-    Ask about your payments, analytics, routing, and disputes in plain language — with Thera in the dashboard, or by connecting your own AI agent over MCP. No card data or secrets ever reach a model.
   </Card>
 </CardGroup>
 
@@ -47,13 +51,15 @@ Therius is a payment API that consolidates every major payment method behind a s
 Start with the quick start if you want to fire a real (sandbox) payment in under five minutes. Read the authentication guide to understand how API keys and the JS SDK session token work. Browse the SDK overview once you are ready to embed a payment form. When you are wiring up your backend, set up [webhooks](/webhooks/overview) so asynchronous outcomes reach your server, and keep the [testing](/guides/testing) reference handy for sandbox test cards.
 
 <CardGroup cols={3}>
-  <Card icon="bolt" title="Quick Start" href="/quickstart">
+  <Card title="Quick Start" icon="bolt" href="/quickstart">
     Make your first test payment with a single curl command.
   </Card>
-  <Card icon="key" title="Authentication" href="/authentication">
+
+  <Card title="Authentication" icon="key" href="/authentication">
     Understand API keys, environments, and the SDK client token.
   </Card>
-  <Card icon="code" title="SDK Overview" href="/sdk/overview">
+
+  <Card title="SDK Overview" icon="code" href="/sdk/overview">
     Embed a PCI-safe payment form in your frontend.
   </Card>
 </CardGroup>
