@@ -1,0 +1,146 @@
+---
+title: 'Tokenización de tarjeta: guarda tarjetas para pagos futuros'
+sidebarTitle: 'Tokenización'
+description: 'Tokeniza tarjetas durante un pago o mediante la API de tokens independiente para cobrar a clientes que regresan sin volver a recopilar los datos de la tarjeta.'
+translationOf: concepts/tokenization.mdx
+translationSourceHash: b6b6996b0c015eb2c553a57ac408df95e8ed341a98741ff16233105369e453c1
+---
+
+La tokenización reemplaza un número de tarjeta sin cifrar por una referencia reutilizable — un token con el prefijo `vt_` — que Therius almacena de forma segura en su bóveda. Una vez que una tarjeta está tokenizada, nunca necesitas volver a recopilar los datos de la tarjeta. Los tokens están limitados a tu cuenta de comercio, llevan metadatos de BIN (marca, tipo y emisor de la tarjeta) y funcionan en cualquier llamada futura de `purchase` o `authorization` exactamente igual que los datos de la tarjeta original.
+
+## Dos formas de tokenizar
+
+### 1. Durante un pago
+
+Agrega `"tokenize": true` dentro de `card.cardData` (o `card.nonceData` si usas el flujo de nonce del SDK de JS), e incluye un `shopper.id` para asociar el token con un cliente específico. El pago se procesa normalmente y la respuesta incluye el nuevo token.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 2999, "exponent": 2 },
+  "shopper": { "id": "shopper-42" },
+  "card": {
+    "cardData": {
+      "cardNumber": "4111111111111111",
+      "cardholderName": "Ada Lovelace",
+      "expiryMonth": "12",
+      "expiryYear": "2030",
+      "cvv": "123",
+      "tokenize": true
+    }
+  }
+}
+```
+
+La respuesta incluye un campo `token` junto a los campos normales del pago:
+
+```json
+{
+  "status": "captured",
+  "paymentCode": "PAY-abc123",
+  "token": "vt_4xK9mNpQ2rLsT7uV"
+}
+```
+
+Guarda este token asociado al cliente en tu base de datos. Es lo único que necesitas para volver a cobrarle.
+
+### 2. Creación de token independiente
+
+Llama a `POST /token` para almacenar una o varias tarjetas como tokens sin realizar un pago. Es útil durante los flujos de configuración de cuenta donde quieres guardar una tarjeta en archivo antes de la primera compra.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "shopper": { "id": "shopper-42" },
+  "card": {
+    "cardData": {
+      "cardNumber": "4111111111111111",
+      "cardholderName": "Ada Lovelace",
+      "expiryMonth": "12",
+      "expiryYear": "2030",
+      "cvv": "123"
+    }
+  }
+}
+```
+
+La respuesta devuelve el mismo valor `token` (`vt_...`) sin procesar un cobro.
+
+## Usar un token en solicitudes futuras
+
+Pasa `card.tokenData.token` en lugar de `card.cardData` en cualquier compra o autorización posterior. La estructura de la solicitud y la de la respuesta son idénticas a las de un pago normal.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-002",
+  "amount": { "currency": "USD", "value": 2999, "exponent": 2 },
+  "shopper": { "id": "shopper-42" },
+  "card": {
+    "tokenData": {
+      "token": "vt_4xK9mNpQ2rLsT7uV"
+    }
+  }
+}
+```
+
+### CVV en tarjetas tokenizadas
+
+Opcionalmente puedes incluir `card.tokenData.cvv` al cobrar un token. Algunos adquirentes requieren el CVV para las transacciones iniciadas por el titular (CIT) pero no para las transacciones iniciadas por el comercio (MIT) ni para los cobros recurrentes.
+
+```json
+{
+  "card": {
+    "tokenData": {
+      "token": "vt_4xK9mNpQ2rLsT7uV",
+      "cvv": "123"
+    }
+  }
+}
+```
+
+Si estás ejecutando una suscripción o un reintento automatizado, omite el CVV — el cliente no está presente para proporcionarlo.
+
+## Tokenización de billetera
+
+Los métodos de pago de Apple Pay y Google Pay también pueden guardarse para uso recurrente. Agrega `"tokenize": true` y un `shopper.id` dentro del objeto `walletData`.
+
+```json
+{
+  "shopper": { "id": "shopper-42" },
+  "card": {
+    "walletData": {
+      "type": "apple_pay",
+      "token": "<wallet payment token from device>",
+      "tokenize": true
+    }
+  }
+}
+```
+
+El token `vt_...` resultante se comporta de forma idéntica a un token de tarjeta en solicitudes futuras.
+
+## Tokenización de ACH
+
+Los datos de cuenta bancaria enviados por ACH pueden tokenizarse de la misma forma. Agrega `"tokenize": true` dentro del objeto `apm`.
+
+```json
+{
+  "shopper": { "id": "shopper-42" },
+  "apm": {
+    "type": "ach",
+    "accountNumber": "123456789",
+    "routingNumber": "021000021",
+    "tokenize": true
+  }
+}
+```
+
+La respuesta devuelve un token `vt_...` que puedes usar en cobros de ACH futuros sin volver a pedirle al cliente los datos de su cuenta bancaria.
+
+## Seguridad
+
+<Note>
+  Los tokens de Therius son seguros para PCI. Un token `vt_...` solo es utilizable dentro de la bóveda de Therius y solo por tu cuenta de comercio. No puede usarse para recuperar el número de tarjeta sin cifrar, y ningún sistema de pago externo lo acepta. Almacenar tokens en lugar de datos de tarjeta significa que tu base de datos queda fuera del alcance de los requisitos de PCI DSS relacionados con los PAN.
+</Note>

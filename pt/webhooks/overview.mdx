@@ -1,0 +1,147 @@
+---
+title: 'Webhooks do Therius: entrega, novas tentativas e verificação de assinatura'
+sidebarTitle: 'Visão geral'
+description: 'Receba eventos de pagamento e de assinatura do Therius por HTTPS. Configure um endpoint, verifique o cabeçalho X-Therius-Signature e trate as novas tentativas de forma idempotente.'
+translationOf: webhooks/overview.mdx
+translationSourceHash: 4dae20f77b36c2124a0e8b23feb9ab66d9c2e8a462f80cdea1f26031a19d85a8
+---
+
+Muitos resultados de pagamento acontecem depois que sua chamada de API original retorna — um APM assíncrono é liquidado, um desafio 3DS é concluído, uma disputa é aberta, ou uma assinatura é renovada conforme programado. Os webhooks são como o Therius avisa o seu servidor sobre esses eventos. Você registra um endpoint HTTPS, assina os tipos de evento que interessam, e o Therius faz um `POST` de uma carga JSON para esse endpoint sempre que um evento correspondente ocorre.
+
+<Note>
+  Os webhooks são a fonte de verdade para os resultados assíncronos. Para os métodos de voucher e transferência bancária em especial, não atenda um pedido com a resposta inicial `pending` / `pending_action` — aguarde o webhook `payment.captured`.
+</Note>
+
+## Configure o seu endpoint
+
+Os endpoints de webhook são configurados no **painel do Therius**, em **Desenvolvedores → Webhooks**:
+
+<Steps>
+  <Step title="Defina a URL do endpoint">
+    Informe uma URL HTTPS pública no seu servidor (por exemplo `https://your-server.com/webhooks/therius`). URLs não HTTPS e URLs que resolvem para endereços privados, de loopback ou link-local são rejeitadas.
+  </Step>
+  <Step title="Escolha os eventos">
+    Selecione os tipos de evento a receber. Deixar a seleção vazia assina você em todos os eventos. Veja o [catálogo de eventos](/webhooks/events) para a lista completa.
+  </Step>
+  <Step title="Habilite a entrega">
+    Ative o endpoint. Você pode desativá-lo a qualquer momento sem perder a configuração.
+  </Step>
+  <Step title="Envie um evento de teste">
+    Use o controle **Enviar evento de teste** para disparar uma carga de amostra ao seu endpoint, depois verifique-a em **Entregas recentes**.
+  </Step>
+</Steps>
+
+É aceito um endpoint de webhook por conta do lojista. Os eventos de sandbox e de produção são configurados juntos, mas cada carga traz um campo `environment` para você distingui-los.
+
+## Mecânica de entrega
+
+| Propriedade | Valor |
+|---|---|
+| Método HTTP | `POST` |
+| Content type | `application/json` |
+| `User-Agent` | `Therius-Webhook/1.0` |
+| Cabeçalho de assinatura | `X-Therius-Signature: sha256=<hex>` (quando há um segredo de assinatura configurado — veja abaixo) |
+| Sucesso | Qualquer resposta `2xx` |
+| Falha | Qualquer resposta que não seja `2xx`, um timeout, ou um erro de conexão |
+
+Seu endpoint deve confirmar o recebimento com um status `2xx` **o mais rápido possível** — faça o processamento de fato em uma fila em segundo plano. O Therius trata uma resposta lenta ou que não seja `2xx` como uma entrega falha e a refaz.
+
+## Novas tentativas
+
+Uma entrega falha é refeita até **7 vezes** em uma programação de espera crescente:
+
+| Tentativa | Atraso após a tentativa anterior |
+|---|---|
+| 1 | 30 segundos |
+| 2 | 5 minutos |
+| 3 | 30 minutos |
+| 4 | 2 horas |
+| 5 | 6 horas |
+| 6 | 12 horas |
+| 7 | 24 horas |
+
+Após a tentativa final, a entrega é marcada como morta. Você pode inspecionar cada tentativa — incluindo o último status HTTP e o erro — em **Desenvolvedores → Webhooks → Entregas recentes**, e disparar uma nova entrega com **Reenviar**.
+
+<Warning>
+  Como as entregas são refeitas, o seu endpoint **vai** receber ocasionalmente o mesmo evento mais de uma vez. Trate os eventos de forma idempotente — baseie o seu processamento no `data.payment_code` (ou `subscription_id`) mais o tipo de `event`, e faça as entregas repetidas não terem efeito.
+</Warning>
+
+## Verificação de assinatura
+
+Quando há um segredo de assinatura configurado para o seu endpoint, cada requisição traz um cabeçalho `X-Therius-Signature`:
+
+```
+X-Therius-Signature: sha256=<hex-encoded HMAC-SHA256 of the raw request body>
+```
+
+O HMAC é calculado sobre os **bytes brutos exatos** do corpo da requisição, usando o seu segredo de assinatura como chave. Verifique-o antes de confiar em uma carga:
+
+<CodeGroup>
+```javascript Node.js
+import crypto from 'crypto'
+
+function verifyTheriusSignature(rawBody, header, signingSecret) {
+  const expected =
+    'sha256=' +
+    crypto.createHmac('sha256', signingSecret).update(rawBody).digest('hex')
+  // constant-time compare
+  return (
+    header &&
+    expected.length === header.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(header))
+  )
+}
+
+// Express: capture the raw body, do not use the parsed object for verification
+app.post(
+  '/webhooks/therius',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    const ok = verifyTheriusSignature(
+      req.body, // Buffer of raw bytes
+      req.header('X-Therius-Signature'),
+      process.env.THERIUS_WEBHOOK_SECRET,
+    )
+    if (!ok) return res.status(400).send('bad signature')
+
+    const event = JSON.parse(req.body.toString('utf8'))
+    // enqueue for background processing, then:
+    res.sendStatus(200)
+  },
+)
+```
+
+```python Python
+import hmac, hashlib
+
+def verify_therius_signature(raw_body: bytes, header: str, signing_secret: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        signing_secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, header or "")
+```
+</CodeGroup>
+
+<Note>
+  Se não houver um cabeçalho `X-Therius-Signature`, um segredo de assinatura ainda não foi provisionado para a sua conta. Entre em contato com o Therius para emitir um e, até lá, restrinja o endpoint por outros meios (por exemplo, um segmento de caminho imprevisível ou uma lista de permissões dos endereços de saída do Therius).
+</Note>
+
+## Envelope da carga
+
+Todo corpo de webhook é um objeto JSON com uma string `event` de nível superior, um timestamp e um objeto `data`. Os eventos de pagamento e de assinatura têm envelopes ligeiramente diferentes — veja [Eventos de webhook](/webhooks/events) para a estrutura exata de cada um.
+
+```json
+{
+  "event": "payment.captured",
+  "environment": "production",
+  "created_at": "2026-08-29T12:00:00Z",
+  "data": {
+    "payment_code": "PAY-abc123",
+    "order_code": "ORDER-001",
+    "status": "captured",
+    "amount": 1999,
+    "currency": "USD",
+    "exponent": 2
+  }
+}
+```

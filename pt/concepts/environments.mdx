@@ -1,0 +1,84 @@
+---
+title: 'Configuração dos ambientes de teste e de produção do Therius'
+sidebarTitle: 'Ambientes'
+description: 'O Therius tem dois ambientes — sandbox e produção. O prefixo da chave de API seleciona o ambiente automaticamente, sem configuração adicional.'
+translationOf: concepts/environments.mdx
+translationSourceHash: f7fc9226c9ff2420bdabcc81358ab371981f1bbb13311b6106451737dc90e02c
+---
+
+O Therius roteia cada requisição para o ambiente de sandbox ou o de produção com base unicamente no prefixo da chave de API que você envia. Não há indicador de ambiente, nem opção de inicialização do SDK separada, nem arquivo de configuração para alterar. Quando estiver pronto para entrar no ar, você troca o prefixo da chave e atualiza a URL base — nada mais.
+
+## Sandbox
+
+O ambiente de sandbox é um ambiente de teste totalmente isolado apoiado por um stub de provedor de teste. Nenhuma rede de cartões real está envolvida, nenhum dinheiro real se move e nenhuma conta real é cobrada. Use-o livremente durante o desenvolvimento e em pipelines de teste automatizado.
+
+| Propriedade | Valor |
+|---|---|
+| **URL base** | `https://api-sandbox.therius.io/v1` |
+| **Prefixo da chave privada** | `sk_sandbox_xxx` |
+| **Prefixo da chave pública** | `pub_sandbox_xxx` |
+| **Cobranças** | Nenhuma — apenas stub de teste |
+| **Idempotency-Key** | Opcional (mas crie o hábito agora) |
+
+### Cartões de teste do sandbox
+
+| Número do cartão | Resultado |
+|---|---|
+| `4111111111111111` | Sempre aprovado (Visa) |
+| `5500005555555559` | Sempre aprovado (Mastercard) |
+| `4000000000000002` | Sempre recusado (do not honor) |
+| `4000003220000000` | 3DS sem atrito — aprovado sem desafio |
+| `4000002500003155` | Desafio 3DS — retorna `pending_3ds` |
+
+Use qualquer data de validade futura, qualquer nome de titular e qualquer CVV de 3 dígitos (4 dígitos para Amex).
+
+<Card icon="flask-vial" title="Referência completa de testes" href="/guides/testing">
+  Cada cartão de teste por rede, cenários de recusa por motivo, o passo a passo completo do 3D Secure e as respostas de APM no sandbox.
+</Card>
+
+## Produção
+
+O ambiente de produção processa pagamentos reais sobre redes de cartões ao vivo. Cada cobrança é real, cada reembolso afeta contas reais e cada transação recusada é uma decisão real do emissor.
+
+| Propriedade | Valor |
+|---|---|
+| **URL base** | `https://api.therius.io/v1` |
+| **Prefixo da chave privada** | `sk_live_xxx` |
+| **Prefixo da chave pública** | `pub_live_xxx` |
+| **Cobranças** | Reais — redes de cartões ao vivo |
+| **Idempotency-Key** | Obrigatório em todas as chamadas que alteram dados |
+
+## Sandbox vs. produção em resumo
+
+| | Sandbox | Produção |
+|---|---|---|
+| **URL base** | `api-sandbox.therius.io/v1` | `api.therius.io/v1` |
+| **Prefixo da chave** | `sk_sandbox_` / `pub_sandbox_` | `sk_live_` / `pub_live_` |
+| **Cobranças reais** | Não | Sim |
+| **Idempotency-Key** | Recomendado | Obrigatório |
+| **Cartões de teste** | `4111111111111111`, `4000000000000002` | Apenas cartões reais |
+
+## Trocar de ambiente
+
+Para passar do sandbox para a produção, faça duas mudanças na sua configuração:
+
+1. Substitua `sk_sandbox_...` por `sk_live_...` (e `pub_sandbox_...` por `pub_live_...`).
+2. Atualize a URL base de `https://api-sandbox.therius.io/v1` para `https://api.therius.io/v1`.
+
+Nenhuma outra mudança de código é necessária. Os mesmos corpos de requisição, as mesmas estruturas de resposta e os mesmos caminhos de endpoint funcionam nos dois ambientes.
+
+<Warning>
+  Antes de trocar para a produção, verifique se toda requisição que altera dados no seu código envia um cabeçalho `Idempotency-Key`. No sandbox isso é opcional; em produção é obrigatório para evitar cobranças duplicadas nas novas tentativas de rede.
+</Warning>
+
+## O cabeçalho `X-Environment`
+
+A maioria das chamadas de API se autentica com uma chave, e o prefixo da chave determina o ambiente. No entanto, alguns fluxos — como `GET /payment/inquiry/{id}` alcançado a partir do fluxo de retomada de `pending_3ds` — podem ser chamados sem chave. Nesses casos, passe o cabeçalho `X-Environment` para dizer ao Therius para qual ambiente rotear a requisição.
+
+```bash
+# Consulte o status de um pagamento de sandbox sem chave
+curl https://api-sandbox.therius.io/v1/payment/inquiry/QUICKSTART-001 \
+  -H "X-Environment: sandbox"
+```
+
+Os valores válidos são `sandbox` e `production`. Quando você inclui uma chave de API, não precisa deste cabeçalho — o prefixo da chave tem precedência.

@@ -1,0 +1,86 @@
+---
+title: 'Catálogo de eventos de webhook do Therius e suas cargas'
+sidebarTitle: 'Eventos de webhook'
+description: 'Cada evento de webhook que o Therius envia — ciclo de vida do pagamento, disputas e faturamento de assinaturas — com a estrutura de carga de cada família.'
+translationOf: webhooks/events.mdx
+translationSourceHash: 591483cbca8a3a9e9f4f1e1a6a030f1a4f088a5df95ded8ca838d27dcce6ab03
+---
+
+Esta página lista cada tipo de evento que o Therius entrega a um endpoint de webhook configurado. Assine um subconjunto em **Desenvolvedores → Webhooks**, ou deixe a seleção vazia para recebê-los todos. Veja [Visão geral de webhooks](/webhooks/overview) para os detalhes de entrega, nova tentativa e verificação de assinatura.
+
+## Eventos de pagamento
+
+As cargas de eventos de pagamento usam este envelope:
+
+```json
+{
+  "event": "payment.captured",
+  "environment": "production",
+  "created_at": "2026-08-29T12:00:00Z",
+  "data": {
+    "payment_id": "b1f2...",
+    "transaction_id": "t_9a8b...",
+    "order_code": "ORDER-001",
+    "payment_code": "PAY-abc123",
+    "merchant_id": 42,
+    "status": "captured",
+    "amount": 1999,
+    "currency": "USD",
+    "exponent": 2,
+    "authorization_code": "OK123"
+  }
+}
+```
+
+| Evento | Dispara quando |
+|---|---|
+| `payment.authorized` | Fundos foram reservados por uma chamada de `authorization` (ou o trecho de autorização de um `purchase`). |
+| `payment.captured` | Uma captura teve sucesso — incluindo a captura automática dentro de `purchase`, e a confirmação de um pagamento APM ou de voucher assíncrono. |
+| `payment.refused` | O emissor ou o adquirente recusou o pagamento. Corresponde a um status `declined` na resposta síncrona da API — veja [Pagamentos recusados](/concepts/declined-payments) para saber como ler a recusa. |
+| `payment.refunded` | Um reembolso foi processado. Dispara a cada reembolso; `data.status` é `refunded` somente depois que o pagamento é totalmente reembolsado. |
+| `payment.cancelled` | Uma autorização foi anulada antes da captura. |
+| `payment.chargeback` | Uma disputa foi aberta contra um pagamento liquidado (recebida da notificação de disputa do adquirente). |
+| `payment.capture_failed` | Uma tentativa de captura falhou. O pagamento continua em `authorized`. |
+| `payment.refund_failed` | Uma tentativa de reembolso falhou. O pagamento continua em `captured`. |
+| `payment.cancel_failed` | Uma tentativa de cancelamento falhou. O pagamento continua em `authorized`. |
+
+<Note>
+  Os nomes dos eventos de webhook usam `refused` onde o campo `status` da [resposta síncrona da API](/api-reference/purchase) usa `declined`, e `payment.<status>` para estados terminais como `expired`. Corresponda à string `event`, não a uma análise de substring.
+</Note>
+
+## Eventos de assinatura
+
+As cargas de eventos de assinatura usam um envelope ligeiramente diferente — `subscription_id` é um campo de nível superior e `data` carrega o detalhe específico do evento:
+
+```json
+{
+  "event": "subscription.renewed",
+  "created_at": "2026-08-29T12:00:00Z",
+  "subscription_id": "sub_abc123",
+  "merchant_id": 42,
+  "data": {
+    "...": "event-specific fields (invoice, period dates, amount, failure reason, ...)"
+  }
+}
+```
+
+| Evento | Dispara quando |
+|---|---|
+| `subscription.created` | Uma assinatura foi criada. |
+| `subscription.trial_ended` | Um período de teste gratuito terminou e o faturamento começa. |
+| `subscription.renewed` | Uma renovação programada foi cobrada com sucesso. |
+| `subscription.payment_failed` | Uma cobrança de renovação falhou. |
+| `subscription.dunning_started` | A assinatura entrou em `past_due` e a sequência de novas tentativas de gestão de cobranças começou. |
+| `subscription.suspended` | Todas as novas tentativas de gestão de cobranças se esgotaram; a assinatura está inativa até o método de pagamento ser atualizado. |
+| `subscription.reactivated` | Uma assinatura `suspended` foi recuperada (novo método de pagamento ou nova tentativa bem-sucedida). |
+| `subscription.paused` | A assinatura foi pausada manualmente. |
+| `subscription.resumed` | Uma assinatura pausada foi retomada. |
+| `subscription.cancelled` | A assinatura foi cancelada de forma permanente. |
+| `subscription.completed` | A assinatura atingiu seu número fixo de ciclos de faturamento e terminou naturalmente. |
+| `subscription.payment_method_updated` | O cartão armazenado na assinatura foi substituído. |
+| `subscription.plan_change_scheduled` | Uma mudança de plano foi enfileirada para ser aplicada na próxima data de faturamento. |
+| `subscription.plan_changed` | Uma mudança de plano entrou em vigor. |
+
+## Eventos de teste
+
+Use **Desenvolvedores → Webhooks → Enviar evento de teste** para entregar uma carga de amostra de qualquer tipo de evento ao seu endpoint sem criar um pagamento ou uma assinatura reais. As entregas de teste aparecem em **Entregas recentes** ao lado das reais e podem ser reenviadas.

@@ -1,0 +1,60 @@
+---
+title: 'Roteamento inteligente: conexões, regras e failover'
+sidebarTitle: 'Roteamento inteligente'
+description: 'Como o Therius roteia cada pagamento entre seus provedores conectados — regras de roteamento, failover em cascata e onde o 3D Secure e a triagem de fraude se encaixam no pipeline.'
+translationOf: concepts/smart-routing.mdx
+translationSourceHash: 4ad6436585c80bd818e7924434d741c852593b21f495d441ad75a3cefe941747
+---
+
+O Therius é um orquestrador de pagamentos: uma única API na frente de muitos provedores de pagamento. Quando você envia um `POST /payment/purchase`, o Therius decide — por transação — qual dos seus provedores conectados tentar, em que ordem, e quais etapas de autenticação e risco executar ao longo do caminho. Essa lógica de decisão é o **roteamento inteligente**, e você a configura no painel do Therius sem mudar uma linha do seu código de integração.
+
+## Conexões
+
+Uma **conexão** é um vínculo configurado a um provedor externo — um adquirente ou PSP (Stripe, Adyen, um adquirente local), um provedor de fraude ou um provedor de 3D Secure. Você adiciona conexões e suas credenciais no painel, em **Conexões**. Um mesmo método de pagamento (por exemplo `card`) pode ter várias conexões de adquirente por trás.
+
+Adicionar ou remover uma conexão nunca muda suas requisições de API. O `paymentMethod` que você envia permanece o mesmo; só muda a configuração de roteamento por trás dele.
+
+## Regras de roteamento
+
+Cada método de pagamento tem um conjunto de **regras de roteamento**. Uma regra combina uma **condição** com uma lista ordenada de conexões a tentar. Quando um pagamento chega, o Therius avalia as regras em ordem de prioridade e usa a primeira cuja condição corresponde; uma regra geral fica sempre no final.
+
+As condições são construídas a partir de atributos da transação, incluindo:
+
+| Atributo | Uso de exemplo |
+|---|---|
+| Valor | Envie as transações acima de um limite para um adquirente de menor custo. |
+| Moeda | Roteie cada moeda para o adquirente que a liquida nativamente. |
+| País do emissor | Roteie os cartões domésticos para um adquirente local para melhores taxas e aprovação. |
+| Bandeira / tipo / BIN do cartão | Envie uma bandeira ou tipo de financiamento específico pelo seu próprio caminho. |
+| Tipo de carteira | Roteie as cobranças de Apple Pay / Google Pay contornando as condições de BIN de cartão. |
+| Uso de credencial armazenada | Envie as primeiras cobranças (com o cliente presente) pelo 3DS, roteie as MITs seguintes para outro lugar. |
+| Metadados | Corresponda às suas próprias chaves de `metadata` enviadas com o pagamento. |
+
+<Note>
+  As regras de roteamento são configuradas pelo administrador do lojista no painel. Elas não fazem parte da API pública — lojistas não criam regras de roteamento em uma requisição de API.
+</Note>
+
+## Failover em cascata
+
+A lista de conexões de uma regra de roteamento é uma **cascata**. Se a primeira conexão recusa ou dá erro de forma passível de nova tentativa, o Therius refaz automaticamente o pagamento na próxima conexão da lista, e assim por diante. Sua integração vê uma requisição e uma resposta final — as novas tentativas acontecem dentro do Therius.
+
+Um limite de saltos restringe quantas conexões um mesmo pagamento pode percorrer, de modo que uma cadeia mal configurada nunca pode refazer indefinidamente. Um pagamento que esgota todas as conexões da sua regra retorna a recusa do último provedor.
+
+<Warning>
+  Nem toda recusa é refeita. Uma recusa definitiva (cartão roubado, conta inválida) é terminal e é retornada imediatamente — refazê-la em outro adquirente só acrescentaria violações das regras de nova tentativa da bandeira. As recusas temporárias (emissor indisponível, do-not-honor, fundos insuficientes) são as que entram em cascata.
+</Warning>
+
+## Onde o 3DS e a triagem de fraude se encaixam
+
+O 3D Secure e a triagem de fraude são **etapas do pipeline de roteamento**, não chamadas de API separadas:
+
+- Uma **etapa de 3D Secure** decide se dispara um desafio (ou se apoia em um fluxo sem atrito ou em uma isenção de SCA) antes de o pagamento chegar ao adquirente. É por isso que o 3DS é habilitado por rota, não por cartão — veja [3D Secure](/concepts/3d-secure).
+- Uma **etapa de fraude** pode triar uma transação **antes da autorização** (bloquear antes de cobrar) ou **depois da autorização** (triar após a autorização, com reversão automática em uma recusa). O mesmo provedor de fraude pode ficar em qualquer um dos dois pontos.
+
+Como são etapas do pipeline, você pode aplicá-las de forma seletiva — por exemplo, desafiar apenas as primeiras cobranças com o cliente presente, ou triar por fraude apenas as transações acima de um determinado valor — usando as mesmas condições que orientam a seleção de conexão.
+
+## O que isso significa para a sua integração
+
+- Você integra uma vez, contra `POST /payment/purchase`. Adicionar adquirentes, trocar de provedor principal, ajustar o failover e mudar a política de 3DS/fraude são todos mudanças no painel.
+- A estrutura da resposta é idêntica independentemente de qual conexão processou o pagamento no fim. O `paymentCode` é a referência estável do Therius ao longo de cada nova tentativa desse pagamento.
+- Use os [webhooks](/webhooks/overview) para observar os resultados finais — a resposta síncrona reflete o estado no momento em que a requisição retorna, o que para os métodos assíncronos não é o estado final.

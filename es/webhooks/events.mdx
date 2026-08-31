@@ -1,0 +1,86 @@
+---
+title: 'Catálogo de eventos de webhook de Therius y sus cargas'
+sidebarTitle: 'Eventos de webhook'
+description: 'Cada evento de webhook que Therius envía — ciclo de vida del pago, disputas y facturación de suscripciones — con la estructura de carga de cada familia.'
+translationOf: webhooks/events.mdx
+translationSourceHash: 591483cbca8a3a9e9f4f1e1a6a030f1a4f088a5df95ded8ca838d27dcce6ab03
+---
+
+Esta página lista cada tipo de evento que Therius entrega a un endpoint de webhook configurado. Suscríbete a un subconjunto en **Desarrolladores → Webhooks**, o deja la selección vacía para recibirlos todos. Ver [Descripción general de webhooks](/webhooks/overview) para los detalles de entrega, reintento y verificación de firma.
+
+## Eventos de pago
+
+Las cargas de eventos de pago usan esta envoltura:
+
+```json
+{
+  "event": "payment.captured",
+  "environment": "production",
+  "created_at": "2026-08-29T12:00:00Z",
+  "data": {
+    "payment_id": "b1f2...",
+    "transaction_id": "t_9a8b...",
+    "order_code": "ORDER-001",
+    "payment_code": "PAY-abc123",
+    "merchant_id": 42,
+    "status": "captured",
+    "amount": 1999,
+    "currency": "USD",
+    "exponent": 2,
+    "authorization_code": "OK123"
+  }
+}
+```
+
+| Evento | Se dispara cuando |
+|---|---|
+| `payment.authorized` | Se reservaron fondos con una llamada de `authorization` (o el tramo de autorización de un `purchase`). |
+| `payment.captured` | Una captura tuvo éxito — incluida la captura automática dentro de `purchase`, y la confirmación de un pago APM o de voucher asíncrono. |
+| `payment.refused` | El emisor o el adquirente rechazó el pago. Corresponde a un estado `declined` en la respuesta síncrona de la API — ver [Pagos rechazados](/concepts/declined-payments) para saber cómo leer el rechazo. |
+| `payment.refunded` | Se procesó un reembolso. Se dispara en cada reembolso; `data.status` es `refunded` solo una vez que el pago está totalmente reembolsado. |
+| `payment.cancelled` | Se anuló una autorización antes de la captura. |
+| `payment.chargeback` | Se planteó una disputa contra un pago liquidado (recibida de la notificación de disputa del adquirente). |
+| `payment.capture_failed` | Falló un intento de captura. El pago permanece en `authorized`. |
+| `payment.refund_failed` | Falló un intento de reembolso. El pago permanece en `captured`. |
+| `payment.cancel_failed` | Falló un intento de cancelación. El pago permanece en `authorized`. |
+
+<Note>
+  Los nombres de los eventos de webhook usan `refused` donde el campo `status` de la [respuesta síncrona de la API](/api-reference/purchase) usa `declined`, y `payment.<status>` para estados terminales como `expired`. Coincide con la cadena `event`, no con un análisis de subcadena.
+</Note>
+
+## Eventos de suscripción
+
+Las cargas de eventos de suscripción usan una envoltura ligeramente diferente — `subscription_id` es un campo de nivel superior y `data` lleva el detalle específico del evento:
+
+```json
+{
+  "event": "subscription.renewed",
+  "created_at": "2026-08-29T12:00:00Z",
+  "subscription_id": "sub_abc123",
+  "merchant_id": 42,
+  "data": {
+    "...": "event-specific fields (invoice, period dates, amount, failure reason, ...)"
+  }
+}
+```
+
+| Evento | Se dispara cuando |
+|---|---|
+| `subscription.created` | Se creó una suscripción. |
+| `subscription.trial_ended` | Terminó un período de prueba gratuito y comienza la facturación. |
+| `subscription.renewed` | Una renovación programada se cobró con éxito. |
+| `subscription.payment_failed` | Falló un cobro de renovación. |
+| `subscription.dunning_started` | La suscripción entró en `past_due` y comenzó la secuencia de reintentos de gestión de cobros. |
+| `subscription.suspended` | Se agotaron todos los reintentos de gestión de cobros; la suscripción está inactiva hasta que se actualice el método de pago. |
+| `subscription.reactivated` | Se recuperó una suscripción `suspended` (nuevo método de pago o reintento exitoso). |
+| `subscription.paused` | La suscripción se pausó manualmente. |
+| `subscription.resumed` | Una suscripción pausada se reanudó. |
+| `subscription.cancelled` | La suscripción se canceló de forma permanente. |
+| `subscription.completed` | La suscripción alcanzó su cantidad fija de ciclos de facturación y terminó de forma natural. |
+| `subscription.payment_method_updated` | Se reemplazó la tarjeta almacenada en la suscripción. |
+| `subscription.plan_change_scheduled` | Se encoló un cambio de plan para aplicarse en la próxima fecha de facturación. |
+| `subscription.plan_changed` | Un cambio de plan entró en vigor. |
+
+## Eventos de prueba
+
+Usa **Desarrolladores → Webhooks → Enviar evento de prueba** para entregar una carga de muestra de cualquier tipo de evento a tu endpoint sin crear un pago o una suscripción reales. Las entregas de prueba aparecen en **Entregas recientes** junto a las reales y pueden reenviarse.

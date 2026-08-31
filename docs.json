@@ -198,6 +198,24 @@
                   "es/authentication",
                   "es/idempotency"
                 ]
+              },
+              {
+                "group": "Conceptos básicos",
+                "pages": [
+                  "es/concepts/payment-lifecycle",
+                  "es/concepts/smart-routing",
+                  "es/concepts/declined-payments",
+                  "es/concepts/tokenization",
+                  "es/concepts/3d-secure",
+                  "es/concepts/environments"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "es/webhooks/overview",
+                  "es/webhooks/events"
+                ]
               }
             ]
           }
@@ -216,6 +234,24 @@
                   "pt/quickstart",
                   "pt/authentication",
                   "pt/idempotency"
+                ]
+              },
+              {
+                "group": "Conceitos básicos",
+                "pages": [
+                  "pt/concepts/payment-lifecycle",
+                  "pt/concepts/smart-routing",
+                  "pt/concepts/declined-payments",
+                  "pt/concepts/tokenization",
+                  "pt/concepts/3d-secure",
+                  "pt/concepts/environments"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "pt/webhooks/overview",
+                  "pt/webhooks/events"
                 ]
               }
             ]

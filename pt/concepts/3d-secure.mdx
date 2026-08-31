@@ -1,0 +1,83 @@
+---
+title: 'Therius 3D Secure: tratamento de desafios e retomada'
+sidebarTitle: '3D Secure'
+description: 'Como o Therius trata automaticamente os desafios do 3DS2 — incluindo a pausa pending_3ds, a coleta de dados do dispositivo e o endpoint de retomada.'
+translationOf: concepts/3d-secure.mdx
+translationSourceHash: ade41118cb8ebc6f3a6f9449178f7760c79d54b52d2e985341db6c73d30966f7
+---
+
+O 3D Secure (3DS2) é um protocolo de autenticação que muitos emissores de cartão exigem antes de autorizar um pagamento — em especial na Europa, sob as regras de Autenticação Forte do Cliente (SCA) da PSD2. Quando um desafio 3DS é disparado, o titular do cartão precisa verificar sua identidade com o banco antes de o pagamento poder prosseguir. O Therius gerencia todo o fluxo do 3DS2 em seu nome: você envia uma requisição normal de compra ou autorização e trata um de dois possíveis estados de pausa se o emissor exigir autenticação adicional.
+
+## Dois estados de pausa
+
+Uma requisição de pagamento pode pausar em dois pontos durante o fluxo do 3DS. Ambos são indicados pelo campo `status` na resposta.
+
+### `pending_ddc` — coleta de dados do dispositivo
+
+A coleta de dados do dispositivo (DDC) reúne dados de impressão digital do navegador que alguns processadores (como o Cybersource) usam para avaliar o risco da transação antes de iniciar o desafio 3DS. Se sua resposta tem `status: "pending_ddc"`, resolva-a refazendo a requisição original de `purchase` ou `authorization` com o campo `threeDsSetup.sessionId` preenchido.
+
+<Note>
+  `pending_ddc` **não** é resolvido por `POST /payment/resume`. Refaça o endpoint de pagamento original (`/purchase` ou `/authorization`) com o session ID.
+</Note>
+
+### `pending_3ds` — desafio necessário
+
+Se o emissor exige que o titular se autentique, a resposta tem `status: "pending_3ds"` e inclui um objeto `actionRequired` contendo uma `challengeUrl`. Direcione o cliente para essa URL para completar o desafio (normalmente uma senha de uso único ou biometria do app do banco). Depois que o cliente completa o desafio, chame `POST /payment/resume` para continuar.
+
+```json
+{
+  "status": "pending_3ds",
+  "sessionId": "3ds-session-abc123",
+  "actionRequired": {
+    "type": "redirect",
+    "challengeUrl": "https://acs.issuerbank.com/3ds/challenge?token=..."
+  }
+}
+```
+
+## Retomar após um desafio 3DS
+
+Chame `POST /payment/resume` com o `sessionId` da resposta pausada. Nenhuma chave de API é necessária — o próprio `sessionId` atua como a credencial bearer para esta chamada. A sessão expira após **15 minutos**, então o cliente precisa completar o desafio dentro dessa janela.
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/resume \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "<sessionId from pending_3ds response>"
+  }'
+```
+
+Uma retomada bem-sucedida retorna o `PaymentResponse` final com `status: "captured"` (para uma compra) ou `status: "authorized"` (para uma autorização).
+
+## Usar o SDK de JS para o 3DS
+
+Se você está coletando os dados do cartão com o SDK de JS do Therius, não precisa tratar a pausa `pending_3ds` manualmente. Chame `sdk.handleAction(result.actionRequired)` e o SDK gerencia o iframe ou o popup do desafio automaticamente. Ele resolve sua promise com o `PaymentResponse` final assim que o cliente completa a autenticação.
+
+```javascript
+const result = await therius.payment(paymentRequest);
+
+if (result.actionRequired) {
+  const finalResult = await therius.handleAction(result.actionRequired);
+  console.log(finalResult.status); // "captured" or "authorized"
+} else {
+  console.log(result.status);
+}
+```
+
+Essa abordagem elimina a necessidade de qualquer ramificação manual sobre `pending_3ds` no seu código de frontend.
+
+## Passar dados de 3DS externos
+
+Se você executa a autenticação 3DS fora do Therius — por meio do seu próprio Merchant Plug-In (MPI) — passe o resultado da autenticação diretamente na requisição de pagamento usando os campos `threedsData`. O Therius usará esses dados para contornar seu próprio fluxo de 3DS e enviar a transação pré-autenticada ao adquirente.
+
+| Campo | Descrição |
+|---|---|
+| `threedsData.cavv` | Cardholder Authentication Verification Value |
+| `threedsData.eci` | Electronic Commerce Indicator |
+| `threedsData.dsTransId` | Directory Server Transaction ID |
+| `threedsData.version` | Versão do protocolo 3DS (por exemplo, `2.1.0`, `2.2.0`) |
+| `threedsData.xid` | Identificador da transação (3DS 1.x) |
+| `threedsData.authenticationStatus` | Código de resultado da autenticação (por exemplo, `Y`, `A`, `U`) |
+
+Preencha esses campos somente se o seu MPI externo concluiu a autenticação. Não envie dados parciais — um objeto `threedsData` incompleto pode fazer o adquirente recusar a transação.

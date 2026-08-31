@@ -1,0 +1,144 @@
+---
+title: 'Pagamentos recusados: códigos de recusa e ações de recuperação'
+sidebarTitle: 'Pagamentos recusados'
+description: 'Como o Therius reporta um pagamento recusado — o objeto refusalCode, a dica recoveryAction e a tabela completa de códigos de recusa ISO 8583 normalizados com seus significados.'
+translationOf: concepts/declined-payments.mdx
+translationSourceHash: f542965d5fc46bc138b2894a916d7a882c2848e6a3ca6505ca5c63deeadb4354
+---
+
+Quando um emissor ou um adquirente recusa um pagamento, o Therius retorna um status `declined` na resposta síncrona e dispara um webhook [`payment.refused`](/webhooks/events). Ambos trazem um objeto `refusalCode` que diz *por que* o pagamento falhou e *o que fazer em seguida*.
+
+## O objeto `refusalCode`
+
+```json
+{
+  "status": "declined",
+  "paymentCode": "PAY-abc123",
+  "orderCode": "ORDER-001",
+  "refusalCode": {
+    "reasonCode": "51",
+    "reason": "Insufficient funds",
+    "originalReasonCode": "insufficient_funds",
+    "originalReason": "Your card has insufficient funds.",
+    "recoveryAction": "switch_method"
+  }
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `reasonCode` | O código de recusa **normalizado** — um código de recusa [ISO 8583](https://en.wikipedia.org/wiki/ISO_8583). A recusa de cada provedor é mapeada para este conjunto, então sua lógica de tratamento é a mesma independentemente de qual adquirente processou o pagamento. Veja a [tabela abaixo](#refusal-code-reference). |
+| `reason` | Significado legível de `reasonCode`. |
+| `originalReasonCode` | O código bruto que o provedor subjacente retornou, antes da normalização. Útil para tíquetes de suporte e depuração específica do provedor. O formato varia por provedor. |
+| `originalReason` | A mensagem bruta que o provedor subjacente retornou. |
+| `recoveryAction` | Uma dica do que o seu checkout deve fazer em seguida — um de `retry`, `switch_method` ou `terminal`. Veja abaixo. |
+
+<Note>
+  Somente `reasonCode` e `recoveryAction` são seguros para construir lógica. `originalReasonCode` / `originalReason` são diagnósticos de repasse e seu formato não é estável entre provedores.
+</Note>
+
+## `recoveryAction`
+
+O Therius classifica cada recusa em uma de três ações de recuperação para que o seu checkout possa responder sem codificar manualmente uma decisão para os mais de 60 códigos.
+
+<CardGroup cols={3}>
+  <Card icon="rotate-right" title="retry">
+    A recusa pode se resolver em uma segunda tentativa — uma mensagem malformada ou fora de hora, uma falha do sistema, ou uma resposta genérica do emissor (incluindo "Do not honor"). Refazer o **mesmo** cartão uma vez é razoável. Sempre limite as novas tentativas a um número fixo pequeno — não faça loops.
+  </Card>
+  <Card icon="arrow-right-arrow-left" title="switch_method">
+    Refazer este cartão não vai ajudar (fundos insuficientes, cartão expirado, cartão restrito), mas um **método de pagamento diferente** pode ter sucesso. Peça ao cliente para tentar outro cartão ou um método alternativo.
+  </Card>
+  <Card icon="ban" title="terminal">
+    Um bloqueio definitivo — cartão a reter/perdido/roubado, conta encerrada, suspeita de fraude, ou uma ordem de revogação. **Não** ofereça uma nova tentativa nem um método alternativo. Mostre uma mensagem de falha neutra e pare.
+  </Card>
+</CardGroup>
+
+Um `reasonCode` não reconhecido ou ausente é reportado como `switch_method` — o padrão seguro, já que refazer cegamente uma recusa não classificada arrisca penalidades por tentativas excessivas das bandeiras de cartão.
+
+<Warning>
+  As bandeiras de cartão monitoram as tentativas de autorização repetidas em um cartão recusado (Visa VAMP, Mastercard excessive-attempts). Nunca refaça uma recusa `terminal`, e nunca refaça nenhuma recusa mais do que um número pequeno e fixo de vezes.
+</Warning>
+
+## Reroteamento automático
+
+A maioria das recusas temporárias é refeita pelo Therius **antes** de você as ver — o [roteamento inteligente](/concepts/smart-routing) leva o pagamento em cascata para a próxima conexão da rota. Portanto, a recusa que você recebe na resposta é o resultado depois de o Therius já ter esgotado as alternativas daquela rota. As recusas definitivas (`terminal` acima, além de algumas outras como PIN incorreto e falhas de CVV) são retornadas imediatamente e nunca são rerroteadas, porque refazê-las em outro adquirente só acrescentaria violações da bandeira.
+
+## Assinaturas e gestão de cobranças
+
+Para as renovações de assinatura, o Therius aplica a mesma classificação internamente: uma recusa `terminal` para a sequência de gestão de cobranças imediatamente (a assinatura vai para `suspended` e dispara [`subscription.suspended`](/webhooks/events)), em vez de desperdiçar as novas tentativas restantes em um cartão que o emissor nunca vai aprovar.
+
+## Referência de códigos de recusa
+
+Os valores de `reasonCode` normalizados que o Therius pode retornar, com seu significado e sua `recoveryAction` padrão.
+
+| Código | Significado | `recoveryAction` |
+|---|---|---|
+| `1` | Consultar o emissor do cartão | `switch_method` |
+| `2` | Consultar o emissor do cartão, condição especial | `switch_method` |
+| `3` | Lojista ou provedor de serviço inválido | `switch_method` |
+| `4` | Reter o cartão | `terminal` |
+| `5` | Do not honor | `retry` |
+| `6` | Erro geral | `retry` |
+| `7` | Reter o cartão, condição especial (não perdido/roubado) | `terminal` |
+| `8` | Aprovar com identificação | `switch_method` |
+| `9` | Solicitação em andamento | `switch_method` |
+| `11` | Aprovação VIP | `switch_method` |
+| `12` | Transação inválida | `retry` |
+| `13` | Valor inválido, ou o valor excede o máximo do programa do cartão | `retry` |
+| `14` | Número de conta inválido (não existe esse número) | `terminal` |
+| `15` | Não existe esse emissor | `terminal` |
+| `16` | Fundos insuficientes | `switch_method` |
+| `17` | Cancelamento do cliente | `switch_method` |
+| `19` | Reinserir a transação | `retry` |
+| `20` | Resposta inválida | `retry` |
+| `21` | Nenhuma ação tomada (não foi possível reverter a transação anterior) | `switch_method` |
+| `22` | Suspeita de falha | `retry` |
+| `25` | Não foi possível localizar o registro no arquivo, ou falta o número de conta na consulta | `switch_method` |
+| `28` | O arquivo está temporariamente indisponível | `switch_method` |
+| `30` | Erro de formato | `switch_method` |
+| `41` | Cartão perdido — o lojista deve retê-lo | `terminal` |
+| `43` | Cartão roubado — o lojista deve retê-lo | `terminal` |
+| `46` | Conta encerrada | `terminal` |
+| `51` | Fundos insuficientes | `switch_method` |
+| `52` | Não há conta corrente | `switch_method` |
+| `53` | Não há conta poupança | `switch_method` |
+| `54` | Cartão expirado | `switch_method` |
+| `55` | PIN incorreto | `switch_method` |
+| `57` | Transação não permitida ao titular | `terminal` |
+| `58` | Transação não permitida no terminal | `switch_method` |
+| `59` | Suspeita de fraude | `terminal` |
+| `61` | Limite de valor de atividade excedido | `switch_method` |
+| `62` | Cartão restrito (por exemplo, exclusão de país) | `terminal` |
+| `63` | Violação de segurança | `terminal` |
+| `65` | Limite de quantidade de atividade excedido | `switch_method` |
+| `68` | Resposta recebida tarde demais | `retry` |
+| `75` | Número permitido de tentativas de inserção de PIN excedido | `switch_method` |
+| `76` | Não foi possível localizar a mensagem anterior (sem correspondência no número de referência de recuperação) | `switch_method` |
+| `77` | Dados de repetição ou reversão inconsistentes com a mensagem original | `switch_method` |
+| `78` | Bloqueado, primeiro uso — cartão de novo titular não desbloqueado corretamente | `switch_method` |
+| `80` | Emissor de crédito indisponível, ou data inválida | `switch_method` |
+| `81` | Erro criptográfico de PIN | `switch_method` |
+| `82` | Resultado negativo de CAM, dCVV, iCVV ou CVV | `switch_method` |
+| `83` | Não foi possível verificar o PIN | `switch_method` |
+| `85` | Sem motivo para recusar (apenas verificação ou comprovante de crédito) | `retry` |
+| `91` | Emissor indisponível ou switch inoperante | `switch_method` |
+| `92` | Não é possível encontrar o destino para o roteamento | `switch_method` |
+| `93` | A transação não pode ser concluída, violação da lei | `switch_method` |
+| `94` | Transmissão duplicada | `switch_method` |
+| `95` | Erro de conciliação | `retry` |
+| `96` | Falha do sistema | `retry` |
+| `B1` | Valor de sobretaxa não permitido em cartões Visa (apenas adquirentes dos EUA) | `switch_method` |
+| `N0` | Forçar STIP | `switch_method` |
+| `N3` | Serviço de saque não disponível | `switch_method` |
+| `N4` | A solicitação de cashback excede o limite do emissor | `switch_method` |
+| `N7` | Recusa por falha de CVV2 | `switch_method` |
+| `P2` | Informações do biller inválidas | `switch_method` |
+| `P5` | Solicitação de troca/desbloqueio de PIN recusada | `switch_method` |
+| `P6` | PIN inseguro | `switch_method` |
+| `Q1` | Falha na autenticação do cartão (3D Secure) | `switch_method` |
+| `R0` | Ordem de suspensão de pagamento | `terminal` |
+| `R1` | Ordem de revogação de autorização | `terminal` |
+| `R3` | Ordem de revogação de todas as autorizações | `terminal` |
+| `XA` | Encaminhar ao emissor | `switch_method` |
+| `XD` | Encaminhar ao emissor | `switch_method` |
+| `Z3` | Não é possível ir para o modo online | `switch_method` |
