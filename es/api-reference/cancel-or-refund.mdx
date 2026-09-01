@@ -1,0 +1,136 @@
+---
+title: "Revierte un pago"
+sidebarTitle: "Cancel or Refund Automatically"
+description: "Cancela automáticamente si el pago está autorizado, o reembolsa si ya está capturado. Sin necesidad de rastrear el estado del pago."
+openapi: "POST /payment/{id}/cancel_or_refund"
+translationOf: api-reference/cancel-or-refund.mdx
+translationSourceHash: 98545184c9dc96815e7966caf5c5664ab305ef0fadf40f80f42d33d9a32f621d
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Si no quieres rastrear en tu propio sistema si un pago está en el estado `authorized` o `captured`, `POST /payment/{id}/cancel_or_refund` lo maneja por ti. Therius verifica el estado actual del pago y automáticamente cancela la autorización (si no está capturada) o emite un reembolso total (si ya está capturada). Esto es especialmente útil en flujos de reversión de pedidos donde el estado del pago puede variar según el momento — por ejemplo, un cliente que cancela un pedido mientras el cumplimiento está en curso.
+
+<SchemaLangNote lang="es" />
+
+## Identificar el pago
+
+`{id}` es el `id` de pago de Therius devuelto por `POST /payment/authorization` y `POST /payment/purchase`. `orderCode` y `paymentCode` son tus propios campos de referencia y **no** se aceptan aquí. Un `id` desconocido o no propio devuelve `404`.
+
+## Solicitud
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/cancel_or_refund`
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El `id` de pago de Therius de la respuesta de autorización/purchase.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string">
+  Tu clave de API secreta como token Bearer: `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Requerido en producción para prevenir operaciones duplicadas en un reintento.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Debe ser `application/json`.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de comercio.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Una referencia interna opcional para esta operación.
+</ParamField>
+
+<Note>
+  Este endpoint siempre revierte el pago **completo** — anula toda la retención de autorización, o reembolsa todo el monto capturado. Para emitir un reembolso *parcial* en un pago capturado, llama a [Refund](/api-reference/refund) con un `amount` en su lugar.
+</Note>
+
+## Respuesta
+
+<ResponseField name="id" type="string">
+  El `id` de pago de Therius (el mismo valor que el segmento de ruta `{id}`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  La acción tomada. Uno de:
+
+  - `"cancelled"` — la autorización fue anulada (el pago estaba en el estado `authorized`).
+  - `"refunded"` — los fondos fueron devueltos al titular de la tarjeta (el pago estaba en el estado `captured`).
+  - `"failed"` — la operación no se pudo completar.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  El ID de recibo de Therius para el pago original.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Tu `orderCode` original.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Tu `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  El monto cancelado o reembolsado, en formato `{ currency, value, exponent }`.
+</ResponseField>
+
+## Ejemplo
+
+### Revertir un pago sin conocer su estado
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/cancel_or_refund \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "cancelled",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+**Respuesta cuando el pago estaba capturado (ruta de reembolso) — `200 OK`**
+
+```json
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "refunded",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 }
+}
+```
+
+<Tip>
+  Este endpoint es ideal para flujos de reversión de pedidos disparados por tu UI de cancelación de cara al cliente, donde la misma ruta de código maneja tanto los estados previos a la captura como los posteriores. Usa el `status` en la respuesta para determinar qué acción se tomó y actualiza tus registros internos en consecuencia.
+</Tip>

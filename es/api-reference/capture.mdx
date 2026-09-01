@@ -1,0 +1,171 @@
+---
+title: "Liquida una autorización previa"
+sidebarTitle: "Capture a Payment"
+description: "Liquida un pago previamente autorizado. Soporta captura parcial. Debe llamarse dentro de la ventana de autorización del adquirente."
+openapi: "POST /payment/{id}/capture"
+translationOf: api-reference/capture.mdx
+translationSourceHash: 19e312b174e7925906c0d067a5db2aba47b19234c5d2a27751e3460cc76c6332
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Llama a `POST /payment/{id}/capture` para liquidar fondos de un `POST /payment/authorization` anterior. Puedes capturar menos que el monto total autorizado — una captura parcial — y la retención restante se libera automáticamente. Debes llamar a este endpoint dentro de la ventana de autorización del adquirente (normalmente 7 días) o la retención expirará y necesitarás volver a autorizar.
+
+<SchemaLangNote lang="es" />
+
+## Identificar el pago
+
+`{id}` es el `id` de pago de Therius devuelto en la respuesta a `POST /payment/authorization` (y `POST /payment/purchase`). Guárdalo cuando creas el pago. `orderCode` y `paymentCode` son tus propios campos de referencia — **no** se aceptan como forma de direccionar el pago para captura, reembolso o cancelación.
+
+Un `id` que no existe, o que pertenece a otro comercio, devuelve `404`.
+
+## Solicitud
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/capture`
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El `id` de pago de Therius de la respuesta de autorización/purchase.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string">
+  Tu clave de API secreta como token Bearer: `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Requerido en producción. Reintentar con la misma clave devuelve la respuesta original sin crear una liquidación duplicada.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Debe ser `application/json`.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de comercio.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Una referencia interna opcional para esta operación de captura.
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  El monto a capturar. Puede ser menor o igual al monto autorizado.
+
+  <Expandable title="campos de amount">
+    <ParamField body="currency" type="string" required>
+      Código de moneda ISO 4217. Debe coincidir con la moneda de la autorización original.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Monto en unidades menores. No debe exceder el valor originalmente autorizado.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Número de decimales de la moneda.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Respuesta
+
+<ResponseField name="id" type="string">
+  El `id` de pago de Therius (el mismo valor que el segmento de ruta `{id}`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Resultado de la captura. Uno de:
+
+  - `"captured"` — fondos liquidados con éxito.
+  - `"failed"` — la captura no se pudo procesar. Revisa `connectionCode` y reintenta o contacta al soporte.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  El ID de recibo de Therius para este pago.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Tu `orderCode` original.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Tu `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  El monto realmente capturado, en formato `{ currency, value, exponent }`.
+</ResponseField>
+
+## Ejemplo
+
+### Captura total
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/capture \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+### Captura parcial
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/capture \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "amount": { "currency": "USD", "value": 7500, "exponent": 2 }
+  }'
+```
+
+```json
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 7500, "exponent": 2 }
+}
+```
+
+<Note>
+  Cuando realizas una captura parcial, Therius libera automáticamente la retención restante (\$24.00 en el ejemplo anterior). No necesitas enviar una solicitud de cancelación separada para la porción no capturada.
+</Note>
+
+<Warning>
+  Solo puedes capturar un pago autorizado una vez. Si necesitas capturar un monto diferente después de que ya se procesó una captura parcial, necesitarás crear una nueva autorización.
+</Warning>
+
+<Tip>
+  Pasa siempre un `Idempotency-Key` en la captura. Si tu servidor agota el tiempo de espera y reintentas, la misma clave garantiza que no liquidarás dos veces la misma autorización.
+</Tip>

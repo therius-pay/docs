@@ -1,0 +1,172 @@
+---
+title: "Emita um reembolso total ou parcial"
+sidebarTitle: "Refund a Payment"
+description: "Reembolse um pagamento capturado total ou parcialmente. Vários reembolsos parciais são permitidos até o valor total capturado."
+openapi: "POST /payment/{id}/refund"
+translationOf: api-reference/refund.mdx
+translationSourceHash: 4ab1015bdcd8895bc1d66aa263e80662070eb15a6521cdb70130079fad49e489
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Use `POST /payment/{id}/refund` para devolver fundos a um titular de cartão depois que um pagamento foi capturado e liquidado. Você pode emitir um único reembolso total ou vários reembolsos parciais — desde que o valor cumulativo reembolsado não exceda o total capturado originalmente. Os reembolsos costumam aparecer no extrato do titular do cartão dentro de 5–10 dias úteis, conforme o banco dele.
+
+<SchemaLangNote lang="pt" />
+
+## Identificar o pagamento
+
+`{id}` é o `id` de pagamento do Therius devolvido por `POST /payment/authorization` e `POST /payment/purchase`. `orderCode` e `paymentCode` são os seus próprios campos de referência e **não** são aceitos aqui. Um `id` desconhecido ou não pertencente devolve `404`.
+
+## Requisição
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/refund`
+
+### Parâmetros de caminho
+
+<ParamField path="id" type="string" required>
+  O `id` de pagamento do Therius da resposta de autorização/purchase.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string">
+  A sua chave de API secreta como token Bearer: `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Um UUID que você gera por operação. Obrigatório em produção — repetir com a mesma chave devolve a resposta original sem emitir um reembolso duplicado.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Deve ser `application/json`.
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="merchantCode" type="string" required>
+  O seu identificador de lojista.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Uma referência interna opcional para esta operação de reembolso (p. ex. o seu número de RMA ou de ticket de suporte).
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  O valor a reembolsar.
+
+  <Expandable title="campos de amount">
+    <ParamField body="currency" type="string" required>
+      Código de moeda ISO 4217. Deve corresponder à moeda do pagamento capturado original.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Valor do reembolso em unidades menores. O total cumulativo de todos os reembolsos contra este pagamento não deve exceder o valor capturado.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Número de casas decimais da moeda.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Resposta
+
+<ResponseField name="id" type="string">
+  O `id` de pagamento do Therius (o mesmo valor que o segmento de caminho `{id}`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Resultado do reembolso. Um de:
+
+  - `"refunded"` — fundos devolvidos com sucesso ao titular do cartão.
+  - `"failed"` — o reembolso não pôde ser processado. Tente de novo com um novo `Idempotency-Key` ou entre em contato com o suporte.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  O ID de recibo do Therius para o pagamento original.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  O seu `orderCode` original.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  O seu `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  O valor reembolsado nesta operação, em formato `{ currency, value, exponent }`.
+</ResponseField>
+
+## Exemplos
+
+### Reembolso total
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/refund \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "amount": { "currency": "USD", "value": 4999, "exponent": 2 }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "refunded",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+### Reembolso parcial
+
+Reembolsar apenas parte de um pedido — por exemplo, um único item devolvido de uma compra com vários itens:
+
+```bash
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/refund \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "reference": "RETURN-98765",
+    "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
+  }'
+```
+
+```json
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "refunded",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 1999, "exponent": 2 }
+}
+```
+
+<Warning>
+  Você não pode reembolsar um pagamento que está no estado `authorized` (ainda não capturado). Para liberar uma autorização que não foi capturada, use [Cancel](/api-reference/cancel) em vez disso. Tentar reembolsar um pagamento não capturado devolve um erro.
+</Warning>
+
+<Note>
+  Vários reembolsos parciais são permitidos. Você pode chamar este endpoint várias vezes contra o mesmo `id` de pagamento, desde que o valor cumulativo de reembolso não exceda o valor capturado original. Cada chamada deve usar um `Idempotency-Key` distinto.
+</Note>
+
+<Tip>
+  Se você não tem certeza se um pagamento está no estado `authorized` ou `captured`, use [Cancel or Refund](/api-reference/cancel-or-refund) em vez disso — ele detecta o estado automaticamente e toma a ação apropriada.
+</Tip>

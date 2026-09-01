@@ -1,0 +1,225 @@
+---
+title: "Almacena tokens de tarjeta para pagos futuros"
+sidebarTitle: "Tokenize a Card"
+description: "Tokeniza una o más tarjetas sin cobrarlas. Cada token está limitado a tu cuenta de comercio y es reutilizable para pagos futuros."
+openapi: "POST /token"
+translationOf: api-reference/store-tokens.mdx
+translationSourceHash: 6a911be4b155cf4797f3e16bd6a39da5f6bfca06a56b044b298d7d2c67d08ac5
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /token` te permite almacenar los datos de tarjeta como tokens reutilizables sin procesar un pago. Úsalo para pre-depositar tarjetas en el vault durante flujos de configuración de cuenta, o para migrar tarjetas almacenadas de otro proveedor. Cada token está limitado a tu cuenta de comercio y se almacena con datos de BIN (bandera, tipo, emisor).
+
+<SchemaLangNote lang="es" />
+
+<Note>
+  Para tokenizar una tarjeta durante un pago, agrega `card.cardData.tokenize: true` a tu solicitud de pago en su lugar — ver [Conceptos de tokenización](/concepts/tokenization).
+</Note>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /token`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador único de cuenta de comercio.
+</ParamField>
+
+<ParamField body="shopper" type="object">
+  El cliente con el que asociar los tokens almacenados.
+
+  <Expandable title="campos de shopper">
+    <ParamField body="shopper.id" type="string">
+      Tu identificador de cliente interno.
+    </ParamField>
+
+    <ParamField body="shopper.email" type="string">
+      Dirección de correo del cliente.
+    </ParamField>
+
+    <ParamField body="shopper.name" type="string">
+      Nombre completo del cliente.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="tokens" type="array" required>
+  Un array de entradas de token a almacenar. Cada entrada debe incluir `card.cardData` (campos de tarjeta sin procesar) o `card.nonceData` (un nonce generado por el SDK).
+
+  <Expandable title="campos de entrada de token">
+    <ParamField body="tokens[].card.cardData" type="object">
+      Datos de tarjeta sin procesar. Úsalo solo en entornos del lado del servidor o que cumplen PCI. Para flujos de navegador, prefiere `card.nonceData`.
+
+      <Expandable title="campos de cardData">
+        <ParamField body="tokens[].card.cardData.cardNumber" type="string">
+          Número de tarjeta completo (PAN).
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.cardholderName" type="string">
+          Nombre tal como aparece en la tarjeta.
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.expiryMonth" type="string">
+          Mes de vencimiento de dos dígitos, p. ej. `"12"`.
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.expiryYear" type="string">
+          Año de vencimiento de cuatro dígitos, p. ej. `"2030"`.
+        </ParamField>
+
+        <ParamField body="tokens[].card.cardData.cvv" type="string">
+          Código de seguridad de la tarjeta.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="tokens[].card.nonceData" type="object">
+      Nonce generado por el SDK en lugar de datos de tarjeta sin procesar. Recomendado para flujos de navegador donde los datos de tarjeta se recolectan vía el SDK JS de Therius.
+
+      <Expandable title="campos de nonceData">
+        <ParamField body="tokens[].card.nonceData.nonce" type="string">
+          La cadena de nonce de un solo uso devuelta por el SDK JS después de que el cliente ingresa su tarjeta.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="tokens[].expirationDate" type="string">
+      Anulación opcional de la fecha de vencimiento efectiva del token. Formato: `YYYY-MM`. Si se omite, se usa el vencimiento propio de la tarjeta.
+    </ParamField>
+
+    <ParamField body="tokens[].tokenCreationReference" type="string">
+      Tu propia cadena de referencia para esta entrada de token. Devuelta en la respuesta para conciliación.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Respuesta
+
+Una solicitud exitosa devuelve `200 OK` con el código de comercio, el objeto shopper devuelto y un array de entradas de token creadas.
+
+<ResponseField name="merchantCode" type="string">
+  Tu identificador de cuenta de comercio, devuelto de la solicitud.
+</ResponseField>
+
+<ResponseField name="shopper" type="object">
+  El objeto shopper devuelto de la solicitud.
+
+  <Expandable title="campos de shopper">
+    <ResponseField name="shopper.id" type="string">
+      Tu identificador de cliente interno.
+    </ResponseField>
+
+    <ResponseField name="shopper.email" type="string">
+      Dirección de correo del cliente.
+    </ResponseField>
+
+    <ResponseField name="shopper.name" type="string">
+      Nombre completo del cliente.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="tokens" type="array">
+  Array de objetos de token creados, en el mismo orden que la solicitud.
+
+  <Expandable title="campos de token">
+    <ResponseField name="tokens[].id" type="string">
+      El ID de token reutilizable (con prefijo `vt_`). Pásalo como `card.tokenData.token` en futuras solicitudes de pago.
+    </ResponseField>
+
+    <ResponseField name="tokens[].card.cardData" type="object">
+      Información de tarjeta enmascarada almacenada junto con el token.
+
+      <Expandable title="campos de cardData enmascarados">
+        <ResponseField name="tokens[].card.cardData.brand" type="string">
+          Bandera de la red de la tarjeta, p. ej. `"visa"`, `"mastercard"`.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.cardNumber" type="string">
+          Número de tarjeta enmascarado, p. ej. `"411111****1111"`.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.type" type="string">
+          Tipo de tarjeta — `"credit"` o `"debit"`.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.issuerName" type="string">
+          Nombre del banco emisor de la tarjeta.
+        </ResponseField>
+
+        <ResponseField name="tokens[].card.cardData.issuingCountry" type="string">
+          Código de país ISO 3166-1 alpha-2 del banco emisor.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="tokens[].expirationDate" type="string">
+      Fecha de vencimiento efectiva del token en formato `YYYY-MM`.
+    </ResponseField>
+
+    <ResponseField name="tokens[].tokenCreationReference" type="string">
+      Tu cadena de referencia, devuelta de la solicitud.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/token \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "shopper": { "id": "customer-42", "email": "ada@example.com" },
+    "tokens": [{
+      "card": {
+        "cardData": {
+          "cardNumber": "4111111111111111",
+          "cardholderName": "Ada Lovelace",
+          "expiryMonth": "12",
+          "expiryYear": "2030",
+          "cvv": "123"
+        }
+      }
+    }]
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "merchantCode": "MERCHANT_001",
+  "shopper": { "id": "customer-42", "email": "ada@example.com" },
+  "tokens": [{
+    "id": "vt_abc123xyz",
+    "card": {
+      "cardData": { "brand": "visa", "cardNumber": "411111****1111", "type": "credit" }
+    },
+    "expirationDate": "2030-12"
+  }]
+}
+```
+
+</ResponseExample>

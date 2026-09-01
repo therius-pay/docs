@@ -1,0 +1,407 @@
+---
+title: "Cobre um cartão em uma única etapa"
+sidebarTitle: "Purchase (Auth + Capture)"
+description: "Autorize e capture um pagamento em uma única requisição. Use para bens digitais ou qualquer pedido que você cumpre de imediato."
+openapi: "POST /payment/purchase"
+translationOf: api-reference/purchase.mdx
+translationSourceHash: 85bb31e95d58bd12e6cef1a159126b10d74a44f9aba84a768e27ad707da1aae9
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /payment/purchase` autoriza e captura fundos em uma única ida e volta. Use quando você pode cumprir o pedido de imediato — bens digitais, assinaturas SaaS ou varejo com estoque. Para bens físicos que são enviados depois, considere [Authorize](/api-reference/authorize) \+ [Capture](/api-reference/capture) para reter fundos até o cumprimento sem liquidar antes da hora.
+
+<SchemaLangNote lang="pt" />
+
+## Requisição
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/purchase`
+
+### Headers
+
+<ParamField header="Authorization" type="string">
+  A sua chave de API secreta como token Bearer: `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Um UUID que você gera por operação. Obrigatório em produção. Repetir com a mesma chave devolve a resposta original sem criar uma cobrança duplicada.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Deve ser `application/json`.
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="merchantCode" type="string" required>
+  O seu identificador de lojista, emitido quando a sua conta é criada.
+</ParamField>
+
+<ParamField body="orderCode" type="string" required>
+  A sua referência de pedido interna. Deve ser única por lojista. Use este valor para correlacionar os pagamentos do Therius com os seus próprios registros de pedidos.
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  O valor a cobrar.
+
+  <Expandable title="campos de amount">
+    <ParamField body="currency" type="string" required>
+      Código de moeda ISO 4217, p. ex. `"USD"`, `"EUR"`, `"JPY"`.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Valor em unidades menores (centavos, pence, etc.). Para USD, `4999` = \$49.99. Para JPY (sem decimais), `5000` = ¥5000.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Número de casas decimais da moeda. `2` para USD/EUR, `0` para JPY.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="card" type="object">
+  Dados de pagamento com cartão. Forneça exatamente um de `cardData`, `nonceData` ou `tokenData`. Omita este campo ao usar um APM.
+
+  <Expandable title="campos de card">
+    <ParamField body="cardData" type="object">
+      Dados de cartão brutos. Use apenas em ambientes em conformidade com PCI ou via um iframe seguro.
+
+      <Expandable title="campos de cardData">
+        <ParamField body="cardNumber" type="string">
+          PAN completo, apenas dígitos.
+        </ParamField>
+
+        <ParamField body="cardholderName" type="string">
+          Nome como aparece no cartão.
+        </ParamField>
+
+        <ParamField body="expiryMonth" type="string">
+          Mês de validade de dois dígitos, p. ex. `"12"`.
+        </ParamField>
+
+        <ParamField body="expiryYear" type="string">
+          Ano de validade de quatro dígitos, p. ex. `"2030"`.
+        </ParamField>
+
+        <ParamField body="cvv" type="string">
+          Valor de verificação do cartão (3 ou 4 dígitos).
+        </ParamField>
+
+        <ParamField body="tokenize" type="boolean">
+          Defina como `true` para salvar este cartão como um token reutilizável. Requer `shopper.id` na requisição.
+        </ParamField>
+
+        <ParamField body="cardAddress" type="object">
+          Endereço de cobrança para verificações AVS.
+        </ParamField>
+
+        <ParamField body="documentNumber" type="string">
+          ID fiscal/de documento do titular do cartão, exigido por alguns adquirentes da América Latina.
+        </ParamField>
+
+        <ParamField body="typeOverride" type="string">
+          Sobrescreve o tipo de cartão detectado, p. ex. `"debit"`.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="nonceData" type="object">
+      Nonce gerado pelo SDK. Use no lugar de `cardData` ao coletar os dados de cartão pelo SDK JS do Therius.
+
+      <Expandable title="campos de nonceData">
+        <ParamField body="nonce" type="string">
+          A string de nonce devolvida pelo SDK.
+        </ParamField>
+
+        <ParamField body="cardholderName" type="string">
+          Nome do titular do cartão.
+        </ParamField>
+
+        <ParamField body="cardAddress" type="object">
+          Endereço de cobrança.
+        </ParamField>
+
+        <ParamField body="tokenize" type="boolean">
+          Salva o cartão como um token após o pagamento.
+        </ParamField>
+
+        <ParamField body="typeOverride" type="string">
+          Sobrescreve o tipo de cartão detectado.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="tokenData" type="object">
+      Dados de token salvo. Use ao cobrar um cartão que o comprador tokenizou anteriormente.
+
+      <Expandable title="campos de tokenData">
+        <ParamField body="token" type="string">
+          ID de token devolvido de uma tokenização anterior.
+        </ParamField>
+
+        <ParamField body="cvv" type="string">
+          CVV, se o adquirente exigir nova coleta.
+        </ParamField>
+
+        <ParamField body="cardAddress" type="object">
+          Sobrescrita do endereço de cobrança.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+
+    <ParamField body="cardOnFile" type="object">
+      Indica que esta é uma transação de cartão arquivado / recorrente. Usada para fluxos MIT (iniciados pelo lojista).
+    </ParamField>
+
+    <ParamField body="instalments" type="integer">
+      Número de parcelas. Suportado em adquirentes e bandeiras de cartão selecionados.
+    </ParamField>
+
+    <ParamField body="networkTransactionId" type="string">
+      ID de transação de rede original para um MIT recorrente ou não programado.
+    </ParamField>
+
+    <ParamField body="networkReferenceId" type="string">
+      ID de referência de rede original para um MIT recorrente ou não programado.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="apm" type="object">
+  Dados do método de pagamento alternativo. Use no lugar de `card` para APMs como Pix ou ACH. A estrutura varia conforme o método de pagamento.
+</ParamField>
+
+<ParamField body="paymentMethod" type="string">
+  Código do método de pagamento. Omita para pagamentos com cartão. Para APMs, passe o código relevante — p. ex. `"pix"`, `"ach"`, `"boleto"`.
+</ParamField>
+
+<ParamField body="shopper" type="object">
+  Informações do comprador. Obrigatório quando `card.cardData.tokenize` ou `card.nonceData.tokenize` é `true`.
+
+  <Expandable title="campos de shopper">
+    <ParamField body="id" type="string">
+      O seu ID de comprador interno. Usado para associar tokens a um cliente.
+    </ParamField>
+
+    <ParamField body="email" type="string">
+      Endereço de e-mail do comprador.
+    </ParamField>
+
+    <ParamField body="name" type="string">
+      Nome completo do comprador.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  Sobrescrita da URL de webhook por pagamento. Deve usar HTTPS. O Therius faz um post do status final do pagamento para esta URL quando ele muda de forma assíncrona.
+</ParamField>
+
+<ParamField body="connectionCode" type="string">
+  Fixa este pagamento a uma conexão de gateway específica. Omita para usar as suas regras de roteamento padrão.
+</ParamField>
+
+<ParamField body="ipAddress" type="string">
+  Endereço IP do titular do cartão. Passado aos sistemas de scoring de fraude quando disponível.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Pares chave/valor arbitrários (apenas valores string). Devolvidos como estão nas cargas de webhook. Útil para anexar os seus próprios metadados de pedido.
+</ParamField>
+
+## Resposta
+
+<ResponseField name="id" type="string">
+  O `id` de pagamento do Therius (um UUID). **Guarde-o** — é o identificador do pagamento: passe-o como o segmento de caminho `{id}` de uma chamada posterior a [Refund](/api-reference/refund) ou [Cancel or Refund](/api-reference/cancel-or-refund).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Resultado do pagamento. Um de:
+
+  - `"captured"` — fundos liquidados com sucesso.
+  - `"declined"` — o emissor recusou o pagamento. Verifique `refusalCode`.
+  - `"pending_3ds"` — o titular do cartão deve concluir um desafio 3D Secure. Verifique `actionRequired`.
+  - `"pending_action"` — o pagamento requer uma ação externa (p. ex. redirecionamento ou código de barras). Verifique `actionRequired`.
+  - `"failed"` — erro de processamento não relacionado ao emissor.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  O ID de recibo do Therius para este pagamento (p. ex. `"PC-1234567890"`). Uma referência para conciliação, suporte e [Inquiry](/api-reference/inquiry) — **não** é usado para endereçar o pagamento para reembolso/cancelamento; use `id` para isso.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  O seu `orderCode`, devolvido para correlação.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  O seu `merchantCode`, devolvido.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  O valor que foi processado, no mesmo formato `{ currency, value, exponent }` da requisição.
+</ResponseField>
+
+<ResponseField name="card" type="object">
+  Dados de cartão da resposta.
+
+  <Expandable title="campos de resposta de card">
+    <ResponseField name="cardData.brand" type="string">
+      Rede do cartão, p. ex. `"visa"`, `"mastercard"`, `"amex"`.
+    </ResponseField>
+
+    <ResponseField name="cardData.cardNumber" type="string">
+      PAN mascarado, p. ex. `"411111****1111"`.
+    </ResponseField>
+
+    <ResponseField name="cardData.type" type="string">
+      `"credit"` ou `"debit"`.
+    </ResponseField>
+
+    <ResponseField name="networkTransactionId" type="string">
+      ID de transação de rede, devolvido para uso em futuras referências MIT.
+    </ResponseField>
+
+    <ResponseField name="networkReferenceId" type="string">
+      ID de referência de rede para fluxos recorrentes.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="token" type="object">
+  Presente quando o cartão foi tokenizado (`cardData.tokenize: true`).
+
+  <Expandable title="campos de token">
+    <ResponseField name="id" type="string">
+      ID de token para usar em futuras cobranças com `tokenData`.
+    </ResponseField>
+
+    <ResponseField name="expirationDate" type="string">
+      Data de validade do token.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="actionRequired" type="object">
+  Presente quando `status` é `"pending_3ds"` ou `"pending_action"`. Descreve o que o titular do cartão deve fazer em seguida.
+
+  <Expandable title="campos de actionRequired">
+    <ResponseField name="type" type="string">
+      Tipo de ação, p. ex. `"redirect"`, `"barcode"`.
+    </ResponseField>
+
+    <ResponseField name="url" type="string">
+      URL para a qual redirecionar o titular do cartão para 3DS ou fluxos APM externos.
+    </ResponseField>
+
+    <ResponseField name="paymentCode" type="string">
+      Código de pagamento do Therius vinculado a esta ação pendente.
+    </ResponseField>
+
+    <ResponseField name="barcode" type="string">
+      Valor do código de barras para APMs que o exigem (p. ex. Boleto).
+    </ResponseField>
+
+    <ResponseField name="params" type="object">
+      Parâmetros adicionais exigidos para concluir a ação.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="refusalCode" type="object">
+  Presente quando `status` é `"declined"`.
+
+  <Expandable title="campos de refusalCode">
+    <ResponseField name="reason" type="string">
+      Motivo de recusa legível.
+    </ResponseField>
+
+    <ResponseField name="reasonCode" type="string">
+      Código de recusa legível por máquina.
+    </ResponseField>
+
+    <ResponseField name="originalReason" type="string">
+      String de motivo bruta do emissor ou adquirente.
+    </ResponseField>
+
+    <ResponseField name="originalReasonCode" type="string">
+      Código de motivo bruto do emissor ou adquirente.
+    </ResponseField>
+
+    <ResponseField name="recoveryAction" type="string">
+      Próximo passo sugerido: `"retry"` (tentar de novo), `"switch_method"` (pedir outro cartão/método ao comprador) ou `"terminal"` (não tentar de novo).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Exemplos
+
+### Cobrar um cartão
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/purchase \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "orderCode": "ORDER-20240101-001",
+    "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+    "card": {
+      "cardData": {
+        "cardNumber": "4111111111111111",
+        "cardholderName": "Ada Lovelace",
+        "expiryMonth": "12",
+        "expiryYear": "2030",
+        "cvv": "123"
+      }
+    }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+  "card": {
+    "cardData": { "brand": "visa", "cardNumber": "411111****1111", "type": "credit" },
+    "networkTransactionId": "txn_abc123"
+  }
+}
+```
+
+</ResponseExample>
+
+**Resposta recusada**
+
+```json
+{
+  "status": "declined",
+  "paymentCode": "PC-9876543210",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+  "refusalCode": {
+    "reason": "Insufficient funds",
+    "reasonCode": "INSUFFICIENT_FUNDS",
+    "recoveryAction": "switch_method"
+  }
+}
+```
+
+<Note>
+  `amount.value` está sempre em unidades menores. `1999` = \$19.99 para USD (exponent `2`). `5000` = ¥5000 para JPY (exponent `0`). Use sempre o campo `exponent` para determinar a posição decimal.
+</Note>
+
+<Note>
+  Se `status` for `"pending_3ds"`, redirecione o titular do cartão para `actionRequired.url` para concluir o desafio 3D Secure. Assim que ele terminar, chame [POST /payment/resume](/api-reference/resume) com o `sessionId` da resposta `pending_3ds` para continuar. Se você usa o SDK JS do Therius, chame `sdk.handleAction(result.actionRequired)` — ele trata o redirecionamento e o resume automaticamente.
+</Note>

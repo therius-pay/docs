@@ -1,0 +1,232 @@
+---
+title: "Coloque uma reserva de fundos"
+sidebarTitle: "Authorize a Payment"
+description: "Reserve fundos sem capturar. Chame capture depois para liquidar, ou cancel para liberar a retenção. Ideal para bens físicos."
+openapi: "POST /payment/authorization"
+translationOf: api-reference/authorize.mdx
+translationSourceHash: b10ec63c8a83658c173913aab230446caa60bd4558e653926342229da859355d
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /payment/authorization` reserva fundos na conta do titular do cartão sem liquidá-los. A retenção de autorização costuma ser válida por 7 dias, embora a janela exata dependa do adquirente e da rede de cartão. Chame [Capture](/api-reference/capture) para liquidar os fundos quando você estiver pronto para cumprir, ou [Cancel](/api-reference/cancel) para liberar a retenção se você não puder cumprir o pedido.
+
+<SchemaLangNote lang="pt" />
+
+## Requisição
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/authorization`
+
+### Headers
+
+<ParamField header="Authorization" type="string">
+  A sua chave de API secreta como token Bearer: `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Um UUID que você gera por operação. Obrigatório em produção. Repetir com a mesma chave devolve a resposta original sem criar uma retenção duplicada.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Deve ser `application/json`.
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="merchantCode" type="string" required>
+  O seu identificador de lojista, emitido quando a sua conta é criada.
+</ParamField>
+
+<ParamField body="orderCode" type="string" required>
+  A sua referência de pedido interna. Deve ser única por lojista.
+</ParamField>
+
+<ParamField body="amount" type="object" required>
+  O valor a reservar.
+
+  <Expandable title="campos de amount">
+    <ParamField body="currency" type="string" required>
+      Código de moeda ISO 4217, p. ex. `"USD"`, `"EUR"`, `"JPY"`.
+    </ParamField>
+
+    <ParamField body="value" type="integer" required>
+      Valor em unidades menores. Para USD, `4999` = \$49.99. Para JPY, `5000` = ¥5000.
+    </ParamField>
+
+    <ParamField body="exponent" type="integer" required>
+      Número de casas decimais da moeda. `2` para USD/EUR, `0` para JPY.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="card" type="object">
+  Dados de pagamento com cartão. Forneça exatamente um de `cardData`, `nonceData` ou `tokenData`. Omita este campo ao usar um APM. Veja a referência de [Purchase](/api-reference/purchase) para o esquema completo de `card`.
+
+  <Expandable title="campos de card">
+    <ParamField body="cardData" type="object">
+      Dados de cartão brutos (`cardNumber`, `cardholderName`, `expiryMonth`, `expiryYear`, `cvv`, `tokenize`, `cardAddress`, `documentNumber`, `typeOverride`).
+    </ParamField>
+
+    <ParamField body="nonceData" type="object">
+      Nonce gerado pelo SDK (`nonce`, `cardholderName`, `cardAddress`, `tokenize`, `typeOverride`).
+    </ParamField>
+
+    <ParamField body="tokenData" type="object">
+      Token salvo (`token`, `cvv`, `cardAddress`).
+    </ParamField>
+
+    <ParamField body="instalments" type="integer">
+      Número de parcelas, se suportado pelo adquirente.
+    </ParamField>
+
+    <ParamField body="networkTransactionId" type="string">
+      ID de transação de rede original para fluxos MIT.
+    </ParamField>
+
+    <ParamField body="networkReferenceId" type="string">
+      ID de referência de rede original para fluxos recorrentes.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="apm" type="object">
+  Dados do método de pagamento alternativo. Use no lugar de `card` para APMs. A estrutura varia conforme o método de pagamento.
+</ParamField>
+
+<ParamField body="paymentMethod" type="string">
+  Código do método de pagamento. Omita para pagamentos com cartão. Para APMs, use `"pix"`, `"ach"`, etc.
+</ParamField>
+
+<ParamField body="shopper" type="object">
+  Informações do comprador. Obrigatório ao tokenizar.
+
+  <Expandable title="campos de shopper">
+    <ParamField body="id" type="string">
+      O seu ID de comprador interno.
+    </ParamField>
+
+    <ParamField body="email" type="string">
+      Endereço de e-mail do comprador.
+    </ParamField>
+
+    <ParamField body="name" type="string">
+      Nome completo do comprador.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  Sobrescrita da URL de webhook por pagamento (apenas HTTPS).
+</ParamField>
+
+<ParamField body="connectionCode" type="string">
+  Fixa este pagamento a uma conexão de gateway específica.
+</ParamField>
+
+<ParamField body="ipAddress" type="string">
+  Endereço IP do titular do cartão para scoring de fraude.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Pares chave/valor string arbitrários, devolvidos nos webhooks.
+</ParamField>
+
+## Resposta
+
+<ResponseField name="id" type="string">
+  O `id` de pagamento do Therius (um UUID). **Guarde-o** — é o identificador do pagamento: passe-o como o segmento de caminho `{id}` da sua chamada posterior a [Capture](/api-reference/capture), [Cancel](/api-reference/cancel), [Refund](/api-reference/refund) ou [Cancel or Refund](/api-reference/cancel-or-refund).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Resultado da autorização. Um de:
+
+  - `"authorized"` — os fundos estão reservados com sucesso. Chame [Capture](/api-reference/capture) para liquidar.
+  - `"declined"` — o emissor recusou. Verifique `refusalCode`.
+  - `"pending_3ds"` — o titular do cartão deve concluir um desafio 3DS. Verifique `actionRequired`.
+  - `"pending_action"` — o pagamento requer uma ação externa. Verifique `actionRequired`.
+  - `"failed"` — erro de processamento.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  O ID de recibo do Therius (p. ex. `"PC-1234567890"`). É uma referência para conciliação e suporte — **não** é usado para endereçar o pagamento para captura/cancelamento/reembolso; use `id` para isso.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  O seu `orderCode`, devolvido.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  O seu `merchantCode`, devolvido.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  O valor reservado em formato `{ currency, value, exponent }`.
+</ResponseField>
+
+<ResponseField name="card" type="object">
+  Resposta de cartão incluindo o PAN mascarado, a bandeira, o tipo e os IDs de transação de rede.
+</ResponseField>
+
+<ResponseField name="token" type="object">
+  Presente se `tokenize: true` foi solicitado. Contém `id` e `expirationDate`.
+</ResponseField>
+
+<ResponseField name="actionRequired" type="object">
+  Presente quando `status` é `"pending_3ds"` ou `"pending_action"`. Contém `type`, `url`, `paymentCode`, `barcode` e `params`.
+</ResponseField>
+
+<ResponseField name="refusalCode" type="object">
+  Presente na recusa. Contém `reason`, `reasonCode`, `originalReason`, `originalReasonCode` e `recoveryAction` (`"retry"`, `"switch_method"` ou `"terminal"`).
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/authorization \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "orderCode": "ORDER-20240101-002",
+    "amount": { "currency": "USD", "value": 9900, "exponent": 2 },
+    "card": {
+      "cardData": {
+        "cardNumber": "4111111111111111",
+        "cardholderName": "Ada Lovelace",
+        "expiryMonth": "12",
+        "expiryYear": "2030",
+        "cvv": "123"
+      }
+    }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "authorized",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 },
+  "card": {
+    "cardData": { "brand": "visa", "cardNumber": "411111****1111", "type": "credit" },
+    "networkTransactionId": "txn_def456"
+  }
+}
+```
+
+</ResponseExample>
+
+<Note>
+  A captura parcial é suportada. Quando você chama [Capture](/api-reference/capture), você pode passar um `amount` menor ou igual ao valor autorizado. Por exemplo, se você autorizou $$99.00 mas enviou apenas $$75.00 em bens, capture \$75.00 e a retenção restante é liberada automaticamente.
+</Note>
+
+<Warning>
+  As retenções de autorização expiram — normalmente após 7 dias, mas isso varia conforme o adquirente e a rede de cartão. Se você não chamar [Capture](/api-reference/capture) antes do vencimento, a retenção é liberada e você precisará autorizar novamente. Monitore a idade da retenção no seu sistema de gestão de pedidos.
+</Warning>

@@ -1,0 +1,122 @@
+---
+title: "Libera una retención de autorización"
+sidebarTitle: "Cancel a Payment"
+description: "Anula un pago que aún está en el estado autorizado. Los fondos se liberan de inmediato. No se puede cancelar un pago capturado."
+openapi: "POST /payment/{id}/cancel"
+translationOf: api-reference/cancel.mdx
+translationSourceHash: 7b92904176556fc9289c80ba23f9c73f284c630803ec06e1397cce3d68555c4f
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /payment/{id}/cancel` anula una autorización antes de que se capture, liberando de inmediato la retención sobre los fondos del titular de la tarjeta. Usa esto cuando un pedido se cancela o no se puede cumplir después de que se colocó la autorización. Si el pago ya ha sido capturado y liquidado, usa [Refund](/api-reference/refund) en su lugar — no puedes cancelar un pago capturado.
+
+<SchemaLangNote lang="es" />
+
+## Identificar el pago
+
+`{id}` es el `id` de pago de Therius devuelto por `POST /payment/authorization` y `POST /payment/purchase`. `orderCode` y `paymentCode` son tus propios campos de referencia y **no** se aceptan aquí. Un `id` desconocido o no propio devuelve `404`.
+
+## Solicitud
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/cancel`
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El `id` de pago de Therius de la respuesta de autorización/purchase.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string">
+  Tu clave de API secreta como token Bearer: `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox).
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Requerido en producción para prevenir intentos de cancelación duplicados.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Debe ser `application/json`.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de comercio.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Una referencia interna opcional para esta cancelación (p. ej. tu ID de cancelación o de tíquet de soporte).
+</ParamField>
+
+## Respuesta
+
+<ResponseField name="id" type="string">
+  El `id` de pago de Therius (el mismo valor que el segmento de ruta `{id}`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Resultado de la cancelación. Uno de:
+
+  - `"cancelled"` — autorización anulada y retención liberada.
+  - `"failed"` — la cancelación no se pudo procesar. La autorización puede haber expirado ya o haber sido capturada.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  El ID de recibo de Therius para el pago original.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  Tu `orderCode` original.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  Tu `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  El monto que estaba retenido y que ahora se libera, en formato `{ currency, value, exponent }`.
+</ResponseField>
+
+## Ejemplo
+
+### Cancelar una autorización
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/cancel \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "status": "cancelled",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-002",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 9900, "exponent": 2 }
+}
+```
+
+</ResponseExample>
+
+<Warning>
+  Este endpoint solo funciona para pagos en el estado `authorized`. Si el pago ya ha sido capturado, esta llamada devolverá un error. Usa [Refund](/api-reference/refund) para devolver fondos en un pago capturado, o [Cancel or Refund](/api-reference/cancel-or-refund) si no conoces el estado actual.
+</Warning>
+
+<Note>
+  Cuando cancelas una autorización, el saldo disponible del titular de la tarjeta se restaura de inmediato del lado de Therius. El tiempo reflejado en el estado de cuenta bancario del titular de la tarjeta varía según el emisor — normalmente es de instantáneo a unas pocas horas, pero puede tardar de 3 a 5 días hábiles para algunos emisores.
+</Note>

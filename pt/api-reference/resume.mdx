@@ -1,0 +1,131 @@
+---
+title: "Continue após um desafio 3DS"
+sidebarTitle: "Resume a Pending Payment"
+description: "Retome um pagamento pausado por um desafio 3DS. Passe o sessionId da resposta pending_3ds. Nenhuma chave de API é necessária."
+openapi: "POST /payment/resume"
+translationOf: api-reference/resume.mdx
+translationSourceHash: ab1affc1394d5496ece90615645bf1ae8518e1a4bca37eed64137b34062ac28b
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Quando um purchase ou uma autorização devolve `status: "pending_3ds"`, o titular do cartão deve concluir um desafio 3D Secure na URL fornecida em `actionRequired.url`. Assim que o titular do cartão termina o desafio, chame `POST /payment/resume` para continuar processando o pagamento e receber o resultado final.
+
+<SchemaLangNote lang="pt" />
+
+## Como funciona a retomada de 3DS
+
+1. A sua chamada de purchase ou autorização devolve `status: "pending_3ds"` com um objeto `actionRequired`.
+2. Redirecione o titular do cartão (ou abra um iframe) para `actionRequired.url`.
+3. Depois que o desafio é concluído, o titular do cartão é redirecionado de volta para o seu site.
+4. Você chama `POST /payment/resume` com o `sessionId` para obter o resultado final do pagamento.
+
+<Note>
+  Nenhuma chave de API é necessária para este endpoint. O próprio `sessionId` age como a credencial e é limitado a um único pagamento pendente. As sessões expiram **15 minutos** depois que o desafio 3DS é emitido — se a sessão expirou, o purchase ou a autorização original deve ser refeito.
+</Note>
+
+<Warning>
+  Este endpoint trata apenas `pending_3ds`. Ele **não** trata `pending_ddc` (coleta de dados do dispositivo). Para fluxos DDC, refaça a requisição original de purchase ou autorização com `threeDsSetup.sessionId` definido como o ID de sessão de DDC.
+</Warning>
+
+## Requisição
+
+**Endpoint:** `POST https://api.therius.io/v1/payment/resume`
+
+<ParamField header="Content-Type" type="string" required>
+  Deve ser `application/json`.
+</ParamField>
+
+<ParamField body="sessionId" type="string" required>
+  O ID de sessão da resposta de pagamento `pending_3ds`. Este valor identifica de forma única a sessão de pagamento pausada e serve como a credencial de autenticação para este endpoint.
+</ParamField>
+
+## Resposta
+
+A resposta é um objeto `paymentResponse` completo com o status final do pagamento.
+
+<ResponseField name="status" type="string">
+  Resultado final do pagamento após 3DS. Um de:
+
+  - `"captured"` — o pagamento teve sucesso e os fundos estão liquidados (para fluxos de purchase).
+  - `"authorized"` — a autorização teve sucesso (para fluxos de autorização).
+  - `"declined"` — o pagamento foi recusado após o desafio. Verifique `refusalCode`.
+  - `"failed"` — erro de processamento.
+</ResponseField>
+
+<ResponseField name="paymentCode" type="string">
+  O ID de recibo do Therius para este pagamento. É o mesmo `paymentCode` que estava presente na resposta `pending_3ds`.
+</ResponseField>
+
+<ResponseField name="orderCode" type="string">
+  O seu `orderCode` original.
+</ResponseField>
+
+<ResponseField name="merchantCode" type="string">
+  O seu `merchantCode`.
+</ResponseField>
+
+<ResponseField name="amount" type="object">
+  O valor processado em formato `{ currency, value, exponent }`.
+</ResponseField>
+
+<ResponseField name="card" type="object">
+  Resposta de cartão incluindo o PAN mascarado, a bandeira, o tipo e os IDs de transação de rede.
+</ResponseField>
+
+<ResponseField name="token" type="object">
+  Presente se a tokenização foi solicitada. Contém `id` e `expirationDate`.
+</ResponseField>
+
+<ResponseField name="authorizationCode" type="string">
+  Código de autorização do emissor, presente em resultados bem-sucedidos.
+</ResponseField>
+
+<ResponseField name="refusalCode" type="object">
+  Presente na recusa. Contém `reason`, `reasonCode`, `originalReason`, `originalReasonCode` e `recoveryAction`.
+</ResponseField>
+
+### Retomar após um desafio 3DS
+
+**Sessão expirada — `400 Bad Request`**
+
+```json
+{
+  "error": "session_expired",
+  "message": "The 3DS session has expired. Please restart the payment."
+}
+```
+
+<Tip>
+  Se você usa o SDK JS do Therius, você não precisa chamar este endpoint manualmente. Chame `sdk.handleAction(result.actionRequired)` depois de receber uma resposta `pending_3ds` e o SDK trata o redirecionamento, escuta a conclusão do desafio e retoma o pagamento automaticamente. Ele devolve uma promise que resolve com o `paymentResponse` final.
+</Tip>
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/payment/resume \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "sessionId": "<sessionId from pending_3ds response>" }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "status": "captured",
+  "paymentCode": "PC-1234567890",
+  "orderCode": "ORDER-20240101-001",
+  "merchantCode": "MERCHANT_001",
+  "amount": { "currency": "USD", "value": 4999, "exponent": 2 },
+  "card": {
+    "cardData": { "brand": "visa", "cardNumber": "411111****1111", "type": "credit" },
+    "networkTransactionId": "txn_abc123"
+  },
+  "authorizationCode": "AUTH-789"
+}
+```
+
+</ResponseExample>

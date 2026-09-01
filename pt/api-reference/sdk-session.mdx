@@ -1,0 +1,142 @@
+---
+title: "Crie um token de SDK de curta duração"
+sidebarTitle: "Create an SDK Session"
+description: "Troque a sua chave de API privada por um client token de curta duração para inicializar o SDK JS do Therius no navegador com segurança."
+openapi: "POST /sdk/session"
+translationOf: api-reference/sdk-session.mdx
+translationSourceHash: 0ee936db9ea73189535c691d72c4a7b0bee8a4a536f9c91ae8c7c7f3b244dbe5
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /sdk/session` troca a sua chave de API privada de lojista por um `clientToken` JWT de curta duração com um TTL de 30 minutos. Passe o `clientToken` ao navegador para inicializar `new TheriusSDK({ clientToken })`. A sua chave privada nunca chega ao navegador — ela fica no seu servidor, onde pertence.
+
+<SchemaLangNote lang="pt" />
+
+<Warning>
+  Chame este endpoint apenas do seu servidor. Nunca o chame do JavaScript do navegador nem exponha a sua chave de API privada ao lado do cliente.
+</Warning>
+
+## Requisição
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /sdk/session`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Um UUID que você gera por operação. Repetir com a mesma chave devolve a resposta original em vez de repetir a operação. Recomendado em produção.
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="country" type="string">
+  Código de país ISO 3166-1 alpha-2, p. ex. `"US"`. Obrigatório para criar uma sessão de checkout completa. Quando fornecido, a resposta inclui um `sessionId` que vincula o SDK do navegador a um fluxo de checkout específico.
+</ParamField>
+
+<ParamField body="customerId" type="string">
+  O seu identificador de cliente do lado do lojista. Torna-se a identidade do comprador para a sessão.
+</ParamField>
+
+<ParamField body="orderCode" type="string">
+  A sua referência de pedido de lojista, usada para correlacionar esta sessão com um pedido no seu sistema.
+</ParamField>
+
+<ParamField body="paymentCode" type="string">
+  Um código de pagamento pré-atribuído para vincular a esta sessão.
+</ParamField>
+
+<ParamField body="amount" type="integer">
+  Valor a bloquear para esta sessão, em unidades menores (p. ex. `4999` = \$49.99). Opcional — se omitido, o SDK JS gerencia o valor de forma dinâmica.
+</ParamField>
+
+<ParamField body="currency" type="string">
+  Código de moeda ISO 4217, p. ex. `"USD"`. Opcional — se omitido, o SDK JS gerencia a seleção de moeda.
+</ParamField>
+
+<ParamField body="checkoutConfigId" type="string">
+  UUID da configuração de checkout a vincular a esta sessão. Controla quais métodos de pagamento e opções de UI são apresentados.
+</ParamField>
+
+<ParamField body="installments" default="1" type="integer">
+  Número de parcelas. O padrão é `1` para uma única cobrança total.
+</ParamField>
+
+<ParamField body="installmentConfig" type="object">
+  Sobrescrita inline para as opções de parcelamento. Use para configurar planos de parcelamento sem criar uma configuração de checkout separada.
+</ParamField>
+
+## Resposta
+
+<ResponseField name="clientToken" type="string">
+  O JWT de curta duração a passar ao SDK do navegador. Inicialize o SDK com `new TheriusSDK({ clientToken })`.
+</ResponseField>
+
+<ResponseField name="expiresIn" type="integer">
+  TTL do token em segundos. Sempre `1800` (30 minutos).
+</ResponseField>
+
+<ResponseField name="sessionId" type="string">
+  Presente quando `country` foi fornecido na requisição. Identifica a sessão de checkout e deve ser mantido junto com o `clientToken` para as chamadas do SDK específicas da sessão.
+</ResponseField>
+
+<ResponseField name="country" type="string">
+  Devolvido da requisição quando fornecido.
+</ResponseField>
+
+<ResponseField name="amount" type="integer">
+  Devolvido da requisição quando fornecido.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  Devolvido da requisição quando fornecido.
+</ResponseField>
+
+<ResponseField name="defaultCheckoutConfigId" type="string">
+  O UUID de configuração de checkout que será aplicado a esta sessão (seja o que você especificou ou o padrão da sua conta).
+</ResponseField>
+
+<ResponseField name="sdkIntegrity" type="string">
+  Hash de integridade para o bundle JS do Therius. Use-o para a verificação de Subresource Integrity (SRI) ao carregar a tag de script do SDK.
+</ResponseField>
+
+<Note>
+  O `clientToken` embute um hash HMAC-SHA256 da sua chave pública. A sua chave privada bruta nunca está presente na carga do token e nunca chega ao navegador.
+</Note>
+
+Veja [Bootstrap de sessão](/sdk/session-bootstrap) na aba JS SDK para saber como usar o `clientToken` no lado do cliente.
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/sdk/session \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "customerId": "customer-42", "country": "US", "currency": "USD", "amount": 4999 }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "clientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 1800,
+  "sessionId": "sess_abc123",
+  "country": "US",
+  "amount": 4999,
+  "currency": "USD"
+}
+```
+
+</ResponseExample>

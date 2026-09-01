@@ -249,6 +249,37 @@
             ]
           },
           {
+            "tab": "Referencia de API",
+            "groups": [
+              {
+                "group": "Pagos",
+                "pages": [
+                  "es/api-reference/purchase",
+                  "es/api-reference/authorize",
+                  "es/api-reference/capture",
+                  "es/api-reference/refund",
+                  "es/api-reference/cancel",
+                  "es/api-reference/cancel-or-refund",
+                  "es/api-reference/resume",
+                  "es/api-reference/inquiry"
+                ]
+              },
+              {
+                "group": "Tokenización",
+                "pages": [
+                  "es/api-reference/store-tokens"
+                ]
+              },
+              {
+                "group": "Sesión del SDK",
+                "pages": [
+                  "es/api-reference/sdk-session"
+                ]
+              }
+            ],
+            "openapi": "openapi.json"
+          },
+          {
             "tab": "SDK de JS",
             "groups": [
               {
@@ -341,6 +372,37 @@
                 ]
               }
             ]
+          },
+          {
+            "tab": "Referência da API",
+            "groups": [
+              {
+                "group": "Pagamentos",
+                "pages": [
+                  "pt/api-reference/purchase",
+                  "pt/api-reference/authorize",
+                  "pt/api-reference/capture",
+                  "pt/api-reference/refund",
+                  "pt/api-reference/cancel",
+                  "pt/api-reference/cancel-or-refund",
+                  "pt/api-reference/resume",
+                  "pt/api-reference/inquiry"
+                ]
+              },
+              {
+                "group": "Tokenização",
+                "pages": [
+                  "pt/api-reference/store-tokens"
+                ]
+              },
+              {
+                "group": "Sessão do SDK",
+                "pages": [
+                  "pt/api-reference/sdk-session"
+                ]
+              }
+            ],
+            "openapi": "openapi.json"
           },
           {
             "tab": "SDK de JS",
