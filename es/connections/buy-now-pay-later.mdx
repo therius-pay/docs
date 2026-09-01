@@ -1,0 +1,74 @@
+---
+title: 'Métodos de compra ahora, paga después: Klarna, Afterpay y más'
+sidebarTitle: 'Paga después'
+description: 'Ofrece opciones de cuotas y pago diferido de Klarna, Afterpay, Affirm y Zip a través de la API de pagos de Therius. Sin integración adicional.'
+translationOf: connections/buy-now-pay-later.mdx
+translationSourceHash: e006830dd4b30e7f556aa65b22ad15b8610c327b9e3fccf83a4fafb29c04c7ae
+---
+
+Los métodos de compra ahora, paga después (BNPL) permiten a los compradores dividir o diferir el costo de una compra — pagando en cuotas durante semanas o meses, o liquidando el monto completo después de un período diferido. Therius enruta todos los métodos BNPL a través del mismo endpoint `POST /payment/purchase` sin trabajo de integración adicional. Cada método devuelve una URL de redirect en `actionRequired.url` para que el comprador complete su solicitud de BNPL con el proveedor.
+
+<Tip>
+  Pasa `apm.lineItems` con nombres de productos, SKU, cantidades y precios unitarios siempre que sea posible. Los proveedores de BNPL usan los datos de los ítems de línea para el scoring de crédito, e incluirlos normalmente mejora las tasas de aprobación.
+</Tip>
+
+<Note>
+  Los límites de pedido de BNPL varían según el proveedor y el mercado. Klarna y Afterpay pueden rechazar pedidos por debajo o por encima de ciertos umbrales — revisa la documentación actual del proveedor para los valores mínimos y máximos de pedido en tu mercado objetivo.
+</Note>
+
+### Klarna — `klarna`
+
+Klarna ofrece tres opciones de pago en una sola integración: pagar después (30 días), pagar en cuotas (3–36 meses) y pagar ahora. Klarna determina qué opciones mostrar al comprador según su cuenta y los detalles del pedido. Monedas soportadas: USD, EUR, GBP, SEK, NOK, DKK, PLN y más.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "klarna",
+  "apm": {
+    "method": "klarna",
+    "returnUrl": "https://yourshop.com/payment/return",
+    "cancelUrl": "https://yourshop.com/payment/cancel"
+  }
+}
+```
+
+### Afterpay / Clearpay — `afterpay_clearpay`
+
+Afterpay (conocido como Clearpay en el Reino Unido) divide el pedido en cuatro cuotas quincenales iguales sin interés. Monedas soportadas: USD, GBP, AUD, NZD, CAD.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "afterpay_clearpay"
+}
+```
+
+### Affirm — `affirm`
+
+Affirm ofrece planes de cuotas mensuales flexibles que van de 3 a 36 meses. Está disponible en Estados Unidos y Canadá. Monedas soportadas: USD, CAD.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "affirm"
+}
+```
+
+### Zip — `zip`
+
+Zip (anteriormente Quadpay en EE. UU.) divide las compras en cuatro cuotas pagadas durante seis semanas. Disponible en Australia, Nueva Zelanda y Estados Unidos. Monedas soportadas: AUD, NZD, USD.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "AUD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "zip"
+}
+```

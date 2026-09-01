@@ -1,0 +1,95 @@
+---
+title: 'Métodos de pago locales de Asia-Pacífico: UPI, QRIS y más'
+sidebarTitle: 'Métodos APAC'
+description: 'Acepta UPI (India), QRIS (Indonesia), FPX (Malasia), PayNow (Singapur), PromptPay (Tailandia) y GrabPay en todo el Sudeste Asiático vía Therius.'
+translationOf: connections/apac-methods.mdx
+translationSourceHash: d20442c6bee3ff01281fa87623bbb8cb21e082d7815ca126dee064fc2be4590f
+---
+
+Therius soporta los principales métodos de pago locales de Asia-Pacífico, desde el UPI de India hasta el QRIS de Indonesia y el PayNow de Singapur. Todos estos métodos enrutan a través de `POST /payment/purchase` con un código `paymentMethod`. La mayoría devuelve una URL de redirect o una carga de código QR para que el comprador complete el pago en su app bancaria o wallet digital.
+
+<Note>
+  Muchos métodos APAC devuelven un código QR en el campo de respuesta `apm.qrCode` o `apm.qrCodeImage`. Si estás usando el SDK JS de Therius, llama a `sdk.handleAction(result.actionRequired)` — renderiza el código QR automáticamente sin trabajo adicional de tu parte.
+</Note>
+
+### UPI — `upi`
+
+UPI (Unified Payments Interface) es el sistema de transferencia bancaria en tiempo real de India, operado por la National Payments Corporation of India (NPCI). El comprador ingresa su UPI ID o escanea un código QR para completar el pago vía su app habilitada para UPI (PhonePe, Google Pay, Paytm, etc.). La liquidación es casi instantánea. Moneda: INR, India.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "INR", "value": 500000, "exponent": 2 },
+  "paymentMethod": "upi"
+}
+```
+
+### QRIS — `qris`
+
+QRIS (Quick Response Code Indonesian Standard) es el esquema nacional unificado de código QR de Indonesia, mandado por Bank Indonesia. Los compradores escanean el código QR con cualquier app bancaria o de e-wallet compatible con QRIS. Moneda: IDR, Indonesia.
+
+<Note>
+  IDR es una moneda sin decimales y usa `exponent: 0`. Un `value` de `100000` equivale a Rp 100,000 — no hay decimales.
+</Note>
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "IDR", "value": 100000, "exponent": 0 },
+  "paymentMethod": "qris"
+}
+```
+
+### FPX — `fpx`
+
+FPX (Financial Process Exchange) es el sistema de transferencia bancaria en línea de Malasia, conectando más de 50 bancos malayos. El comprador es redirigido al portal en línea de su banco para autorizar la transferencia. La liquidación es el mismo día. Moneda: MYR, Malasia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MYR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "fpx"
+}
+```
+
+### PayNow — `paynow`
+
+PayNow es el sistema de pago basado en QR en tiempo real de Singapur, operado por la Association of Banks in Singapore (ABS). El comprador escanea el código QR con su app bancaria para completar el pago al instante. Moneda: SGD, Singapur.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "paynow"
+}
+```
+
+### PromptPay — `promptpay`
+
+PromptPay es el sistema nacional de transferencia bancaria instantánea basado en QR de Tailandia, vinculado al ID nacional tailandés o al número móvil. El comprador escanea el código QR dentro de su app bancaria. Moneda: THB, Tailandia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "THB", "value": 5000, "exponent": 2 },
+  "paymentMethod": "promptpay"
+}
+```
+
+### GrabPay — `grabpay`
+
+GrabPay es la wallet digital integrada en la super-app Grab, que cubre el Sudeste Asiático. Los compradores se autentican vía la app de Grab. Disponible en Malasia, Singapur, Filipinas, Tailandia y Vietnam. Monedas soportadas: MYR, SGD, PHP, THB, VND.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "grabpay"
+}
+```

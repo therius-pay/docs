@@ -1,0 +1,147 @@
+---
+title: 'Métodos de pagamento locais da América Latina: Efecty e mais'
+sidebarTitle: 'Métodos LATAM'
+description: 'Aceite Efecty, Rapipago, PagoFácil, PagoEfectivo, Nequi, Yape, Khipu, Transbank Debit e outros métodos de pagamento da LATAM pela API de pagamentos do Therius.'
+translationOf: connections/latam-methods.mdx
+translationSourceHash: c9fad4232cd31d80677abcb0a34a9e08d1c010089ed373a68334d1c126f3c241
+---
+
+O Therius suporta um conjunto abrangente de métodos de pagamento locais em toda a América Latina, cobrindo Argentina, Chile, Colômbia e Peru. Brasil e México têm páginas dedicadas para os métodos de maior volume deles — veja [Transferências bancárias](/connections/bank-transfers) para Pix e [Vouchers e dinheiro](/connections/vouchers-cash) para Boleto e OXXO. Todos os métodos da LATAM passam por `POST /payment/purchase` sem mudanças adicionais de endpoint.
+
+<Note>
+  Para os métodos da Argentina, `apm.payerName`, `apm.payerEmail` e `apm.payerTaxId` podem ser exigidos pelo provedor de pagamento. Se você receber um erro de validação, confirme os campos obrigatórios com o suporte do Therius e garanta que a sua requisição inclua os dados completos do pagador.
+</Note>
+
+<Note>
+  CLP (peso chileno) usa `exponent: 0` — os valores são inteiros sem casas decimais. Um `value` de `20000` equivale a $20.000 CLP.
+</Note>
+
+### Efecty — `efecty`
+
+O Efecty é a maior rede de pagamento em dinheiro da Colômbia, com agentes em milhares de locais em todo o país. O comprador recebe uma referência de voucher e paga em dinheiro em qualquer agente Efecty. A liquidação é confirmada dentro de 24 a 48 horas. Moeda: COP, Colômbia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "COP", "value": 500000, "exponent": 2 },
+  "paymentMethod": "efecty"
+}
+```
+
+### Rapipago — `rapipago`
+
+O Rapipago é uma rede de pagamento em dinheiro argentina com mais de 7.000 pontos de cobrança. O comprador leva um voucher impresso a qualquer unidade do Rapipago para pagar. Moeda: ARS, Argentina.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "ARS", "value": 500000, "exponent": 2 },
+  "paymentMethod": "rapipago"
+}
+```
+
+### PagoFácil — `pagofacil`
+
+O PagoFácil é outra grande rede de cobrança em dinheiro argentina, com milhares de agentes autorizados. Moeda: ARS, Argentina.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "ARS", "value": 500000, "exponent": 2 },
+  "paymentMethod": "pagofacil"
+}
+```
+
+### Cobro Express — `cobro_express`
+
+O Cobro Express é uma rede de pagamento em dinheiro argentina comumente usada para pagamentos de contas de serviços públicos e serviços. Moeda: ARS, Argentina.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "ARS", "value": 500000, "exponent": 2 },
+  "paymentMethod": "cobro_express"
+}
+```
+
+### PagoEfectivo — `pagoefectivo`
+
+O PagoEfectivo é a principal plataforma de pagamento alternativo do Peru. O comprador recebe um código CIP (Código de Identificación de Pago) que ele usa para pagar em qualquer banco afiliado, agente ou via internet banking. Moeda: PEN, Peru.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "PEN", "value": 20000, "exponent": 2 },
+  "paymentMethod": "pagoefectivo"
+}
+```
+
+### Nequi — `nequi`
+
+O Nequi é a carteira digital mobile-first mais popular da Colômbia, de propriedade do Bancolombia. Os compradores autorizam o pagamento diretamente dentro do app do Nequi. A liquidação é quase instantânea. Moeda: COP, Colômbia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "COP", "value": 500000, "exponent": 2 },
+  "paymentMethod": "nequi"
+}
+```
+
+### Yape — `yape`
+
+O Yape é o app de pagamento móvel mais usado do Peru, de propriedade do Banco de Crédito del Perú (BCP). Os compradores escaneiam um QR code ou digitam um número de telefone para concluir o pagamento. Moeda: PEN, Peru.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "PEN", "value": 20000, "exponent": 2 },
+  "paymentMethod": "yape"
+}
+```
+
+### Khipu — `khipu`
+
+O Khipu é uma plataforma de transferência bancária chilena que se conecta a todos os principais bancos chilenos. O comprador é redirecionado ao banco dele para autorizar a transferência. CLP usa `exponent: 0`. Moeda: CLP, Chile.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "CLP", "value": 20000, "exponent": 0 },
+  "paymentMethod": "khipu"
+}
+```
+
+### Transbank Debit — `transbank_debit`
+
+O Transbank é a rede nacional de cartões de débito do Chile (Redcompra). Os compradores se autenticam com o cartão de débito chileno deles via um redirecionamento. CLP usa `exponent: 0`. Moeda: CLP, Chile.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "CLP", "value": 20000, "exponent": 0 },
+  "paymentMethod": "transbank_debit"
+}
+```
+
+### Bancolombia Button — `bancolombia_button`
+
+O Bancolombia Button é um pagamento por redirecionamento hospedado pelo banco para os correntistas do Bancolombia na Colômbia. Os compradores fazem login no portal do Bancolombia para autorizar a transferência diretamente. Moeda: COP, Colômbia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "COP", "value": 500000, "exponent": 2 },
+  "paymentMethod": "bancolombia_button"
+}
+```

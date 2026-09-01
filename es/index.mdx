@@ -1,0 +1,94 @@
+---
+title: "API de pagos de Therius — Inicio de la documentación para desarrolladores"
+sidebarTitle: "Inicio"
+description: "Acepta tarjetas, wallets y más de 40 métodos de pago alternativos a nivel global con una sola API unificada. Procesa tu primer pago en minutos."
+translationOf: index.mdx
+translationSourceHash: af59d7f76863df8b4961a35b1a6c61214e90454065d11fa545327dcbd7b446b5
+---
+
+Therius es una API de pagos que te permite aceptar tarjetas, wallets digitales y más de 40 métodos de pago alternativos — Pix, ACH, iDEAL, Klarna, Apple Pay y más — a través de un solo endpoint. Esta documentación cubre todo, desde tu primera llamada en sandbox hasta la gestión de suscripciones, el manejo de desafíos de 3D Secure y la integración del SDK JS para una recolección de tarjetas segura en el navegador.
+
+<CardGroup cols={2}>
+  <Card title="Inicio rápido" icon="rocket" href="/quickstart">
+    Procesa tu primer pago en menos de 5 minutos con nada más que una clave de sandbox y una terminal.
+  </Card>
+
+  <Card title="Autenticación" icon="key" href="/authentication">
+    Aprende cómo funcionan las claves de API, qué clave usar dónde y cómo pasar las credenciales correctamente.
+  </Card>
+
+  <Card title="Referencia de API" icon="code" href="/api-reference/purchase">
+    Referencia completa de cada endpoint — purchase, authorize, capture, refund y más.
+  </Card>
+
+  <Card title="SDK JS" icon="browser" href="/sdk/overview">
+    Recolecta los datos de tarjeta de forma segura en el navegador usando campos alojados o el Widget de checkout drop-in.
+  </Card>
+
+  <Card title="Conexiones" icon="globe" href="/connections/overview">
+    Explora el catálogo completo de métodos de pago — con ejemplos de código funcionales para cada uno.
+  </Card>
+
+  <Card title="Suscripciones" icon="rotate" href="/guides/subscriptions">
+    Construye facturación recurrente con planes, pruebas, gestión de cobros, pausar/reanudar y cambios de plan.
+  </Card>
+</CardGroup>
+
+## Cómo funciona Therius
+
+Cada pago — tarjeta, wallet o método alternativo — fluye a través del mismo endpoint `/payment/purchase`. Eliges el método de pago pasando un campo `paymentMethod` (u omitiéndolo para tarjetas). La respuesta siempre tiene la misma forma, así que tu backend no necesita rutas de código separadas por método.
+
+<Steps>
+  <Step title="Obtén una clave de sandbox">
+    Tu cuenta de Therius incluye una clave de sandbox (`sk_sandbox_...`) sin configuración. Enruta a un stub de proveedor de prueba — nada toca una red de tarjetas real.
+  </Step>
+  <Step title="Haz tu primera llamada de API">
+    Envía tu clave como `Authorization: Bearer sk_live_...` y dispara un `POST /payment/purchase`. Ver el [Inicio rápido](/quickstart) para un comando curl listo para ejecutar.
+  </Step>
+  <Step title="Integra el SDK JS (si es basado en navegador)">
+    Si estás aceptando tarjetas desde un navegador, usa el [SDK JS](/sdk/overview) para que los números de tarjeta sin procesar nunca transiten por tu servidor. El SDK emite un nonce de un solo uso; tu servidor cobra el nonce.
+  </Step>
+  <Step title="Sal a producción">
+    Cambia `sk_sandbox_...` por `sk_live_...` y apunta a `api.therius.io`. No se requieren otros cambios de código.
+  </Step>
+</Steps>
+
+## Conceptos clave
+
+<CardGroup cols={3}>
+  <Card title="Ciclo de vida del pago" icon="arrows-spin" href="/concepts/payment-lifecycle">
+    Comprende los flujos de authorize, capture, refund y cancel.
+  </Card>
+
+  <Card title="Enrutamiento inteligente" icon="route" href="/concepts/smart-routing">
+    Enruta cada pago entre tus adquirentes con condiciones y failover en cascada.
+  </Card>
+
+  <Card title="Tokenización" icon="vault" href="/concepts/tokenization">
+    Almacena tarjetas como tokens reutilizables para compradores recurrentes.
+  </Card>
+
+  <Card title="3D Secure" icon="shield-check" href="/concepts/3d-secure">
+    Maneja los desafíos de 3DS2 sin lógica de ramificación compleja.
+  </Card>
+
+  <Card title="Idempotencia" icon="copy" href="/idempotency">
+    Reintenta de forma segura las solicitudes fallidas sin cobrar dos veces a los clientes.
+  </Card>
+
+  <Card title="Entornos" icon="flask" href="/concepts/environments">
+    Cambia entre sandbox y producción con un solo prefijo de clave.
+  </Card>
+
+  <Card title="Métodos alternativos" icon="money-bill-transfer" href="/guides/alternative-payment-methods">
+    Agrega Pix, ACH, Klarna y más con un mínimo de código adicional.
+  </Card>
+
+  <Card title="Webhooks" icon="bell" href="/webhooks/overview">
+    Recibe eventos de pago y de suscripción firmados en tu servidor.
+  </Card>
+
+  <Card title="Pruebas" icon="flask-vial" href="/guides/testing">
+    Tarjetas de prueba de sandbox, escenarios de rechazo y flujos de prueba de 3DS.
+  </Card>
+</CardGroup>

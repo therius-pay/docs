@@ -1,0 +1,180 @@
+---
+title: 'Guia de métodos de pagamento de transferência bancária e débito direto'
+sidebarTitle: 'Transferências bancárias'
+description: 'Aceite Pix, ACH, SEPA, iDEAL, BLIK, Przelewy24, EPS, Multibanco, SPEI, PSE e outros métodos de transferência bancária pela API de pagamentos do Therius.'
+translationOf: connections/bank-transfers.mdx
+translationSourceHash: 1a39a50e09b8cb5ac06f5c7ec24c5d27c416ad542c03a3567aca4a3960c19d87
+---
+
+O Therius suporta uma ampla gama de métodos de transferência bancária e débito direto nas Américas, Europa e além. A maioria é baseada em redirecionamento e devolve `status: "pending_action"` com uma URL de redirecionamento ou um QR code para o comprador concluir. Os prazos de liquidação variam significativamente conforme o método — de quase instantâneo (Pix) a vários dias úteis (ACH, Bacs). Use as observações específicas por método abaixo para definir expectativas precisas com os seus compradores.
+
+### Pix — `pix`
+
+O Pix é o sistema de pagamento instantâneo do Brasil e o método de pagamento dominante do país. O comprador recebe um QR code ou uma chave copia-e-cola e conclui o pagamento pelo app bancário dele. A liquidação é quase instantânea, 24/7. Moeda: BRL.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "pix"
+}
+```
+
+### ACH — `ach`
+
+O ACH é a rede padrão de transferência banco a banco dos EUA. A liquidação leva de 1 a 4 dias úteis. Moeda: USD, Estados Unidos.
+
+O ACH também suporta tokenização — defina `apm.tokenize: true` e inclua `shopper.id` na sua requisição para salvar a conta bancária para uso futuro sem exigir que o comprador digite os dados dele novamente.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "USD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "ach"
+}
+```
+
+### SEPA Direct Debit — `sepa_debit`
+
+O SEPA Direct Debit cobre a zona do euro mais o Reino Unido, a Suíça e a Noruega. O comprador autoriza um mandato e os fundos são puxados da conta dele. A liquidação normalmente leva de 2 a 5 dias úteis. Moeda: EUR.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "sepa_debit"
+}
+```
+
+### BECS Direct Debit — `au_becs_debit`
+
+O BECS é o Bulk Electronic Clearing System da Austrália para débito direto. Moeda: AUD, Austrália.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "AUD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "au_becs_debit"
+}
+```
+
+### Bacs Direct Debit — `bacs_debit`
+
+O Bacs é o esquema padrão de débito direto do Reino Unido. A liquidação leva 3 dias úteis. Moeda: GBP, Reino Unido.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "GBP", "value": 5000, "exponent": 2 },
+  "paymentMethod": "bacs_debit"
+}
+```
+
+### iDEAL — `ideal`
+
+O iDEAL é o método de pagamento mais usado nos Países Baixos, cobrindo mais de 60% das transações online holandesas. O comprador é redirecionado ao ambiente de internet banking do próprio banco dele para aprovar o pagamento. A liquidação é no mesmo dia. Moeda: EUR, Países Baixos.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "ideal"
+}
+```
+
+### Bancontact — `bancontact`
+
+O Bancontact é o método de pagamento online mais popular da Bélgica, usado por quase todos os titulares de cartão belgas. É baseado em redirecionamento. Moeda: EUR, Bélgica.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "bancontact"
+}
+```
+
+### Przelewy24 — `p24`
+
+O Przelewy24 (P24) é o principal agregador de transferências bancárias online da Polônia, conectando mais de 165 bancos poloneses. Moedas: PLN, EUR.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "PLN", "value": 5000, "exponent": 2 },
+  "paymentMethod": "p24"
+}
+```
+
+### EPS — `eps`
+
+O EPS (Electronic Payment Standard) é o esquema nacional de transferência bancária online da Áustria. Moeda: EUR, Áustria.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "eps"
+}
+```
+
+### Multibanco — `multibanco`
+
+O Multibanco é a rede de pagamento bancário de Portugal. Em vez de um redirecionamento, o comprador recebe um número de referência e um código de entidade para inserir em qualquer caixa eletrônico Multibanco ou pelo portal online do banco dele. A resposta se resolve pelo tipo de ação `multibanco_voucher`. Moeda: EUR, Portugal.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "EUR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "multibanco"
+}
+```
+
+### BLIK — `blik`
+
+O BLIK é o padrão de pagamento móvel da Polônia, usado diretamente dentro dos apps bancários. O comprador gera um código de uso único de 6 dígitos e o insere no checkout. Moeda: PLN, Polônia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "PLN", "value": 5000, "exponent": 2 },
+  "paymentMethod": "blik"
+}
+```
+
+### PSE — `pse`
+
+O PSE (Pagos Seguros en Línea) é o principal método de transferência bancária online da Colômbia. O comprador é redirecionado ao banco dele para autorizar a transferência. Moeda: COP, Colômbia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "COP", "value": 500000, "exponent": 2 },
+  "paymentMethod": "pse"
+}
+```
+
+### SPEI — `spei`
+
+O SPEI é o sistema de transferência interbancária em tempo real do México. O comprador recebe um número de referência CLABE para concluir a transferência a partir do banco dele. A liquidação normalmente é no mesmo dia. Moeda: MXN, México.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MXN", "value": 10000, "exponent": 2 },
+  "paymentMethod": "spei"
+}
+```

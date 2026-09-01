@@ -328,6 +328,23 @@
                 ]
               }
             ]
+          },
+          {
+            "tab": "Conexiones",
+            "groups": [
+              {
+                "group": "Métodos de pago",
+                "pages": [
+                  "es/connections/overview",
+                  "es/connections/cards-wallets",
+                  "es/connections/bank-transfers",
+                  "es/connections/vouchers-cash",
+                  "es/connections/buy-now-pay-later",
+                  "es/connections/apac-methods",
+                  "es/connections/latam-methods"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -472,6 +489,23 @@
                   "pt/sdk/wallet-buttons",
                   "pt/sdk/click-to-pay",
                   "pt/sdk/apm-redirects"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Conexões",
+            "groups": [
+              {
+                "group": "Métodos de pagamento",
+                "pages": [
+                  "pt/connections/overview",
+                  "pt/connections/cards-wallets",
+                  "pt/connections/bank-transfers",
+                  "pt/connections/vouchers-cash",
+                  "pt/connections/buy-now-pay-later",
+                  "pt/connections/apac-methods",
+                  "pt/connections/latam-methods"
                 ]
               }
             ]

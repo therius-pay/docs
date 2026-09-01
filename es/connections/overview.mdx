@@ -1,0 +1,120 @@
+---
+title: 'Métodos de pago de Therius: más de 40 opciones, un endpoint'
+sidebarTitle: 'Descripción general'
+description: 'Cada método de pago que Therius soporta enruta a través de POST /payment/purchase. Explora por categoría o encuentra un método específico para un ejemplo de código.'
+translationOf: connections/overview.mdx
+translationSourceHash: deb0130d4bf327eac29b2f24670b39cb3e180e9c3bc737a455d93ddfbfafeac6
+---
+
+Cada método de pago en Therius enruta a través del mismo endpoint `POST /payment/purchase`. Cambias entre métodos estableciendo el campo `paymentMethod` en el cuerpo de tu solicitud — u omítelo por completo al cobrar una tarjeta. Esta página es tu punto de partida para el catálogo completo de métodos de pago: explora por categoría abajo, o usa la tabla de búsqueda rápida para saltar directamente a un método específico.
+
+<Note>
+  Un método está disponible para tu cuenta una vez que una **conexión** que lo soporta está configurada y habilitada en tu dashboard (ver [Enrutamiento inteligente](/concepts/smart-routing)). El catálogo de abajo es el conjunto completo que Therius soporta — revisa la página **Conexiones** en tu dashboard para ver qué está activo en tu cuenta, y contacta a Therius para habilitar un método que no veas ahí.
+</Note>
+
+## Explorar por categoría
+
+<CardGroup cols={2}>
+  <Card title="Tarjetas y wallets" icon="credit-card" href="/connections/cards-wallets">
+    Visa, Mastercard, Apple Pay, Google Pay, PayPal, Alipay, GrabPay y más.
+  </Card>
+  <Card title="Transferencias bancarias" icon="building-columns" href="/connections/bank-transfers">
+    Pix, ACH, SEPA, iDEAL, BLIK, PSE, SPEI, Przelewy24 y más.
+  </Card>
+  <Card title="Vouchers y efectivo" icon="receipt" href="/connections/vouchers-cash">
+    Boleto (Brasil), OXXO (México) y Konbini (Japón).
+  </Card>
+  <Card title="Compra ahora, paga después" icon="calendar-days" href="/connections/buy-now-pay-later">
+    Opciones de cuotas de Klarna, Afterpay, Affirm y Zip.
+  </Card>
+  <Card title="Métodos de Asia-Pacífico" icon="globe" href="/connections/apac-methods">
+    UPI, QRIS, FPX, PayNow, PromptPay y GrabPay en APAC.
+  </Card>
+  <Card title="Métodos de Latinoamérica" icon="map-pin" href="/connections/latam-methods">
+    Efecty, Rapipago, PagoFácil, Khipu, Transbank y más.
+  </Card>
+</CardGroup>
+
+## Cómo funcionan los redirects
+
+La mayoría de los métodos de pago alternativos (APM) devuelven un `status` de `"pending_action"` junto con un `actionRequired.url`. Tu integración debe redirigir al comprador a esa URL para que pueda completar la autenticación o el pago en la página de su banco o wallet. Después de que el comprador termina, Therius lo redirige de vuelta a tu `apm.returnUrl`.
+
+Si estás usando el SDK JS de Therius, no necesitas manejar esto manualmente — llama a `sdk.handleAction(result.actionRequired)` y el SDK administra el redirect, espera el resultado y resuelve la promesa por ti.
+
+<Note>
+  Algunos métodos de redirect requieren campos adicionales en la solicitud — como `apm.returnUrl`, `apm.cancelUrl` o detalles del comprador como el nombre y el correo. Estos requisitos se indican en la página de cada método.
+</Note>
+
+## Forma base de la solicitud
+
+Cada solicitud a `POST /payment/purchase` comparte la misma estructura base. Agregas un código `paymentMethod` y un objeto específico del método (`card`, `apm` o `walletData`) encima de ella.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": {
+    "currency": "USD",
+    "value": 5000,
+    "exponent": 2
+  },
+  "paymentMethod": "<code>"
+}
+```
+
+Los montos siempre están en unidades menores. Para USD, `value: 1999` con `exponent: 2` equivale a $19.99. Para monedas sin decimales como JPY o CLP, usa `exponent: 0` y pasa el monto entero completo.
+
+## Búsqueda rápida de métodos
+
+| Método | Código | Moneda | Categoría |
+|---|---|---|---|
+| Tarjeta de crédito/débito | `card` | Cualquiera | Tarjetas |
+| Apple Pay | `applepay` | Cualquiera | Wallets |
+| Google Pay | `googlepay` | Cualquiera | Wallets |
+| Click to Pay | `click_to_pay` | Cualquiera | Wallets |
+| PayPal | `paypal` | USD/EUR/GBP | Wallets |
+| Alipay | `alipay` | CNY+ | Wallets |
+| WeChat Pay | `wechat_pay` | CNY+ | Wallets |
+| GrabPay | `grabpay` | SGD/MYR/PHP/THB/VND | Wallets |
+| Amazon Pay | `amazon_pay` | USD/EUR/GBP/JPY | Wallets |
+| Revolut Pay | `revolut_pay` | EUR/GBP+ | Wallets |
+| TWINT | `twint` | CHF | Wallets |
+| MobilePay | `mobilepay` | DKK/EUR | Wallets |
+| Cash App Pay | `cashapp` | USD | Wallets |
+| Venmo | `venmo` | USD | Wallets |
+| PicPay | `picpay_wallet` | BRL | Wallets |
+| Pix | `pix` | BRL | Transferencia bancaria |
+| ACH | `ach` | USD | Transferencia bancaria |
+| SEPA Direct Debit | `sepa_debit` | EUR | Transferencia bancaria |
+| BECS Direct Debit | `au_becs_debit` | AUD | Transferencia bancaria |
+| Bacs Direct Debit | `bacs_debit` | GBP | Transferencia bancaria |
+| iDEAL | `ideal` | EUR | Transferencia bancaria |
+| Bancontact | `bancontact` | EUR | Transferencia bancaria |
+| Przelewy24 | `p24` | PLN/EUR | Transferencia bancaria |
+| EPS | `eps` | EUR | Transferencia bancaria |
+| Multibanco | `multibanco` | EUR | Transferencia bancaria |
+| BLIK | `blik` | PLN | Transferencia bancaria |
+| PSE | `pse` | COP | Transferencia bancaria |
+| SPEI | `spei` | MXN | Transferencia bancaria |
+| Klarna | `klarna` | USD/EUR/GBP+ | BNPL |
+| Afterpay / Clearpay | `afterpay_clearpay` | USD/GBP/AUD/NZD/CAD | BNPL |
+| Affirm | `affirm` | USD/CAD | BNPL |
+| Zip | `zip` | AUD/NZD/USD | BNPL |
+| Boleto | `boleto` | BRL | Voucher |
+| OXXO | `oxxo` | MXN | Voucher |
+| Konbini | `konbini` | JPY | Voucher |
+| UPI | `upi` | INR | APAC |
+| QRIS | `qris` | IDR | APAC |
+| FPX | `fpx` | MYR | APAC |
+| PayNow | `paynow` | SGD | APAC |
+| PromptPay | `promptpay` | THB | APAC |
+| Efecty | `efecty` | COP | LATAM |
+| Rapipago | `rapipago` | ARS | LATAM |
+| PagoFácil | `pagofacil` | ARS | LATAM |
+| Cobro Express | `cobro_express` | ARS | LATAM |
+| PagoEfectivo | `pagoefectivo` | PEN | LATAM |
+| Nequi | `nequi` | COP | LATAM |
+| Yape | `yape` | PEN | LATAM |
+| Khipu | `khipu` | CLP | LATAM |
+| Transbank Debit | `transbank_debit` | CLP | LATAM |
+| Bancolombia Button | `bancolombia_button` | COP | LATAM |

@@ -1,0 +1,62 @@
+---
+title: 'Métodos de pago por voucher y efectivo: Boleto, OXXO, Konbini'
+sidebarTitle: 'Vouchers y efectivo'
+description: 'Acepta pagos por voucher en efectivo con Boleto (Brasil), OXXO (México) y Konbini (Japón) a través de la API de Therius. Estos métodos se liquidan de forma asíncrona.'
+translationOf: connections/vouchers-cash.mdx
+translationSourceHash: 18448545e5d3a3cc12bda0c83c555492bd28fbba7372268b794198120ff5e79a
+---
+
+Los métodos de pago por voucher y efectivo generan una referencia imprimible — un código de barras, un número de voucher o un código QR — que el comprador lleva a una sucursal bancaria, un cajero o una tienda de conveniencia para pagar en efectivo. La liquidación es asíncrona: recibes una notificación de webhook cuando el pago se confirma, lo que puede tomar desde unas pocas horas hasta varios días hábiles según el método. No cumplas los pedidos de inmediato después de la respuesta inicial de la API para estos métodos.
+
+La respuesta inicial de todos los métodos de voucher devuelve `status: "pending_action"` con una carga `actionRequired` que contiene el código de barras o la referencia del voucher que tu UI necesita mostrar.
+
+<Tip>
+  Establece un valor `apm.expirationSeconds` en tu solicitud para controlar cuánto tiempo permanece válido el voucher antes de expirar. Esto limita tu ventana de exposición para pedidos no cumplidos.
+</Tip>
+
+<Warning>
+  Los pagos por voucher no son reversibles una vez que el comprador ha pagado en el punto de venta. Evita usarlos para bienes o servicios sensibles al tiempo a menos que tu flujo de cumplimiento pueda manejar de forma elegante los pagos tardíos o faltantes.
+</Warning>
+
+### Boleto — `boleto`
+
+Boleto Bancário es el voucher bancario imprimible tradicional de Brasil. El comprador recibe un código de barras que puede pagar en cualquier sucursal bancaria, cajero, casa de lotería o vía banca por internet. La liquidación normalmente toma de 1 a 3 días hábiles después del pago. La respuesta se resuelve mediante el tipo de acción `boleto_voucher`. Moneda: BRL, Brasil.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "BRL", "value": 5000, "exponent": 2 },
+  "paymentMethod": "boleto"
+}
+```
+
+### OXXO — `oxxo`
+
+OXXO es la cadena de tiendas de conveniencia más grande de México, con más de 20,000 ubicaciones. El comprador recibe una referencia de voucher que presenta al cajero y paga en efectivo. La liquidación se confirma dentro de 24 a 48 horas del pago. Moneda: MXN, México.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MXN", "value": 10000, "exponent": 2 },
+  "paymentMethod": "oxxo"
+}
+```
+
+### Konbini — `konbini`
+
+Konbini es la red de pago en efectivo en tiendas de conveniencia de Japón, que cubre 7-Eleven, Lawson, FamilyMart y otras cadenas importantes. El comprador recibe un número de confirmación que presenta en la terminal de pago de la tienda. La respuesta se resuelve mediante el tipo de acción `konbini_voucher`. Moneda: JPY, Japón.
+
+<Note>
+  JPY es una moneda sin decimales y usa `exponent: 0`. Un `value` de `5000` equivale a ¥5,000 — no hay decimales.
+</Note>
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "JPY", "value": 5000, "exponent": 0 },
+  "paymentMethod": "konbini"
+}
+```

@@ -20,4 +20,6 @@ jobs:
         with:
           node-version: '20'
       - name: Check es/ and pt/ translations against their English sources
-        run: node .translation/check-staleness.mjs
+        # STRICT=1: every English page must have an es/ and pt/ counterpart.
+        # Safe to enforce now that the full corpus is translated (all 63 nav pages).
+        run: STRICT=1 node .translation/check-staleness.mjs

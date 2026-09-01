@@ -1,0 +1,95 @@
+---
+title: 'Métodos de pagamento locais da Ásia-Pacífico: UPI, QRIS e mais'
+sidebarTitle: 'Métodos APAC'
+description: 'Aceite UPI (Índia), QRIS (Indonésia), FPX (Malásia), PayNow (Singapura), PromptPay (Tailândia) e GrabPay em todo o Sudeste Asiático via Therius.'
+translationOf: connections/apac-methods.mdx
+translationSourceHash: d20442c6bee3ff01281fa87623bbb8cb21e082d7815ca126dee064fc2be4590f
+---
+
+O Therius suporta os principais métodos de pagamento locais da Ásia-Pacífico, do UPI da Índia ao QRIS da Indonésia e ao PayNow de Singapura. Todos esses métodos passam por `POST /payment/purchase` com um código `paymentMethod`. A maioria devolve uma URL de redirecionamento ou uma carga de QR code para o comprador concluir o pagamento no app bancário ou na carteira digital dele.
+
+<Note>
+  Muitos métodos APAC devolvem um QR code no campo de resposta `apm.qrCode` ou `apm.qrCodeImage`. Se você está usando o SDK JS do Therius, chame `sdk.handleAction(result.actionRequired)` — ele renderiza o QR code automaticamente sem trabalho adicional do seu lado.
+</Note>
+
+### UPI — `upi`
+
+O UPI (Unified Payments Interface) é o sistema de transferência bancária em tempo real da Índia, operado pela National Payments Corporation of India (NPCI). O comprador digita o UPI ID dele ou escaneia um QR code para concluir o pagamento pelo app habilitado para UPI dele (PhonePe, Google Pay, Paytm, etc.). A liquidação é quase instantânea. Moeda: INR, Índia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "INR", "value": 500000, "exponent": 2 },
+  "paymentMethod": "upi"
+}
+```
+
+### QRIS — `qris`
+
+O QRIS (Quick Response Code Indonesian Standard) é o esquema nacional unificado de QR code da Indonésia, determinado pelo Bank Indonesia. Os compradores escaneiam o QR code com qualquer app bancário ou de e-wallet compatível com QRIS. Moeda: IDR, Indonésia.
+
+<Note>
+  IDR é uma moeda sem decimais e usa `exponent: 0`. Um `value` de `100000` equivale a Rp 100.000 — não há casas decimais.
+</Note>
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "IDR", "value": 100000, "exponent": 0 },
+  "paymentMethod": "qris"
+}
+```
+
+### FPX — `fpx`
+
+O FPX (Financial Process Exchange) é o sistema de transferência bancária online da Malásia, conectando mais de 50 bancos malaios. O comprador é redirecionado ao portal online do banco dele para autorizar a transferência. A liquidação é no mesmo dia. Moeda: MYR, Malásia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "MYR", "value": 5000, "exponent": 2 },
+  "paymentMethod": "fpx"
+}
+```
+
+### PayNow — `paynow`
+
+O PayNow é o sistema de pagamento baseado em QR em tempo real de Singapura, operado pela Association of Banks in Singapore (ABS). O comprador escaneia o QR code com o app bancário dele para concluir o pagamento instantaneamente. Moeda: SGD, Singapura.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "paynow"
+}
+```
+
+### PromptPay — `promptpay`
+
+O PromptPay é o sistema nacional de transferência bancária instantânea baseado em QR da Tailândia, vinculado ao ID nacional tailandês ou ao número de celular. O comprador escaneia o QR code dentro do app bancário dele. Moeda: THB, Tailândia.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "THB", "value": 5000, "exponent": 2 },
+  "paymentMethod": "promptpay"
+}
+```
+
+### GrabPay — `grabpay`
+
+O GrabPay é a carteira digital embutida no super-app Grab, cobrindo o Sudeste Asiático. Os compradores se autenticam via o app da Grab. Disponível na Malásia, Singapura, Filipinas, Tailândia e Vietnã. Moedas suportadas: MYR, SGD, PHP, THB, VND.
+
+```json
+{
+  "merchantCode": "MERCHANT_001",
+  "orderCode": "ORDER-001",
+  "amount": { "currency": "SGD", "value": 5000, "exponent": 2 },
+  "paymentMethod": "grabpay"
+}
+```
