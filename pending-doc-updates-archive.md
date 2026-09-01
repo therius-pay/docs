@@ -4,6 +4,37 @@ Entries moved here by the `technical-writer` skill after processing.
 
 ---
 
+## 2026-08-31 — Private API key: header-only, no longer accepted in the request body
+
+- Skill: developer. Processed 2026-08-31 → verification completed 2026-09-01.
+- **Duplicate of the already-archived "Removed the dead `key` auth param; Headers / Body /
+  Query separation" entry** — the developer skill filed a fresh copy on the same day. Kept
+  both for the audit trail; the work is one and the same.
+- Doc-visible change: raw private key (`prv_production_…` / `prv_sandbox_…`) is accepted
+  **only** as `Authorization: Bearer <key>`. The `"key"` body field and `?key=` query param
+  are gone from every endpoint.
+- What was done in the docs (all verified 2026-09-01 — 0 residual `"key":` in code samples,
+  0 `?key=` anywhere, 0 `key` param in `openapi.json`):
+  - `openapi.json` — `key` removed from all 6 request-body schemas + every query param
+    (`2f38edf`, `b272e53`).
+  - All 22 `api-reference/**` pages — `<ParamField>` for `key` removed (body + query),
+    Request section split into `### Headers` / `### Path Parameters` / `### Request Body`
+    (or `### Query Parameters`); GET/DELETE pages carry `Authorization` only (`2f38edf`).
+  - Guides / concepts / connections / quickstart / index / `authentication.mdx` /
+    `idempotency.mdx` — `"key": "..."` stripped from 71 code samples, missing
+    `-H "Authorization: Bearer"` added to the quickstart + `/payment/resume` curls, prose
+    rewritten so `key` is no longer called a body/query field (`cd22849`).
+  - GET/DELETE **curl examples** in 5 subscription/plan pages that still had
+    `?key=sk_live_...` in the example string (missed by `2f38edf`, which only removed the
+    ParamFields) — fixed to `?merchantCode=...` + `-H "Authorization: Bearer ..."`
+    (`47f4de1`).
+  - Key **prefix** corrected repo-wide: `sk_live_`→`prv_production_`, `sk_sandbox_`→
+    `prv_sandbox_`, `pub_live_`→`pub_production_` — the docs had used Stripe-style prefixes
+    that no real key has (`deea0bc`, see `../memory/therius-docs-key-prefix-fix-2026-09-01.md`).
+- Product side: `product/platform-coverage.md` §7 already carries the dated bullet
+  ("API authentication is Authorization-header only (2026-08-31)").
+- GA status: matches shipped code.
+
 ## 2026-08-30 — Capture / refund / cancel move to `POST /payment/{id}/...`
 
 - Skill: developer. Processed 2026-08-30.
