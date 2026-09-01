@@ -35,6 +35,32 @@ a[nav-tabs-item] {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* language switcher (localization select) in the navbar — magenta pill */
+#localization-select-trigger,
+[data-component-part="localization-select-trigger"] {
+  background-color: #db2777 !important; /* brand magenta */
+  color: #fff !important;
+  border-radius: 0.75rem;
+}
+
+#localization-select-trigger:hover,
+#localization-select-trigger[aria-expanded="true"],
+[data-component-part="localization-select-trigger"]:hover,
+[data-component-part="localization-select-trigger"][aria-expanded="true"] {
+  background-color: #be185d !important; /* darker while hovered / open */
+}
+
+/* keep the label text and chevron readable on the magenta fill */
+#localization-select-trigger span,
+#localization-select-trigger svg,
+#localization-select-trigger svg path,
+[data-component-part="localization-select-trigger"] span,
+[data-component-part="localization-select-trigger"] svg,
+[data-component-part="localization-select-trigger"] svg path {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+
 .kb-feature-card {
   background-color: rgb(var(--foreground-light, 17 24 39));
 }
