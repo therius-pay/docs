@@ -3,7 +3,7 @@ title: 'Acepta métodos de pago alternativos (APM) con Therius'
 sidebarTitle: 'Métodos alternativos'
 description: 'Agrega Pix, ACH, iDEAL, Klarna y más de 40 métodos de pago a través del mismo endpoint de purchase — solo cambia el campo paymentMethod.'
 translationOf: guides/alternative-payment-methods.mdx
-translationSourceHash: 4f69b1df9a19754be4a6d3ed298bbd2f05fbbccdcbdc0534a8a96c7b6ed068ce
+translationSourceHash: 4cc04b1b37c7345fb477e7561c8a74c7e14075a65cd7e42ab15b3f2061c5475b
 ---
 
 Cada método de pago alternativo (APM) del catálogo de Therius fluye a través del mismo endpoint `POST /payment/purchase` que un cobro de tarjeta estándar. No necesitas una integración diferente por método — cambias de método de pago estableciendo el campo `paymentMethod` y proporcionando una carga específica del método bajo `apm`. Esto significa que puedes agregar Pix en Brasil, ACH en EE. UU. y Klarna en Europa sin tocar tu lógica central de checkout.

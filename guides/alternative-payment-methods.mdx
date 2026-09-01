@@ -47,7 +47,7 @@ APMs fall into two broad categories depending on how the customer authorizes the
 
 ### Handling the Redirect
 
-When a method returns `status: "pending_action"`, you must send your customer to `actionRequired.url` to complete authorisation.
+When a method returns `status: "pending_action"`, you must send your customer to `actionRequired.url` to complete authorization.
 
 <Tabs>
   <Tab title="JS SDK">
@@ -63,7 +63,7 @@ When a method returns `status: "pending_action"`, you must send your customer to
     ```
   </Tab>
   <Tab title="Server-Side Redirect">
-    Redirect the customer's browser to `actionRequired.url`. After authorisation, the customer is forwarded to your `apm.returnUrl` with `orderId` and `status` query parameters. Verify the final status by calling `GET /payment/inquiry/{orderId}`.
+    Redirect the customer's browser to `actionRequired.url`. After authorization, the customer is forwarded to your `apm.returnUrl` with `orderId` and `status` query parameters. Verify the final status by calling `GET /payment/inquiry/{orderId}`.
 
     ```bash
     # Include return and cancel URLs in your purchase request
@@ -200,5 +200,5 @@ For ACH payments you can save the bank account for future use by passing `apm.to
 ```
 
 <Note>
-  ACH tokenization is subject to NACHA rules. Ensure you display the required bank-account authorisation mandate to the customer before submitting the request.
+  ACH tokenization is subject to NACHA rules. Ensure you display the required bank-account authorization mandate to the customer before submitting the request.
 </Note>
