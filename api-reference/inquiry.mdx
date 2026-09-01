@@ -14,7 +14,7 @@ Use `GET /payment/inquiry/{id}` to retrieve the current status and details of an
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox). Required for most requests.
+  Your secret API key as a Bearer token: `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox). Required for most requests.
 </ParamField>
 
 <ParamField header="X-Environment" type="string">
@@ -91,7 +91,7 @@ Use `GET /payment/inquiry/{id}` to retrieve the current status and details of an
 
 ```bash
 curl https://api.therius.io/v1/payment/inquiry/PC-9876543210 \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 ```json
@@ -130,7 +130,7 @@ curl https://api-sandbox.therius.io/v1/payment/inquiry/PC-1234567890 \
 
 ```bash cURL
 curl https://api.therius.io/v1/payment/inquiry/PC-1234567890 \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

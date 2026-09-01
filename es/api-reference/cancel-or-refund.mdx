@@ -4,7 +4,7 @@ sidebarTitle: "Cancelar o reembolsar automáticamente"
 description: "Cancela automáticamente si el pago está autorizado, o reembolsa si ya está capturado. Sin necesidad de rastrear el estado del pago."
 openapi: "POST /payment/{id}/cancel_or_refund"
 translationOf: api-reference/cancel-or-refund.mdx
-translationSourceHash: 98545184c9dc96815e7966caf5c5664ab305ef0fadf40f80f42d33d9a32f621d
+translationSourceHash: 52074ad76a3e7ff2db4a264b99ed71bc3e36629a21950c7ce03402582ecd2457
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -30,7 +30,7 @@ Si no quieres rastrear en tu propio sistema si un pago está en el estado `autho
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  Tu clave de API secreta como token Bearer: `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox).
+  Tu clave de API secreta como token Bearer: `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -93,7 +93,7 @@ Si no quieres rastrear en tu propio sistema si un pago está en el estado `autho
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/cancel_or_refund \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

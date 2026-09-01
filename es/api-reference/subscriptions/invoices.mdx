@@ -4,7 +4,7 @@ sidebarTitle: "Ver facturas"
 description: "Lista las facturas de una suscripción o recupera una sola factura por su UUID."
 openapi: "GET /subscription/{id}/invoice"
 translationOf: api-reference/subscriptions/invoices.mdx
-translationSourceHash: f281c054789b179531f27935caeae5fac62ca682dbc73ea49a9a8dcb3a1c683f
+translationSourceHash: e01989e30ea5addb0f95ccc4f001cabcbb69d25fd14e3afd8f07bba382fdbdd6
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -24,7 +24,7 @@ Therius crea una factura por ciclo de facturación. Cada factura registra el int
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 ### Parámetros de ruta
@@ -83,7 +83,7 @@ Devuelve un array de objetos de factura para la suscripción.
 
 ```bash
 curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 ---
@@ -99,7 +99,7 @@ curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCo
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 ### Parámetros de ruta
@@ -128,14 +128,14 @@ Devuelve un solo objeto de factura con los mismos campos descritos arriba.
 
 ```bash
 curl "https://api.therius.io/v1/subscription/invoice/inv_xyz789abc?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 <RequestExample>
 
 ```bash cURL
 curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

@@ -3,7 +3,7 @@ title: 'Autenticación de la API de Therius — claves y entornos'
 sidebarTitle: 'Autenticación'
 description: 'Conoce cómo funcionan las claves de API de Therius, cómo enviarlas en las solicitudes, la diferencia entre credenciales de producción y de sandbox, y cómo generar tokens de sesión del SDK.'
 translationOf: authentication.mdx
-translationSourceHash: 228a4bab784f3a7a0021bb4f14aa253d40790a47b45d4e4bd9f71d457e36ccf4
+translationSourceHash: 6299812d42f8bbe05533ca2ddbcd9d2d9aa9a68a9eb7f30a9bf0dfcdb9cc55a9
 ---
 
 Todos los endpoints de la API de Therius requieren una credencial. Las llamadas de servidor a servidor envían tu clave privada como token `Bearer` en el encabezado `Authorization`. Lo que nunca debes hacer es exponer una clave privada de API en código de frontend ni pasarla por un cliente no confiable — las integraciones en el navegador usan un token de cliente del SDK de corta duración en su lugar (ver más abajo).
@@ -14,14 +14,14 @@ Therius emite cuatro tipos de credenciales. El prefijo de cada clave te dice exa
 
 | Prefijo de clave | Tipo | Usada por | Entorno |
 |---|---|---|---|
-| `sk_live_xxx` | Clave privada | Tu servidor | Producción |
-| `sk_sandbox_xxx` | Clave privada | Tu servidor | Sandbox |
-| `pub_live_xxx` | Clave pública | SDK de JS (JWT de token de cliente) | Producción |
+| `prv_production_xxx` | Clave privada | Tu servidor | Producción |
+| `prv_sandbox_xxx` | Clave privada | Tu servidor | Sandbox |
+| `pub_production_xxx` | Clave pública | SDK de JS (JWT de token de cliente) | Producción |
 | `pub_sandbox_xxx` | Clave pública | SDK de JS (JWT de token de cliente) | Sandbox |
 
-**Claves privadas** (`sk_live_xxx`, `sk_sandbox_xxx`) autentican todos los endpoints de pago. Mantenlas solo en tu servidor — en variables de entorno, no en el código fuente.
+**Claves privadas** (`prv_production_xxx`, `prv_sandbox_xxx`) autentican todos los endpoints de pago. Mantenlas solo en tu servidor — en variables de entorno, no en el código fuente.
 
-**Claves públicas** (`pub_live_xxx`, `pub_sandbox_xxx`) se incrustan dentro del JWT de token de cliente de corta duración que tu servidor genera y pasa al navegador. El navegador nunca ve una clave privada sin cifrar.
+**Claves públicas** (`pub_production_xxx`, `pub_sandbox_xxx`) se incrustan dentro del JWT de token de cliente de corta duración que tu servidor genera y pasa al navegador. El navegador nunca ve una clave privada sin cifrar.
 
 **Token de cliente del SDK (JWT)** — un token de corta duración (válido por 30 minutos) que tu servidor crea llamando a `POST /sdk/session` con tu clave privada. Es la única credencial que el navegador llega a tener. Si el token expira, tu servidor genera uno nuevo.
 
@@ -31,13 +31,13 @@ Envía tu clave privada como token `Bearer` en el encabezado `Authorization` en 
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001", ... }'
 ```
 
 <Note>
-  El prefijo de la clave determina el entorno automáticamente. Una clave que empieza por `sk_sandbox_` siempre se enruta al sandbox — no necesitas un indicador de entorno aparte ni una ruta de código diferente.
+  El prefijo de la clave determina el entorno automáticamente. Una clave que empieza por `prv_sandbox_` siempre se enruta al sandbox — no necesitas un indicador de entorno aparte ni una ruta de código diferente.
 </Note>
 
 ## Flujo del token de sesión del SDK
@@ -54,7 +54,7 @@ Tu clave privada nunca sale de tu servidor. Si necesitas refrescar la sesión (p
 ```bash
 # Tu servidor genera un token de cliente
 curl -X POST https://api.therius.io/v1/sdk/session \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -77,7 +77,7 @@ Pasa el `clientToken` al inicializador del SDK de JS — nunca lo registres ni l
 ## Consejos de seguridad
 
 <Warning>
-  Nunca incrustes una clave privada (`sk_live_xxx` o `sk_sandbox_xxx`) en JavaScript de frontend, en el binario de una app móvil ni en un repositorio público. Trata las claves privadas igual que las contraseñas de base de datos.
+  Nunca incrustes una clave privada (`prv_production_xxx` o `prv_sandbox_xxx`) en JavaScript de frontend, en el binario de una app móvil ni en un repositorio público. Trata las claves privadas igual que las contraseñas de base de datos.
 </Warning>
 
 - Guarda las claves en variables de entorno o en un gestor de secretos (p. ej., AWS Secrets Manager, HashiCorp Vault).

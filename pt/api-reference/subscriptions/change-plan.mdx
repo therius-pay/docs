@@ -4,7 +4,7 @@ sidebarTitle: "Mudar de plano"
 description: "Mova um assinante para um plano diferente de imediato (com rateio) ou no próximo ciclo de faturamento."
 openapi: "POST /subscription/{id}/change-plan"
 translationOf: api-reference/subscriptions/change-plan.mdx
-translationSourceHash: a074b9365352f6c394d71a5dd20487a55b331cefff9d574e8d94c2f21d70b186
+translationSourceHash: 2edb36b5047655d37911b132153d86f4bf813eb80047fd8e755e0db5b3ee1d2a
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -26,7 +26,7 @@ Use `POST /subscription/{id}/change-plan` para mover um assinante para um plano 
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -77,7 +77,7 @@ Devolve `200 OK` com o objeto de assinatura atualizado. Quando `applyAt` é `"ne
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/change-plan \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

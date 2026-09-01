@@ -4,7 +4,7 @@ sidebarTitle: "Listar planos"
 description: "Liste todos os planos de faturamento da sua conta de lojista, com filtro de país opcional. Inclui a contagem de assinantes e o estado de arquivamento."
 openapi: "GET /subscription/plan"
 translationOf: api-reference/plans/list.mdx
-translationSourceHash: 010b90e601fcf620629545446f445c911de292b5c047bf44f3eee40e19ed6875
+translationSourceHash: 43c06312ff39cf172b5d2fb9fce36cfb1ff2dce2a78b1ce7205dc667dbdbcc10
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -22,7 +22,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 ### Parâmetros de consulta
@@ -59,7 +59,7 @@ Devolve um array de objetos de plano. Cada objeto inclui todos os campos definid
 
 ```bash cURL
 curl "https://api.therius.io/v1/subscription/plan?merchantCode=MERCHANT_001&country=US" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

@@ -4,7 +4,7 @@ sidebarTitle: "Crear un plan"
 description: "Define un plan de facturación recurrente con monto, moneda, intervalo, período de prueba y restricciones geográficas opcionales."
 openapi: "POST /subscription/plan"
 translationOf: api-reference/plans/create.mdx
-translationSourceHash: 29198d590744d519c9a6eaa7a2bce8bead3dd751f186bccc067e40548c79d678
+translationSourceHash: e7f6cd8a5c643d9faa0f16d798cc93959829f56b34664c3cb2c25d3d4f753746
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -22,7 +22,7 @@ Los planes definen los términos de facturación de las suscripciones — monto,
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -95,7 +95,7 @@ Devuelve `201 Created` con el objeto de plan completo incluyendo el `id` generad
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription/plan \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",

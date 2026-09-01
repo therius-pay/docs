@@ -4,7 +4,7 @@ sidebarTitle: "Reembolsar um pagamento"
 description: "Reembolse um pagamento capturado total ou parcialmente. Vários reembolsos parciais são permitidos até o valor total capturado."
 openapi: "POST /payment/{id}/refund"
 translationOf: api-reference/refund.mdx
-translationSourceHash: 4ab1015bdcd8895bc1d66aa263e80662070eb15a6521cdb70130079fad49e489
+translationSourceHash: c1c67897d910e20c030611ce72ab1d16b1de9400ba0b3cce1dcbcbf1843a09df
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -30,7 +30,7 @@ Use `POST /payment/{id}/refund` para devolver fundos a um titular de cartão dep
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  A sua chave de API secreta como token Bearer: `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox).
+  A sua chave de API secreta como token Bearer: `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -106,7 +106,7 @@ Use `POST /payment/{id}/refund` para devolver fundos a um titular de cartão dep
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/refund \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
@@ -138,7 +138,7 @@ Reembolsar apenas parte de um pedido — por exemplo, um único item devolvido d
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/refund \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

@@ -12,7 +12,7 @@ Call `POST /sdk/session` from your backend with your private API key in the `Aut
 
 ```bash
 curl -X POST https://api.therius.io/v1/sdk/session \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "customerId": "customer-42", "country": "US" }'
 ```
@@ -62,7 +62,7 @@ The SDK validates the token immediately. If the token is missing or malformed, `
 Client tokens expire after **30 minutes**. Create a fresh token for each new checkout session — do not cache and reuse tokens across sessions or page loads.
 
 <Warning>
-  Never call `POST /sdk/session` from the browser. It requires your private API key (`sk_live_...`). Exposing that key client-side would allow anyone to create sessions and make charges against your account. Always make this call from your backend only.
+  Never call `POST /sdk/session` from the browser. It requires your private API key (`prv_production_...`). Exposing that key client-side would allow anyone to create sessions and make charges against your account. Always make this call from your backend only.
 </Warning>
 
 ## Reference

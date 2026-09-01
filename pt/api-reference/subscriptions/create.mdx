@@ -4,7 +4,7 @@ sidebarTitle: "Criar uma assinatura"
 description: "Inscreva um cliente em um plano e cobre o primeiro ciclo de faturamento. Realiza a CIT inicial que registra o mandato recorrente."
 openapi: "POST /subscription"
 translationOf: api-reference/subscriptions/create.mdx
-translationSourceHash: 8f585b23ed11e8e4cb54bed01e78bb79dd9cd1f897e660acfd90923a97c8b294
+translationSourceHash: 098935bce3b0612a6bcc93024732b51d30616586e486846110459c598fb74a6b
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -68,7 +68,7 @@ Execute você mesmo uma CIT com capacidade 3DS, depois anexe o resultado:
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -167,7 +167,7 @@ Uma requisição bem-sucedida devolve `201 Created` com o objeto de assinatura c
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

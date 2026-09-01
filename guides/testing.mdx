@@ -4,7 +4,7 @@ sidebarTitle: 'Testing'
 description: 'Every sandbox test card, decline reason, and 3D Secure scenario for the Therius API — plus how APM and subscription flows behave in the sandbox.'
 ---
 
-The Therius sandbox (`https://api-sandbox.therius.io/v1`, `sk_sandbox_...` keys) is a fully isolated environment. Requests are handled by the built-in **Therius sandbox provider**, which simulates responses without touching a card network — no real money moves. This page lists the test data that drives each simulated outcome.
+The Therius sandbox (`https://api-sandbox.therius.io/v1`, `prv_sandbox_...` keys) is a fully isolated environment. Requests are handled by the built-in **Therius sandbox provider**, which simulates responses without touching a card network — no real money moves. This page lists the test data that drives each simulated outcome.
 
 <Note>
   The card numbers below apply to the built-in Therius sandbox provider. If you have configured a **real provider in sandbox/test mode** (for example Stripe test keys), that provider's own test-card set applies instead — use the numbers from their documentation.
@@ -12,7 +12,7 @@ The Therius sandbox (`https://api-sandbox.therius.io/v1`, `sk_sandbox_...` keys)
 
 ## Using the test cards
 
-- Send the request with a `sk_sandbox_...` key, or add the header `X-Environment: sandbox`.
+- Send the request with a `prv_sandbox_...` key, or add the header `X-Environment: sandbox`.
 - Use **any future expiry** (for example `12/29`) and **any 3-digit CVV** (for example `123`).
 - American Express requires a **4-digit** CVV (for example `1234`).
 
@@ -70,7 +70,7 @@ Each of these card numbers returns a `declined` status with a matching `refusalC
     Redirect to `actionRequired.url`. The sandbox simulator treats the challenge as instantly completed — no interaction is required.
   </Step>
   <Step title="Resume the payment">
-    Call `POST /payment/resume` with `{ "sessionId": "..." }` and your `Authorization: Bearer sk_sandbox_...` header — the `sk_sandbox_` prefix routes to the sandbox. Sessions are single-use and expire after 15 minutes. A successful resume returns the final `PaymentResponse` with `status: "captured"`.
+    Call `POST /payment/resume` with `{ "sessionId": "..." }` and your `Authorization: Bearer prv_sandbox_...` header — the `prv_sandbox_` prefix routes to the sandbox. Sessions are single-use and expire after 15 minutes. A successful resume returns the final `PaymentResponse` with `status: "captured"`.
   </Step>
 </Steps>
 

@@ -3,7 +3,7 @@ title: 'Configuração dos ambientes de teste e de produção do Therius'
 sidebarTitle: 'Ambientes'
 description: 'O Therius tem dois ambientes — sandbox e produção. O prefixo da chave de API seleciona o ambiente automaticamente, sem configuração adicional.'
 translationOf: concepts/environments.mdx
-translationSourceHash: f7fc9226c9ff2420bdabcc81358ab371981f1bbb13311b6106451737dc90e02c
+translationSourceHash: 7a81134e6520e9d9b2c8ed8ea4bfe1af0efe8e915775a7752e440f00b6807beb
 ---
 
 O Therius roteia cada requisição para o ambiente de sandbox ou o de produção com base unicamente no prefixo da chave de API que você envia. Não há indicador de ambiente, nem opção de inicialização do SDK separada, nem arquivo de configuração para alterar. Quando estiver pronto para entrar no ar, você troca o prefixo da chave e atualiza a URL base — nada mais.
@@ -15,7 +15,7 @@ O ambiente de sandbox é um ambiente de teste totalmente isolado apoiado por um 
 | Propriedade | Valor |
 |---|---|
 | **URL base** | `https://api-sandbox.therius.io/v1` |
-| **Prefixo da chave privada** | `sk_sandbox_xxx` |
+| **Prefixo da chave privada** | `prv_sandbox_xxx` |
 | **Prefixo da chave pública** | `pub_sandbox_xxx` |
 | **Cobranças** | Nenhuma — apenas stub de teste |
 | **Idempotency-Key** | Opcional (mas crie o hábito agora) |
@@ -43,8 +43,8 @@ O ambiente de produção processa pagamentos reais sobre redes de cartões ao vi
 | Propriedade | Valor |
 |---|---|
 | **URL base** | `https://api.therius.io/v1` |
-| **Prefixo da chave privada** | `sk_live_xxx` |
-| **Prefixo da chave pública** | `pub_live_xxx` |
+| **Prefixo da chave privada** | `prv_production_xxx` |
+| **Prefixo da chave pública** | `pub_production_xxx` |
 | **Cobranças** | Reais — redes de cartões ao vivo |
 | **Idempotency-Key** | Obrigatório em todas as chamadas que alteram dados |
 
@@ -53,7 +53,7 @@ O ambiente de produção processa pagamentos reais sobre redes de cartões ao vi
 | | Sandbox | Produção |
 |---|---|---|
 | **URL base** | `api-sandbox.therius.io/v1` | `api.therius.io/v1` |
-| **Prefixo da chave** | `sk_sandbox_` / `pub_sandbox_` | `sk_live_` / `pub_live_` |
+| **Prefixo da chave** | `prv_sandbox_` / `pub_sandbox_` | `prv_production_` / `pub_production_` |
 | **Cobranças reais** | Não | Sim |
 | **Idempotency-Key** | Recomendado | Obrigatório |
 | **Cartões de teste** | `4111111111111111`, `4000000000000002` | Apenas cartões reais |
@@ -62,7 +62,7 @@ O ambiente de produção processa pagamentos reais sobre redes de cartões ao vi
 
 Para passar do sandbox para a produção, faça duas mudanças na sua configuração:
 
-1. Substitua `sk_sandbox_...` por `sk_live_...` (e `pub_sandbox_...` por `pub_live_...`).
+1. Substitua `prv_sandbox_...` por `prv_production_...` (e `pub_sandbox_...` por `pub_production_...`).
 2. Atualize a URL base de `https://api-sandbox.therius.io/v1` para `https://api.therius.io/v1`.
 
 Nenhuma outra mudança de código é necessária. Os mesmos corpos de requisição, as mesmas estruturas de resposta e os mesmos caminhos de endpoint funcionam nos dois ambientes.

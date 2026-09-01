@@ -4,7 +4,7 @@ sidebarTitle: "Arquivar um plano"
 description: "Arquive de forma suave um plano para que nenhuma assinatura nova possa se inscrever. Os assinantes existentes continuam até a próxima renovação deles."
 openapi: "DELETE /subscription/plan/{id}"
 translationOf: api-reference/plans/archive.mdx
-translationSourceHash: 3d1c381a9d01dc3569e5041c340decffa20e300b92b5803c6df2c41da56d5f4c
+translationSourceHash: 98b44665f67e57c596804fbcdb2936be844b64e8b28ce4687c92bd3ac7b8ddd5
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -26,7 +26,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 ### Parâmetros de caminho
@@ -54,7 +54,7 @@ Devolve `200 OK` com um objeto de confirmação.
 
 ```bash cURL
 curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

@@ -4,7 +4,7 @@ sidebarTitle: "Obtener una suscripción"
 description: "Recupera los detalles completos de una suscripción, incluyendo su cronología de eventos, historial de facturas y estado actual de gestión de cobros."
 openapi: "GET /subscription/{id}"
 translationOf: api-reference/subscriptions/get.mdx
-translationSourceHash: 977f424afb70fa42e57d8368aac87c6202eb3835702d0e88acbd01f052207f2a
+translationSourceHash: 8e623997a828e4642a936cf3aed02f863400d46923fe2e692b6ed9599fa10516
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -22,7 +22,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 ### Parámetros de ruta
@@ -91,7 +91,7 @@ Devuelve el objeto de suscripción completo en caso de éxito. Los campos clave 
 
 ```bash cURL
 curl "https://api.therius.io/v1/subscription/sub_abc123def456?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

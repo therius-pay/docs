@@ -25,7 +25,7 @@
             "bearerAuth": {
                 "type": "http",
                 "scheme": "bearer",
-                "description": "Your secret API key: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox)."
+                "description": "Your secret API key: `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox)."
             }
         },
         "parameters": {

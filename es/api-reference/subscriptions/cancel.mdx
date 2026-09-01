@@ -4,7 +4,7 @@ sidebarTitle: "Cancelar una suscripción"
 description: "Cancela una suscripción de inmediato. Dispara el evento de webhook subscription.cancelled. No se puede deshacer."
 openapi: "POST /subscription/{id}/cancel"
 translationOf: api-reference/subscriptions/cancel.mdx
-translationSourceHash: a826862ab20dc3d11a4dcdcb1b164179959094e03064c12b9b68ec5537a70cb6
+translationSourceHash: 1317fdd509cca8d6dddc2269febd04fb20e2a4e02da564abf3e2d75ae78651a6
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -26,7 +26,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -64,7 +64,7 @@ Devuelve `200 OK` con el objeto de suscripción actualizado. El campo `status` s
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/cancel \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```

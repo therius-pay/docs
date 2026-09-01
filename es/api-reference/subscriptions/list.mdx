@@ -4,7 +4,7 @@ sidebarTitle: "Listar suscripciones"
 description: "Recupera una lista paginada de suscripciones con filtros por estado, correo, plan, bandera de tarjeta y rango de fecha de creación."
 openapi: "GET /subscription"
 translationOf: api-reference/subscriptions/list.mdx
-translationSourceHash: 8cf06b7b2946ef97d02f81f21291158496c72e93f1837a267c96e9189ad583de
+translationSourceHash: aceb03b62283ad4a423ada78fe8e948d35982204feba629a3d60cbcb15a6f487
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -22,7 +22,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 ### Parámetros de consulta
@@ -98,7 +98,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 
 ```bash cURL
 curl "https://api.therius.io/v1/subscription?merchantCode=MERCHANT_001&status=active&per_page=50" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

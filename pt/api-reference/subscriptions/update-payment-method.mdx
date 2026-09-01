@@ -4,7 +4,7 @@ sidebarTitle: "Atualizar cartão arquivado"
 description: "Substitua o cartão de uma assinatura. Mudar o cartão é uma CIT e pode precisar de 3D Secure — registre um cartão cuja CIT você já fez, ou execute uma CIT de valor zero aqui."
 openapi: "POST /subscription/{id}/payment-method"
 translationOf: api-reference/subscriptions/update-payment-method.mdx
-translationSourceHash: ab73b0f34309af6f730ee8e8f8a7274cfef37c591dffe101b06f3ada2b452f8b
+translationSourceHash: 37fcfbaf59b7b3b99a953d834c557ac9a5ea0085463acc5fb8720215c2ac8d7a
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -70,7 +70,7 @@ Como a própria CIT deste endpoint não pode fazer um desafio de 3DS, a forma co
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -144,7 +144,7 @@ Devolve `200 OK` com o objeto de assinatura atualizado.
 
 ```bash Record mode
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",
@@ -154,7 +154,7 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-met
 
 ```bash CIT mode
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",

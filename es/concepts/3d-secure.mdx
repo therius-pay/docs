@@ -3,7 +3,7 @@ title: 'Therius 3D Secure: manejo de desafíos y reanudación'
 sidebarTitle: '3D Secure'
 description: 'Cómo Therius maneja automáticamente los desafíos de 3DS2 — incluida la pausa pending_3ds, la recolección de datos del dispositivo y el endpoint de reanudación.'
 translationOf: concepts/3d-secure.mdx
-translationSourceHash: ade41118cb8ebc6f3a6f9449178f7760c79d54b52d2e985341db6c73d30966f7
+translationSourceHash: d85c700b0df2ec998e1371dd9bd3be7478b02705e809936f31cbd6349e6ec6c4
 ---
 
 3D Secure (3DS2) es un protocolo de autenticación que muchos emisores de tarjeta requieren antes de autorizar un pago — en particular en Europa bajo las reglas de Autenticación Reforzada de Cliente (SCA) de PSD2. Cuando se activa un desafío 3DS, el titular de la tarjeta debe verificar su identidad con su banco antes de que el pago pueda continuar. Therius gestiona todo el flujo de 3DS2 en tu nombre: envías una solicitud normal de compra o autorización y manejas uno de dos posibles estados de pausa si el emisor requiere autenticación adicional.
@@ -41,7 +41,7 @@ Llama a `POST /payment/resume` con el `sessionId` de la respuesta pausada. No se
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/resume \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "sessionId": "<sessionId from pending_3ds response>"

@@ -3,7 +3,7 @@ title: 'Aceite métodos de pagamento alternativos (APMs) com o Therius'
 sidebarTitle: 'Métodos alternativos'
 description: 'Adicione Pix, ACH, iDEAL, Klarna e mais de 40 métodos de pagamento pelo mesmo endpoint de purchase — basta mudar o campo paymentMethod.'
 translationOf: guides/alternative-payment-methods.mdx
-translationSourceHash: 8fe083913298b8d08a2c1d30e019bfd427f8a4176eb3acb3d3ad30e0ec5bc955
+translationSourceHash: 5b6d62c83d3a78addcd7d34a3f2ef434756c6a5668e573c613147341a1ce2a08
 ---
 
 Todo método de pagamento alternativo (APM) do catálogo do Therius passa pelo mesmo endpoint `POST /payment/purchase` que uma cobrança de cartão padrão. Você não precisa de uma integração diferente por método — você troca de método de pagamento definindo o campo `paymentMethod` e fornecendo uma carga específica do método em `apm`. Isso significa que você pode adicionar Pix no Brasil, ACH nos EUA e Klarna na Europa sem tocar na sua lógica central de checkout.
@@ -70,7 +70,7 @@ Quando um método devolve `status: "pending_action"`, você precisa enviar o seu
     ```bash
     # Inclua as URLs de retorno e de cancelamento na sua requisição de purchase
     curl -X POST https://api.therius.io/v1/payment/purchase \
-      -H "Authorization: Bearer sk_live_your_key_here" \
+      -H "Authorization: Bearer prv_production_your_key_here" \
       -H "Idempotency-Key: <uuid>" \
       -H "Content-Type: application/json" \
       -d '{

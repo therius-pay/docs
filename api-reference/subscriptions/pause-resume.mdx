@@ -22,7 +22,7 @@ Pausing a subscription stops all renewal attempts without cancelling it, preserv
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -49,7 +49,7 @@ Pausing a subscription stops all renewal attempts without cancelling it, preserv
 
 ```bash
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```
@@ -78,7 +78,7 @@ On success, Therius fires `subscription.resumed`. If a `suspended` subscription 
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -113,7 +113,7 @@ On success, Therius fires `subscription.resumed`. If a `suspended` subscription 
 
 ```bash
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/resume \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```
@@ -122,7 +122,7 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/resume \
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```

@@ -4,7 +4,7 @@ sidebarTitle: 'Quick Start'
 description: 'Send a real sandbox payment with the Therius API in under five minutes — no SDK needed, no frontend setup. Just a key and a curl command.'
 ---
 
-The Therius sandbox is a fully isolated test environment — requests hit a test-provider stub, no real money moves, and no card network is involved. Your sandbox key starts with `sk_sandbox_...` and every Therius account includes one by default. Everything you build here works identically in production; you only swap the key and base URL when you are ready to go live.
+The Therius sandbox is a fully isolated test environment — requests hit a test-provider stub, no real money moves, and no card network is involved. Your sandbox key starts with `prv_sandbox_...` and every Therius account includes one by default. Everything you build here works identically in production; you only swap the key and base URL when you are ready to go live.
 
 <Warning>
   The `Idempotency-Key` header is mandatory in production. Retrying a network timeout without it can double-charge a customer. The examples below include it so you build the habit from the start.
@@ -14,17 +14,17 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
 
 <Steps>
   <Step title="Get a sandbox key">
-    Log in to your Therius dashboard and copy the key labeled **Sandbox Secret Key**. It looks like `sk_sandbox_xxxxxxxxxxxx`.
+    Log in to your Therius dashboard and copy the key labeled **Sandbox Secret Key**. It looks like `prv_sandbox_xxxxxxxxxxxx`.
 
-    Every request to `https://api-sandbox.therius.io/v1` sends this key as `Authorization: Bearer sk_sandbox_...`. The key prefix (`sk_sandbox_`) tells Therius to route the request to the sandbox environment automatically — no extra configuration needed.
+    Every request to `https://api-sandbox.therius.io/v1` sends this key as `Authorization: Bearer prv_sandbox_...`. The key prefix (`prv_sandbox_`) tells Therius to route the request to the sandbox environment automatically — no extra configuration needed.
   </Step>
 
   <Step title="Fire your first purchase">
-    Paste the following command into your terminal, replacing `sk_sandbox_your_key_here` with your actual sandbox key.
+    Paste the following command into your terminal, replacing `prv_sandbox_your_key_here` with your actual sandbox key.
 
     ```bash
     curl -X POST https://api-sandbox.therius.io/v1/payment/purchase \
-      -H "Authorization: Bearer sk_sandbox_your_key_here" \
+      -H "Authorization: Bearer prv_sandbox_your_key_here" \
       -H "Content-Type: application/json" \
       -H "Idempotency-Key: $(uuidgen)" \
       -d '{
@@ -69,7 +69,7 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
 
     ```bash
     curl https://api-sandbox.therius.io/v1/payment/inquiry/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e \
-      -H "Authorization: Bearer sk_sandbox_your_key_here"
+      -H "Authorization: Bearer prv_sandbox_your_key_here"
     ```
 
     The response returns the same `PaymentResponse` shape as the original purchase, including the current `status` and full amount details.
@@ -113,7 +113,7 @@ The Therius sandbox is a fully isolated test environment — requests hit a test
   <Step title="Go live">
     When you are ready to accept real payments, make two changes:
 
-    1. Replace `sk_sandbox_...` with your production key `sk_live_...`.
+    1. Replace `prv_sandbox_...` with your production key `prv_production_...`.
     2. Point your requests at `https://api.therius.io/v1` instead of `https://api-sandbox.therius.io/v1`.
 
     No other code changes are required. The key prefix selects the environment automatically.

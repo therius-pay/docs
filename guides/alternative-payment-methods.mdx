@@ -68,7 +68,7 @@ When a method returns `status: "pending_action"`, you must send your customer to
     ```bash
     # Include return and cancel URLs in your purchase request
     curl -X POST https://api.therius.io/v1/payment/purchase \
-      -H "Authorization: Bearer sk_live_your_key_here" \
+      -H "Authorization: Bearer prv_production_your_key_here" \
       -H "Idempotency-Key: <uuid>" \
       -H "Content-Type: application/json" \
       -d '{

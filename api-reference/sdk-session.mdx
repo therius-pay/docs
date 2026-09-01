@@ -20,7 +20,7 @@ openapi: "POST /sdk/session"
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -113,7 +113,7 @@ See [Session Bootstrap](/sdk/session-bootstrap) in the JS SDK tab for how to use
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/sdk/session \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "customerId": "customer-42", "country": "US", "currency": "USD", "amount": 4999 }'
 ```

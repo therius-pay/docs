@@ -4,7 +4,7 @@ sidebarTitle: "Crear una sesión del SDK"
 description: "Intercambia tu clave de API privada por un client token de corta duración para inicializar el SDK JS de Therius en el navegador de forma segura."
 openapi: "POST /sdk/session"
 translationOf: api-reference/sdk-session.mdx
-translationSourceHash: 0ee936db9ea73189535c691d72c4a7b0bee8a4a536f9c91ae8c7c7f3b244dbe5
+translationSourceHash: 8c436b7071bcca4b5e40c4e3ea5036bc23e6f15a9702363a1fc108406f2f8742
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -26,7 +26,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -119,7 +119,7 @@ Ver [Bootstrap de sesión](/sdk/session-bootstrap) en la pestaña JS SDK para sa
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/sdk/session \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "customerId": "customer-42", "country": "US", "currency": "USD", "amount": 4999 }'
 ```

@@ -4,7 +4,7 @@ sidebarTitle: "Pausar e retomar o faturamento"
 description: "Pause uma assinatura para parar o faturamento temporariamente sem cancelá-la. Retome o faturamento de um estado pausado ou suspenso com uma única chamada de API."
 openapi: "POST /subscription/{id}/pause"
 translationOf: api-reference/subscriptions/pause-resume.mdx
-translationSourceHash: 2165ffc2add930eefeda68a4b793a143b2fadf4f43a81123647808e06241fd86
+translationSourceHash: 03f67f79e4160345e40d1b7c4773d8130e398cbd10d80bda0760a1ca2d240f88
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -28,7 +28,7 @@ Pausar uma assinatura para todas as tentativas de renovação sem cancelá-la, p
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -55,7 +55,7 @@ Pausar uma assinatura para todas as tentativas de renovação sem cancelá-la, p
 
 ```bash
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```
@@ -84,7 +84,7 @@ Em caso de sucesso, o Therius dispara `subscription.resumed`. Se uma assinatura 
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -119,7 +119,7 @@ Em caso de sucesso, o Therius dispara `subscription.resumed`. Se uma assinatura 
 
 ```bash
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/resume \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```
@@ -128,7 +128,7 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/resume \
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001" }'
 ```

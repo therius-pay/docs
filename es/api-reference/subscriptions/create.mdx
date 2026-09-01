@@ -4,7 +4,7 @@ sidebarTitle: "Crear una suscripción"
 description: "Inscribe a un cliente en un plan y cobra el primer ciclo de facturación. Realiza la CIT inicial que registra el mandato recurrente."
 openapi: "POST /subscription"
 translationOf: api-reference/subscriptions/create.mdx
-translationSourceHash: 8f585b23ed11e8e4cb54bed01e78bb79dd9cd1f897e660acfd90923a97c8b294
+translationSourceHash: 098935bce3b0612a6bcc93024732b51d30616586e486846110459c598fb74a6b
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -68,7 +68,7 @@ Ejecuta tú mismo una CIT con capacidad 3DS, luego adjunta el resultado:
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -167,7 +167,7 @@ Una solicitud exitosa devuelve `201 Created` con el objeto de suscripción compl
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

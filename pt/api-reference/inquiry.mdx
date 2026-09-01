@@ -4,7 +4,7 @@ sidebarTitle: "Consultar um pagamento"
 description: "Recupere o status atual e os detalhes completos de qualquer pagamento usando o paymentCode dele ou o UUID de pagamento interno."
 openapi: "GET /payment/inquiry/{id}"
 translationOf: api-reference/inquiry.mdx
-translationSourceHash: af587219f3fa6e946366ca09d31d1084cf6d765b87de829000adc3af47231c1d
+translationSourceHash: 98b3549d743ca19a40a234cad3bd80a7da96de5f52d993c75c34b33aa2e5447d
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -20,7 +20,7 @@ Use `GET /payment/inquiry/{id}` para recuperar o status atual e os detalhes de q
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  A sua chave de API secreta como token Bearer: `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox). Obrigatória para a maioria das requisições.
+  A sua chave de API secreta como token Bearer: `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox). Obrigatória para a maioria das requisições.
 </ParamField>
 
 <ParamField header="X-Environment" type="string">
@@ -97,7 +97,7 @@ Use `GET /payment/inquiry/{id}` para recuperar o status atual e os detalhes de q
 
 ```bash
 curl https://api.therius.io/v1/payment/inquiry/PC-9876543210 \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 ```json
@@ -136,7 +136,7 @@ curl https://api-sandbox.therius.io/v1/payment/inquiry/PC-1234567890 \
 
 ```bash cURL
 curl https://api.therius.io/v1/payment/inquiry/PC-1234567890 \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

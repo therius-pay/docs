@@ -16,7 +16,7 @@ openapi: "GET /subscription/{id}"
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 ### Path Parameters
@@ -85,7 +85,7 @@ Returns the full subscription object on success. Key fields include:
 
 ```bash cURL
 curl "https://api.therius.io/v1/subscription/sub_abc123def456?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

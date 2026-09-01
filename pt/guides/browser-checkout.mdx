@@ -3,7 +3,7 @@ title: 'Crie um checkout de navegador seguro para PCI com o SDK JS do Therius'
 sidebarTitle: 'Checkout de navegador'
 description: 'Guia passo a passo para criar um checkout de navegador seguro para PCI com os campos hospedados do Therius ou o widget drop-in — os números de cartão nunca tocam o seu servidor.'
 translationOf: guides/browser-checkout.mdx
-translationSourceHash: edac302005303b8fe937f0d415ebb4875ccc1ed3bd6ee6ef7ccf85601c5319b6
+translationSourceHash: fa1d8d4ab504cbd82246845674f36870a8de0add1da1f09f969b9401e9353283
 ---
 
 Quando um cliente digita um número de cartão na sua página de checkout, esse número nunca deve passar pelo seu próprio servidor. Encaminhar dados de cartão brutos pelo seu backend amplia drasticamente o seu escopo de conformidade PCI DSS e cria uma responsabilidade direta se o seu servidor for comprometido. O SDK de JavaScript do Therius elimina esse risco renderizando os campos sensíveis dentro de iframes isolados hospedados na infraestrutura do Therius. A sua página nunca vê o número de cartão bruto — em vez disso, o SDK devolve um **nonce** de uso único e de curta duração que o seu servidor troca por uma cobrança. O nonce é inútil fora do contexto da sua conta de lojista e expira após 15 minutos.
@@ -45,7 +45,7 @@ O Therius oferece duas formas de coletar os dados de cartão no navegador:
 
   ```bash
   curl -X POST https://api.therius.io/v1/sdk/session \
-    -H "Authorization: Bearer sk_live_your_key_here" \
+    -H "Authorization: Bearer prv_production_your_key_here" \
     -H "Content-Type: application/json" \
     -d '{ "customerId": "customer-42", "country": "US" }'
   ```
@@ -111,7 +111,7 @@ O Therius oferece duas formas de coletar os dados de cartão no navegador:
 
       ```bash
       curl -X POST https://api.therius.io/v1/payment/purchase \
-        -H "Authorization: Bearer sk_live_your_key_here" \
+        -H "Authorization: Bearer prv_production_your_key_here" \
         -H "Idempotency-Key: <uuid>" \
         -H "Content-Type: application/json" \
         -d '{

@@ -3,10 +3,10 @@ title: 'Inicio rápido de Therius: tu primer pago en 5 minutos'
 sidebarTitle: 'Inicio rápido'
 description: 'Realiza un pago real de sandbox con la API de Therius en menos de cinco minutos — sin SDK, sin configuración de frontend. Solo una clave y un comando curl.'
 translationOf: quickstart.mdx
-translationSourceHash: f65ba464eaac96e12658b2382b70302788436e73ec83e66217c89e67107c4aca
+translationSourceHash: 3012bdede0ca22c4e9aa189e5890b68f12cb24aebf800164c86b0c12f3b28215
 ---
 
-El sandbox de Therius es un entorno de pruebas totalmente aislado — las solicitudes llegan a un stub de proveedor de prueba, no se mueve dinero real y no interviene ninguna red de tarjetas. Tu clave de sandbox comienza con `sk_sandbox_...` y toda cuenta de Therius incluye una por defecto. Todo lo que construyas aquí funciona de forma idéntica en producción; solo cambias la clave y la URL base cuando estés listo para salir a producción.
+El sandbox de Therius es un entorno de pruebas totalmente aislado — las solicitudes llegan a un stub de proveedor de prueba, no se mueve dinero real y no interviene ninguna red de tarjetas. Tu clave de sandbox comienza con `prv_sandbox_...` y toda cuenta de Therius incluye una por defecto. Todo lo que construyas aquí funciona de forma idéntica en producción; solo cambias la clave y la URL base cuando estés listo para salir a producción.
 
 <Warning>
   El encabezado `Idempotency-Key` es obligatorio en producción. Reintentar un timeout de red sin él puede cobrarle dos veces a un cliente. Los ejemplos siguientes lo incluyen para que adoptes el hábito desde el principio.
@@ -16,17 +16,17 @@ El sandbox de Therius es un entorno de pruebas totalmente aislado — las solici
 
 <Steps>
   <Step title="Obtén una clave de sandbox">
-    Inicia sesión en tu panel de Therius y copia la clave etiquetada como **Sandbox Secret Key**. Se ve así: `sk_sandbox_xxxxxxxxxxxx`.
+    Inicia sesión en tu panel de Therius y copia la clave etiquetada como **Sandbox Secret Key**. Se ve así: `prv_sandbox_xxxxxxxxxxxx`.
 
-    Toda solicitud a `https://api-sandbox.therius.io/v1` envía esta clave como `Authorization: Bearer sk_sandbox_...`. El prefijo de la clave (`sk_sandbox_`) le indica a Therius que enrute la solicitud al entorno de sandbox automáticamente — sin configuración adicional.
+    Toda solicitud a `https://api-sandbox.therius.io/v1` envía esta clave como `Authorization: Bearer prv_sandbox_...`. El prefijo de la clave (`prv_sandbox_`) le indica a Therius que enrute la solicitud al entorno de sandbox automáticamente — sin configuración adicional.
   </Step>
 
   <Step title="Realiza tu primera compra">
-    Pega el siguiente comando en tu terminal, reemplazando `sk_sandbox_your_key_here` por tu clave de sandbox real.
+    Pega el siguiente comando en tu terminal, reemplazando `prv_sandbox_your_key_here` por tu clave de sandbox real.
 
     ```bash
     curl -X POST https://api-sandbox.therius.io/v1/payment/purchase \
-      -H "Authorization: Bearer sk_sandbox_your_key_here" \
+      -H "Authorization: Bearer prv_sandbox_your_key_here" \
       -H "Content-Type: application/json" \
       -H "Idempotency-Key: $(uuidgen)" \
       -d '{
@@ -71,7 +71,7 @@ El sandbox de Therius es un entorno de pruebas totalmente aislado — las solici
 
     ```bash
     curl https://api-sandbox.therius.io/v1/payment/inquiry/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e \
-      -H "Authorization: Bearer sk_sandbox_your_key_here"
+      -H "Authorization: Bearer prv_sandbox_your_key_here"
     ```
 
     La respuesta devuelve la misma estructura `PaymentResponse` que la compra original, incluido el `status` actual y todos los detalles del monto.
@@ -115,7 +115,7 @@ El sandbox de Therius es un entorno de pruebas totalmente aislado — las solici
   <Step title="Sal a producción">
     Cuando estés listo para aceptar pagos reales, haz dos cambios:
 
-    1. Reemplaza `sk_sandbox_...` por tu clave de producción `sk_live_...`.
+    1. Reemplaza `prv_sandbox_...` por tu clave de producción `prv_production_...`.
     2. Dirige tus solicitudes a `https://api.therius.io/v1` en lugar de `https://api-sandbox.therius.io/v1`.
 
     No se requiere ningún otro cambio de código. El prefijo de la clave selecciona el entorno automáticamente.

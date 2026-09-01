@@ -20,7 +20,7 @@ Use `POST /subscription/{id}/change-plan` to move a subscriber to a different pl
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -71,7 +71,7 @@ Returns `200 OK` with the updated subscription object. When `applyAt` is `"next_
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/change-plan \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

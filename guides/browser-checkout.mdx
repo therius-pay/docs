@@ -43,7 +43,7 @@ Therius gives you two ways to collect card details in the browser:
 
   ```bash
   curl -X POST https://api.therius.io/v1/sdk/session \
-    -H "Authorization: Bearer sk_live_your_key_here" \
+    -H "Authorization: Bearer prv_production_your_key_here" \
     -H "Content-Type: application/json" \
     -d '{ "customerId": "customer-42", "country": "US" }'
   ```
@@ -109,7 +109,7 @@ Therius gives you two ways to collect card details in the browser:
 
       ```bash
       curl -X POST https://api.therius.io/v1/payment/purchase \
-        -H "Authorization: Bearer sk_live_your_key_here" \
+        -H "Authorization: Bearer prv_production_your_key_here" \
         -H "Idempotency-Key: <uuid>" \
         -H "Content-Type: application/json" \
         -d '{

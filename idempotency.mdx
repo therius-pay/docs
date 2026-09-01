@@ -41,7 +41,7 @@ Keys expire after **24 hours**. After expiry, the same UUID can be reused freely
 IDEM_KEY=$(uuidgen)
 
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $IDEM_KEY" \
   -H "Content-Type: application/json" \
   -d '{ ... }'
@@ -57,7 +57,7 @@ import { v4 as uuidv4 } from 'uuid';
 const response = await fetch('https://api.therius.io/v1/payment/purchase', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer sk_live_your_key_here',
+    'Authorization': 'Bearer prv_production_your_key_here',
     'Idempotency-Key': uuidv4(),
     'Content-Type': 'application/json',
   },

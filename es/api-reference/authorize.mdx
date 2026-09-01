@@ -4,7 +4,7 @@ sidebarTitle: "Autorizar un pago"
 description: "Reserva fondos sin capturarlos. Llama a capture más tarde para liquidar, o a cancel para liberar la retención. Ideal para bienes físicos."
 openapi: "POST /payment/authorization"
 translationOf: api-reference/authorize.mdx
-translationSourceHash: b10ec63c8a83658c173913aab230446caa60bd4558e653926342229da859355d
+translationSourceHash: 87b6017d8d5a49b17ad84c913f0cdc0fd43a0cea358c48ca098faf98b315b5c8
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -20,7 +20,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  Tu clave de API secreta como token Bearer: `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox).
+  Tu clave de API secreta como token Bearer: `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -183,7 +183,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/authorization \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

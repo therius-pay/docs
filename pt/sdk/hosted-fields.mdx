@@ -3,7 +3,7 @@ title: 'Campos hospedados: integração de um formulário de cartão personaliza
 sidebarTitle: 'Campos hospedados'
 description: 'Use os campos hospedados do Therius para renderizar inputs de cartão dentro de iframes que a sua página controla. Obtenha um nonce de uso único para cobrar no seu servidor — sem PAN no seu DOM.'
 translationOf: sdk/hosted-fields.mdx
-translationSourceHash: 4ffd861b6e46456a1db89e40931b4759ae710643f4055f228e1b448f7512068f
+translationSourceHash: 7bce6585bf1189bc054689a5e909afdc0f71ae2f3c3c9ac4d6216f931aee0bee
 ---
 
 Os campos hospedados permitem que você construa um formulário de cartão totalmente personalizado mantendo os números de cartão brutos fora do seu DOM. Cada campo — número do cartão, validade e CVV — é renderizado dentro de um iframe hospedado pelo Therius. O seu JavaScript nunca vê o PAN; ele só recebe um nonce de uso único que o seu servidor usa para concluir a cobrança.
@@ -65,7 +65,7 @@ O seu servidor passa o nonce como `card.nonceData.nonce` ao chamar `POST /paymen
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d '{
     "merchantCode": "MERCHANT_001",

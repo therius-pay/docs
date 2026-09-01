@@ -13,7 +13,7 @@ The sandbox environment is a fully isolated test environment backed by a test-pr
 | Property | Value |
 |---|---|
 | **Base URL** | `https://api-sandbox.therius.io/v1` |
-| **Private key prefix** | `sk_sandbox_xxx` |
+| **Private key prefix** | `prv_sandbox_xxx` |
 | **Public key prefix** | `pub_sandbox_xxx` |
 | **Charges** | None — test stub only |
 | **Idempotency-Key** | Optional (but build the habit now) |
@@ -41,8 +41,8 @@ The production environment processes real payments over live card networks. Ever
 | Property | Value |
 |---|---|
 | **Base URL** | `https://api.therius.io/v1` |
-| **Private key prefix** | `sk_live_xxx` |
-| **Public key prefix** | `pub_live_xxx` |
+| **Private key prefix** | `prv_production_xxx` |
+| **Public key prefix** | `pub_production_xxx` |
 | **Charges** | Real — live card networks |
 | **Idempotency-Key** | Mandatory on all mutating calls |
 
@@ -51,7 +51,7 @@ The production environment processes real payments over live card networks. Ever
 | | Sandbox | Production |
 |---|---|---|
 | **Base URL** | `api-sandbox.therius.io/v1` | `api.therius.io/v1` |
-| **Key prefix** | `sk_sandbox_` / `pub_sandbox_` | `sk_live_` / `pub_live_` |
+| **Key prefix** | `prv_sandbox_` / `pub_sandbox_` | `prv_production_` / `pub_production_` |
 | **Real charges** | No | Yes |
 | **Idempotency-Key** | Recommended | Mandatory |
 | **Test cards** | `4111111111111111`, `4000000000000002` | Real cards only |
@@ -60,7 +60,7 @@ The production environment processes real payments over live card networks. Ever
 
 To move from sandbox to production, make two changes in your configuration:
 
-1. Replace `sk_sandbox_...` with `sk_live_...` (and `pub_sandbox_...` with `pub_live_...`).
+1. Replace `prv_sandbox_...` with `prv_production_...` (and `pub_sandbox_...` with `pub_production_...`).
 2. Update the base URL from `https://api-sandbox.therius.io/v1` to `https://api.therius.io/v1`.
 
 No other code changes are required. The same request bodies, the same response shapes, and the same endpoint paths work in both environments.

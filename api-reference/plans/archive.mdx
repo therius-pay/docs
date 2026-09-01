@@ -20,7 +20,7 @@ openapi: "DELETE /subscription/plan/{id}"
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 ### Path Parameters
@@ -48,7 +48,7 @@ Returns `200 OK` with a confirmation object.
 
 ```bash cURL
 curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?merchantCode=MERCHANT_001" \
-  -H "Authorization: Bearer sk_live_your_key_here"
+  -H "Authorization: Bearer prv_production_your_key_here"
 ```
 
 </RequestExample>

@@ -4,7 +4,7 @@ sidebarTitle: "Editar um plano"
 description: "Atualize o nome, a descrição, o status ativo ou a disponibilidade por país de um plano. O valor e o intervalo não podem ser alterados."
 openapi: "PATCH /subscription/plan/{id}"
 translationOf: api-reference/plans/update.mdx
-translationSourceHash: 4267421b6cc743bf3115b96d3fa2f7cc91a916e4d643a39efb5c00a02569c2ad
+translationSourceHash: 28e3c0bb85989a735549c29cb17f92864c5307885d5418e3d944cb2a736c8b27
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -26,7 +26,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -82,7 +82,7 @@ Devolve `200 OK` com o objeto de plano atualizado completo.
 
 ```bash cURL
 curl -X PATCH https://api.therius.io/v1/subscription/plan/42 \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",

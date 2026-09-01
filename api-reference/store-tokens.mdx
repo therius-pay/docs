@@ -20,7 +20,7 @@ openapi: "POST /token"
 ### Headers
 
 <ParamField header="Authorization" type="string" required>
-  `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox) — your merchant private API key.
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
@@ -179,7 +179,7 @@ A successful request returns `200 OK` with the merchant code, the echoed shopper
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/token \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "merchantCode": "MERCHANT_001",

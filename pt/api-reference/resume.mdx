@@ -4,7 +4,7 @@ sidebarTitle: "Retomar um pagamento pendente"
 description: "Retome um pagamento pausado por um desafio 3DS. Passe o sessionId da resposta pending_3ds. Nenhuma chave de API é necessária."
 openapi: "POST /payment/resume"
 translationOf: api-reference/resume.mdx
-translationSourceHash: ab1affc1394d5496ece90615645bf1ae8518e1a4bca37eed64137b34062ac28b
+translationSourceHash: 1efe70a95d19646e10701f86507b507e2a68f770fc00fa712ae1ac8ef52289e7
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -104,7 +104,7 @@ A resposta é um objeto `paymentResponse` completo com o status final do pagamen
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/resume \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "sessionId": "<sessionId from pending_3ds response>" }'
 ```

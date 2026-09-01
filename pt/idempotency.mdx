@@ -3,7 +3,7 @@ title: 'Idempotência: refaça pagamentos sem duplicatas com segurança'
 sidebarTitle: 'Idempotência'
 description: 'Evite cobranças duplicadas usando o cabeçalho Idempotency-Key em todas as chamadas da API do Therius que alteram dados. Saiba como a idempotência funciona e as boas práticas.'
 translationOf: idempotency.mdx
-translationSourceHash: 658585d059efa82d1184b65ad2c42c04d30f8cb46b8756cba9117fa4321672e1
+translationSourceHash: a1ed3fda74bfcb23c62edca2707d18206d61bca5c8c9556a95a1ef6ac1e71210
 ---
 
 Quando você envia uma requisição de pagamento pela rede, pode encontrar uma situação em que sua conexão cai antes de você receber uma resposta. Nesse ponto você não tem como saber se o servidor processou o pagamento ou não. Se você refizer a requisição sem uma chave de idempotência, corre o risco de cobrar o cliente duas vezes. O cabeçalho `Idempotency-Key` resolve isso: ele permite refazer uma requisição quantas vezes forem necessárias com a garantia de que o Therius a processará exatamente uma vez.
@@ -43,7 +43,7 @@ As chaves expiram após **24 horas**. Depois da expiração, o mesmo UUID pode s
 IDEM_KEY=$(uuidgen)
 
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $IDEM_KEY" \
   -H "Content-Type: application/json" \
   -d '{ ... }'
@@ -59,7 +59,7 @@ import { v4 as uuidv4 } from 'uuid';
 const response = await fetch('https://api.therius.io/v1/payment/purchase', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer sk_live_your_key_here',
+    'Authorization': 'Bearer prv_production_your_key_here',
     'Idempotency-Key': uuidv4(),
     'Content-Type': 'application/json',
   },

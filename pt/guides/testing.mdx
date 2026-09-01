@@ -3,10 +3,10 @@ title: 'Cartões de teste e cenários de sandbox para o Therius'
 sidebarTitle: 'Testes'
 description: 'Cada cartão de teste de sandbox, motivo de recusa e cenário de 3D Secure para a API do Therius — além de como os fluxos de APM e de assinatura se comportam no sandbox.'
 translationOf: guides/testing.mdx
-translationSourceHash: e23c617d49f0157308cc57db60727eba798dfcbe8025a9c18e2d4e9f2f8219d0
+translationSourceHash: cd7e11f7d68645b068fabf50708eb8b43d13407304f4a2fe77114b0a56821303
 ---
 
-O sandbox do Therius (`https://api-sandbox.therius.io/v1`, chaves `sk_sandbox_...`) é um ambiente totalmente isolado. As requisições são tratadas pelo **provedor de sandbox do Therius** integrado, que simula respostas sem tocar em uma rede de cartão — nenhum dinheiro real se move. Esta página lista os dados de teste que impulsionam cada resultado simulado.
+O sandbox do Therius (`https://api-sandbox.therius.io/v1`, chaves `prv_sandbox_...`) é um ambiente totalmente isolado. As requisições são tratadas pelo **provedor de sandbox do Therius** integrado, que simula respostas sem tocar em uma rede de cartão — nenhum dinheiro real se move. Esta página lista os dados de teste que impulsionam cada resultado simulado.
 
 <Note>
   Os números de cartão abaixo se aplicam ao provedor de sandbox do Therius integrado. Se você configurou um **provedor real em modo sandbox/teste** (por exemplo, chaves de teste da Stripe), o conjunto de cartões de teste próprio desse provedor se aplica no lugar — use os números da documentação dele.
@@ -14,7 +14,7 @@ O sandbox do Therius (`https://api-sandbox.therius.io/v1`, chaves `sk_sandbox_..
 
 ## Usar os cartões de teste
 
-- Envie a requisição com uma chave `sk_sandbox_...`, ou adicione o cabeçalho `X-Environment: sandbox`.
+- Envie a requisição com uma chave `prv_sandbox_...`, ou adicione o cabeçalho `X-Environment: sandbox`.
 - Use **qualquer validade futura** (por exemplo `12/29`) e **qualquer CVV de 3 dígitos** (por exemplo `123`).
 - American Express exige um CVV de **4 dígitos** (por exemplo `1234`).
 
@@ -72,7 +72,7 @@ O 3DS é habilitado por **rota**, não por cartão — a decisão de step-up é 
     Redirecione para `actionRequired.url`. O simulador de sandbox trata o desafio como concluído instantaneamente — nenhuma interação é necessária.
   </Step>
   <Step title="Retome o pagamento">
-    Chame `POST /payment/resume` com `{ "sessionId": "..." }` e o seu cabeçalho `Authorization: Bearer sk_sandbox_...` — o prefixo `sk_sandbox_` roteia para o sandbox. As sessões são de uso único e expiram após 15 minutos. Um resume bem-sucedido devolve o `PaymentResponse` final com `status: "captured"`.
+    Chame `POST /payment/resume` com `{ "sessionId": "..." }` e o seu cabeçalho `Authorization: Bearer prv_sandbox_...` — o prefixo `prv_sandbox_` roteia para o sandbox. As sessões são de uso único e expiram após 15 minutos. Um resume bem-sucedido devolve o `PaymentResponse` final com `status: "captured"`.
   </Step>
 </Steps>
 

@@ -63,7 +63,7 @@ Your server passes the nonce as `card.nonceData.nonce` when calling `POST /payme
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d '{
     "merchantCode": "MERCHANT_001",

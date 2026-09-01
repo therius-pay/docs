@@ -3,10 +3,10 @@ title: 'Tarjetas de prueba y escenarios de sandbox para Therius'
 sidebarTitle: 'Pruebas'
 description: 'Cada tarjeta de prueba de sandbox, razón de rechazo y escenario de 3D Secure para la API de Therius — además de cómo se comportan los flujos de APM y suscripción en el sandbox.'
 translationOf: guides/testing.mdx
-translationSourceHash: e23c617d49f0157308cc57db60727eba798dfcbe8025a9c18e2d4e9f2f8219d0
+translationSourceHash: cd7e11f7d68645b068fabf50708eb8b43d13407304f4a2fe77114b0a56821303
 ---
 
-El sandbox de Therius (`https://api-sandbox.therius.io/v1`, claves `sk_sandbox_...`) es un entorno totalmente aislado. Las solicitudes son manejadas por el **proveedor de sandbox de Therius** integrado, que simula respuestas sin tocar una red de tarjetas — no se mueve dinero real. Esta página lista los datos de prueba que impulsan cada resultado simulado.
+El sandbox de Therius (`https://api-sandbox.therius.io/v1`, claves `prv_sandbox_...`) es un entorno totalmente aislado. Las solicitudes son manejadas por el **proveedor de sandbox de Therius** integrado, que simula respuestas sin tocar una red de tarjetas — no se mueve dinero real. Esta página lista los datos de prueba que impulsan cada resultado simulado.
 
 <Note>
   Los números de tarjeta de abajo se aplican al proveedor de sandbox de Therius integrado. Si has configurado un **proveedor real en modo sandbox/test** (por ejemplo, claves de test de Stripe), en su lugar se aplica el conjunto de tarjetas de prueba propio de ese proveedor — usa los números de su documentación.
@@ -14,7 +14,7 @@ El sandbox de Therius (`https://api-sandbox.therius.io/v1`, claves `sk_sandbox_.
 
 ## Usar las tarjetas de prueba
 
-- Envía la solicitud con una clave `sk_sandbox_...`, o agrega el encabezado `X-Environment: sandbox`.
+- Envía la solicitud con una clave `prv_sandbox_...`, o agrega el encabezado `X-Environment: sandbox`.
 - Usa **cualquier vencimiento futuro** (por ejemplo `12/29`) y **cualquier CVV de 3 dígitos** (por ejemplo `123`).
 - American Express requiere un CVV de **4 dígitos** (por ejemplo `1234`).
 
@@ -72,7 +72,7 @@ Cada uno de estos números de tarjeta devuelve un estado `declined` con un `refu
     Redirige a `actionRequired.url`. El simulador de sandbox trata el desafío como completado al instante — no se requiere interacción.
   </Step>
   <Step title="Reanuda el pago">
-    Llama a `POST /payment/resume` con `{ "sessionId": "..." }` y tu encabezado `Authorization: Bearer sk_sandbox_...` — el prefijo `sk_sandbox_` enruta al sandbox. Las sesiones son de un solo uso y expiran después de 15 minutos. Un resume exitoso devuelve el `PaymentResponse` final con `status: "captured"`.
+    Llama a `POST /payment/resume` con `{ "sessionId": "..." }` y tu encabezado `Authorization: Bearer prv_sandbox_...` — el prefijo `prv_sandbox_` enruta al sandbox. Las sesiones son de un solo uso y expiran después de 15 minutos. Un resume exitoso devuelve el `PaymentResponse` final con `status: "captured"`.
   </Step>
 </Steps>
 

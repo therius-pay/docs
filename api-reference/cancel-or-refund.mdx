@@ -24,7 +24,7 @@ If you don't want to track whether a payment is in the `authorized` or `captured
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
+  Your secret API key as a Bearer token: `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -87,7 +87,7 @@ If you don't want to track whether a payment is in the `authorized` or `captured
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/cancel_or_refund \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

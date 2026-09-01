@@ -3,7 +3,7 @@ title: 'Bootstrap de sesión del SDK: intercambia la clave por un client token'
 sidebarTitle: 'Bootstrap de sesión'
 description: 'Crea un client token JWT de corta duración llamando a POST /sdk/session desde tu servidor. Pasa el token al navegador para inicializar el SDK JS de Therius.'
 translationOf: sdk/session-bootstrap.mdx
-translationSourceHash: 5780e395c7252284c854e1b7cf6b07cafc203621ced591db9810802f5612729e
+translationSourceHash: cef7eb2b411acec6b24ad99fc4440fffccab18aed82a012d180c6a5a6d2e3a27
 ---
 
 Antes de usar el SDK JS en el navegador, tu servidor debe intercambiar tu clave de API privada por un client token JWT de corta duración. Este token es lo que recibe el navegador — tu clave privada sin procesar nunca sale de tu servidor. Cada token está limitado a una sola sesión de checkout y expira después de 30 minutos.
@@ -14,7 +14,7 @@ Llama a `POST /sdk/session` desde tu backend con tu clave de API privada en el e
 
 ```bash
 curl -X POST https://api.therius.io/v1/sdk/session \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "customerId": "customer-42", "country": "US" }'
 ```
@@ -64,7 +64,7 @@ El SDK valida el token de inmediato. Si el token falta o está mal formado, `The
 Los client tokens expiran después de **30 minutos**. Crea un token fresco para cada nueva sesión de checkout — no caches ni reutilices tokens entre sesiones o cargas de página.
 
 <Warning>
-  Nunca llames a `POST /sdk/session` desde el navegador. Requiere tu clave de API privada (`sk_live_...`). Exponer esa clave del lado del cliente permitiría a cualquiera crear sesiones y hacer cobros contra tu cuenta. Haz siempre esta llamada solo desde tu backend.
+  Nunca llames a `POST /sdk/session` desde el navegador. Requiere tu clave de API privada (`prv_production_...`). Exponer esa clave del lado del cliente permitiría a cualquiera crear sesiones y hacer cobros contra tu cuenta. Haz siempre esta llamada solo desde tu backend.
 </Warning>
 
 ## Referencia

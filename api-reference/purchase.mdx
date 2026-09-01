@@ -14,7 +14,7 @@ openapi: "POST /payment/purchase"
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  Your secret API key as a Bearer token: `Bearer sk_live_xxx` (production) or `Bearer sk_sandbox_xxx` (sandbox).
+  Your secret API key as a Bearer token: `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -335,7 +335,7 @@ openapi: "POST /payment/purchase"
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{

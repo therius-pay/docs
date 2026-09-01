@@ -12,14 +12,14 @@ Therius issues four kinds of credentials. The prefix on every key tells you exac
 
 | Key prefix | Type | Used by | Environment |
 |---|---|---|---|
-| `sk_live_xxx` | Private key | Your server | Production |
-| `sk_sandbox_xxx` | Private key | Your server | Sandbox |
-| `pub_live_xxx` | Public key | JS SDK (client token JWT) | Production |
+| `prv_production_xxx` | Private key | Your server | Production |
+| `prv_sandbox_xxx` | Private key | Your server | Sandbox |
+| `pub_production_xxx` | Public key | JS SDK (client token JWT) | Production |
 | `pub_sandbox_xxx` | Public key | JS SDK (client token JWT) | Sandbox |
 
-**Private keys** (`sk_live_xxx`, `sk_sandbox_xxx`) authenticate all payment endpoints. Keep these on your server only — in environment variables, not in source code.
+**Private keys** (`prv_production_xxx`, `prv_sandbox_xxx`) authenticate all payment endpoints. Keep these on your server only — in environment variables, not in source code.
 
-**Public keys** (`pub_live_xxx`, `pub_sandbox_xxx`) are embedded inside the short-lived client token JWT that your server mints and passes to the browser. The browser never sees a raw private key.
+**Public keys** (`pub_production_xxx`, `pub_sandbox_xxx`) are embedded inside the short-lived client token JWT that your server mints and passes to the browser. The browser never sees a raw private key.
 
 **SDK client token (JWT)** — a short-lived token (valid for 30 minutes) that your server creates by calling `POST /sdk/session` with your private key. This is the only credential the browser ever holds. If the token expires, your server mints a fresh one.
 
@@ -29,13 +29,13 @@ Send your private key as a `Bearer` token in the `Authorization` header on every
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{ "merchantCode": "MERCHANT_001", ... }'
 ```
 
 <Note>
-  The key prefix determines the environment automatically. A key starting with `sk_sandbox_` always routes to the sandbox — you do not need a separate environment flag or a different code path.
+  The key prefix determines the environment automatically. A key starting with `prv_sandbox_` always routes to the sandbox — you do not need a separate environment flag or a different code path.
 </Note>
 
 ## SDK Session Token Flow
@@ -52,7 +52,7 @@ Your private key never leaves your server. If you ever need to refresh the sessi
 ```bash
 # Your server mints a client token
 curl -X POST https://api.therius.io/v1/sdk/session \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -75,7 +75,7 @@ Pass `clientToken` to the JS SDK initialiser — never log it or store it beyond
 ## Security Tips
 
 <Warning>
-  Never embed a private key (`sk_live_xxx` or `sk_sandbox_xxx`) in frontend JavaScript, a mobile app binary, or a public repository. Treat private keys the same way you treat database passwords.
+  Never embed a private key (`prv_production_xxx` or `prv_sandbox_xxx`) in frontend JavaScript, a mobile app binary, or a public repository. Treat private keys the same way you treat database passwords.
 </Warning>
 
 - Store keys in environment variables or a secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault).

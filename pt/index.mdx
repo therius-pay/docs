@@ -3,7 +3,7 @@ title: "API de pagamentos do Therius — Início da documentação para desenvol
 sidebarTitle: "Início"
 description: "Aceite cartões, carteiras e mais de 40 métodos de pagamento alternativos globalmente com uma única API unificada. Processe o seu primeiro pagamento em minutos."
 translationOf: index.mdx
-translationSourceHash: af59d7f76863df8b4961a35b1a6c61214e90454065d11fa545327dcbd7b446b5
+translationSourceHash: f9dfa5badf8935b03d1e6951c249b29398d5a4852ef26438d00d340ee454bb1d
 ---
 
 O Therius é uma API de pagamentos que permite aceitar cartões, carteiras digitais e mais de 40 métodos de pagamento alternativos — Pix, ACH, iDEAL, Klarna, Apple Pay e mais — por meio de um único endpoint. Esta documentação cobre tudo, da sua primeira chamada em sandbox à gestão de assinaturas, ao tratamento de desafios de 3D Secure e à integração do SDK JS para uma coleta de cartões segura no navegador.
@@ -40,16 +40,16 @@ Cada pagamento — cartão, carteira ou método alternativo — passa pelo mesmo
 
 <Steps>
   <Step title="Obtenha uma chave de sandbox">
-    A sua conta do Therius inclui uma chave de sandbox (`sk_sandbox_...`) de fábrica. Ela roteia para um stub de provedor de teste — nada toca uma rede de cartão real.
+    A sua conta do Therius inclui uma chave de sandbox (`prv_sandbox_...`) de fábrica. Ela roteia para um stub de provedor de teste — nada toca uma rede de cartão real.
   </Step>
   <Step title="Faça a sua primeira chamada de API">
-    Envie a sua chave como `Authorization: Bearer sk_live_...` e dispare um `POST /payment/purchase`. Veja o [Início rápido](/quickstart) para um comando curl pronto para executar.
+    Envie a sua chave como `Authorization: Bearer prv_production_...` e dispare um `POST /payment/purchase`. Veja o [Início rápido](/quickstart) para um comando curl pronto para executar.
   </Step>
   <Step title="Integre o SDK JS (se for baseado em navegador)">
     Se você está aceitando cartões de um navegador, use o [SDK JS](/sdk/overview) para que os números de cartão brutos nunca transitem pelo seu servidor. O SDK emite um nonce de uso único; o seu servidor cobra o nonce.
   </Step>
   <Step title="Entre em produção">
-    Troque `sk_sandbox_...` por `sk_live_...` e aponte para `api.therius.io`. Nenhuma outra mudança de código é necessária.
+    Troque `prv_sandbox_...` por `prv_production_...` e aponte para `api.therius.io`. Nenhuma outra mudança de código é necessária.
   </Step>
 </Steps>
 

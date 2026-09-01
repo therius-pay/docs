@@ -3,7 +3,7 @@ title: 'Campos alojados: integración de un formulario de tarjeta personalizado 
 sidebarTitle: 'Campos alojados'
 description: 'Usa los campos alojados de Therius para renderizar inputs de tarjeta dentro de iframes que tu página controla. Obtén un nonce de un solo uso para cobrar en tu servidor — sin PAN en tu DOM.'
 translationOf: sdk/hosted-fields.mdx
-translationSourceHash: 4ffd861b6e46456a1db89e40931b4759ae710643f4055f228e1b448f7512068f
+translationSourceHash: 7bce6585bf1189bc054689a5e909afdc0f71ae2f3c3c9ac4d6216f931aee0bee
 ---
 
 Los campos alojados te permiten construir un formulario de tarjeta completamente personalizado manteniendo los números de tarjeta sin procesar fuera de tu DOM. Cada campo — número de tarjeta, vencimiento y CVV — se renderiza dentro de un iframe alojado por Therius. Tu JavaScript nunca ve el PAN; solo recibe un nonce de un solo uso que tu servidor usa para completar el cobro.
@@ -65,7 +65,7 @@ Tu servidor pasa el nonce como `card.nonceData.nonce` al llamar a `POST /payment
 
 ```bash
 curl -X POST https://api.therius.io/v1/payment/purchase \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -d '{
     "merchantCode": "MERCHANT_001",

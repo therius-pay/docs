@@ -4,7 +4,7 @@ sidebarTitle: "Cancelar un pago"
 description: "Anula un pago que aún está en el estado autorizado. Los fondos se liberan de inmediato. No se puede cancelar un pago capturado."
 openapi: "POST /payment/{id}/cancel"
 translationOf: api-reference/cancel.mdx
-translationSourceHash: 7b92904176556fc9289c80ba23f9c73f284c630803ec06e1397cce3d68555c4f
+translationSourceHash: 76a75002ca46320e63690f96053d729cc092cf07937b55e9bc60487c16404494
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -30,7 +30,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ### Headers
 
 <ParamField header="Authorization" type="string">
-  Tu clave de API secreta como token Bearer: `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox).
+  Tu clave de API secreta como token Bearer: `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox).
 </ParamField>
 
 <ParamField header="Idempotency-Key" type="string">
@@ -88,7 +88,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 
 ```bash cURL
 curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e/cancel \
-  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
