@@ -1,0 +1,68 @@
+---
+title: "Archiva un plan de suscripción"
+sidebarTitle: "Archive a Plan"
+description: "Archiva de forma suave un plan para que ninguna suscripción nueva pueda inscribirse. Los suscriptores existentes continúan hasta su próxima renovación."
+openapi: "DELETE /subscription/plan/{id}"
+translationOf: api-reference/plans/archive.mdx
+translationSourceHash: 3d1c381a9d01dc3569e5041c340decffa20e300b92b5803c6df2c41da56d5f4c
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`DELETE /subscription/plan/{id}` archiva de forma suave un plan estableciendo su timestamp `deletedAt`. Las suscripciones existentes en el plan archivado continúan facturando normalmente. En la próxima fecha de renovación de cada suscriptor, Therius cancelará esas suscripciones en lugar de renovarlas. Ningún suscriptor nuevo puede inscribirse en un plan archivado.
+
+<SchemaLangNote lang="es" />
+
+<Note>
+  Esto es un borrado suave — el plan no se elimina de forma permanente. Sigue visible en los resultados de lista con su timestamp `deletedAt` poblado, así que conservas un rastro de auditoría completo.
+</Note>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `DELETE /subscription/plan/{id}`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="integer" required>
+  El ID entero del plan a archivar.
+</ParamField>
+
+## Respuesta
+
+Devuelve `200 OK` con un objeto de confirmación.
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `404` | Plan no encontrado. |
+| `409` | El plan ya está archivado. |
+
+<Warning>
+  Una vez que un plan está archivado, los suscriptores existentes serán cancelados automáticamente en su próxima renovación. Migra a los suscriptores a un plan nuevo usando [change-plan](/api-reference/subscriptions/change-plan) antes de archivar si quieres que continúen facturando sin interrupción.
+</Warning>
+
+<RequestExample>
+
+```bash cURL
+curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{ "archived": true }
+```
+
+</ResponseExample>

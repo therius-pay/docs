@@ -1,0 +1,144 @@
+---
+title: "Pausa y reanuda una suscripción"
+sidebarTitle: "Pause & Resume Billing"
+description: "Pausa una suscripción para detener la facturación temporalmente sin cancelarla. Reanuda la facturación desde un estado pausado o suspendido con una sola llamada de API."
+openapi: "POST /subscription/{id}/pause"
+translationOf: api-reference/subscriptions/pause-resume.mdx
+translationSourceHash: 2165ffc2add930eefeda68a4b793a143b2fadf4f43a81123647808e06241fd86
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Pausar una suscripción detiene todos los intentos de renovación sin cancelarla, preservando el registro de la suscripción y todo su historial. Reanudar restaura la facturación y recalcula la próxima fecha de facturación hacia adelante desde la fecha actual — al cliente no se le cobra por el tiempo transcurrido mientras estuvo pausada.
+
+<SchemaLangNote lang="es" />
+
+## Pausar una suscripción
+
+`POST /subscription/{id}/pause` suspende la facturación de una suscripción activa. Dispara el evento de webhook `subscription.paused` y mueve la suscripción al estado `paused`.
+
+<Note>
+  Solo las suscripciones en estado `active`, `trialing` o `past_due` se pueden pausar. Intentar pausar una suscripción `cancelled`, `completed` o ya `paused` devuelve un error `400`.
+</Note>
+
+### Solicitud
+
+**Endpoint:** `POST /subscription/{id}/pause`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción a pausar.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "merchantCode": "MERCHANT_001" }'
+```
+
+---
+
+## Reanudar una suscripción
+
+`POST /subscription/{id}/resume` restaura la facturación de una suscripción pausada o suspendida, con un comportamiento ligeramente diferente según el estado actual.
+
+| Estado actual | Comportamiento al reanudar |
+| --- | --- |
+| `paused` | Facturación restaurada. Próxima fecha de facturación = hoy \+ intervalo del plan. |
+| `suspended` | Therius intenta un recobro inmediato (MIT). Devuelve `402` si se rechaza. |
+
+<Warning>
+  Si reanudar desde `suspended` devuelve `402` (tarjeta rechazada), primero debes actualizar el método de pago usando `POST /subscription/{id}/payment-method` antes de reintentar la reanudación.
+</Warning>
+
+En caso de éxito, Therius dispara `subscription.resumed`. Si una suscripción `suspended` se revive con un cobro exitoso, también dispara `subscription.reactivated`.
+
+### Solicitud
+
+**Endpoint:** `POST /subscription/{id}/resume`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción a reanudar.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+### Errores
+
+| Código | Significado |
+| --- | --- |
+| `400` | La suscripción no está en un estado reanudable (p. ej. ya `active` o `cancelled`). |
+| `402` | La reanudación desde `suspended` falló — el recobro inmediato fue rechazado. |
+| `404` | Suscripción no encontrada. |
+
+### Ejemplo
+
+```bash
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/resume \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "merchantCode": "MERCHANT_001" }'
+```
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "merchantCode": "MERCHANT_001" }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

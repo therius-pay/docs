@@ -1,0 +1,105 @@
+---
+title: "Recupera los detalles de una suscripción"
+sidebarTitle: "Get a Subscription"
+description: "Recupera los detalles completos de una suscripción, incluyendo su cronología de eventos, historial de facturas y estado actual de gestión de cobros."
+openapi: "GET /subscription/{id}"
+translationOf: api-reference/subscriptions/get.mdx
+translationSourceHash: 977f424afb70fa42e57d8368aac87c6202eb3835702d0e88acbd01f052207f2a
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`GET /subscription/{id}` devuelve el registro completo de la suscripción para un UUID dado, incluyendo la cronología de eventos, el historial de facturas y el estado actual de gestión de cobros. Usa este endpoint para inspeccionar todo sobre una suscripción en una sola llamada — desde los detalles de la CIT original hasta cada renovación y cambio de estado.
+
+<SchemaLangNote lang="es" />
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `GET /subscription/{id}`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción a recuperar.
+</ParamField>
+
+### Parámetros de consulta
+
+<ParamField query="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio. Requerido si tu clave está limitada a varias cuentas de comercio.
+</ParamField>
+
+## Respuesta
+
+Devuelve el objeto de suscripción completo en caso de éxito. Los campos clave incluyen:
+
+<ResponseField name="id" type="string">
+  UUID de la suscripción.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Estado actual de la suscripción. Uno de: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused` o `completed`.
+</ResponseField>
+
+<ResponseField name="planId" type="integer">
+  ID del plan en el que está inscrita esta suscripción.
+</ResponseField>
+
+<ResponseField name="customerEmail" type="string">
+  Dirección de correo del suscriptor.
+</ResponseField>
+
+<ResponseField name="currentPeriodStart" type="string">
+  Timestamp ISO 8601 del inicio del período de facturación actual.
+</ResponseField>
+
+<ResponseField name="currentPeriodEnd" type="string">
+  Timestamp ISO 8601 del fin del período de facturación actual (próxima renovación programada).
+</ResponseField>
+
+<ResponseField name="dunningState" type="object">
+  Estado actual de gestión de cobros, incluyendo el conteo de reintentos y el timestamp del próximo reintento. Presente cuando `status` es `past_due` o `suspended`.
+</ResponseField>
+
+<ResponseField name="invoices" type="array">
+  Array de objetos de factura por cada ciclo de facturación intentado en esta suscripción.
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  Cronología de eventos de ciclo de vida en orden cronológico (p. ej. `created`, `trialing`, `activated`, `past_due`, `payment_method_updated`).
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Pares clave/valor arbitrarios adjuntados en la creación o vía actualizaciones.
+</ResponseField>
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `404` | No se encontró ninguna suscripción para el `id` dado bajo tu cuenta de comercio. |
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/sub_abc123def456?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

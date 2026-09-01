@@ -1,0 +1,105 @@
+---
+title: "Recupere os detalhes de uma assinatura"
+sidebarTitle: "Get a Subscription"
+description: "Recupere os detalhes completos de uma assinatura, incluindo a linha do tempo de eventos, o histórico de faturas e o estado atual de gestão de cobranças."
+openapi: "GET /subscription/{id}"
+translationOf: api-reference/subscriptions/get.mdx
+translationSourceHash: 977f424afb70fa42e57d8368aac87c6202eb3835702d0e88acbd01f052207f2a
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`GET /subscription/{id}` devolve o registro completo da assinatura para um UUID dado, incluindo a linha do tempo de eventos, o histórico de faturas e o estado atual de gestão de cobranças. Use este endpoint para inspecionar tudo sobre uma assinatura em uma única chamada — dos detalhes da CIT original a cada renovação e mudança de status.
+
+<SchemaLangNote lang="pt" />
+
+## Requisição
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `GET /subscription/{id}`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+</ParamField>
+
+### Parâmetros de caminho
+
+<ParamField path="id" type="string" required>
+  O UUID da assinatura a recuperar.
+</ParamField>
+
+### Parâmetros de consulta
+
+<ParamField query="merchantCode" type="string" required>
+  O seu identificador de conta de lojista. Obrigatório se a sua chave estiver limitada a várias contas de lojista.
+</ParamField>
+
+## Resposta
+
+Devolve o objeto de assinatura completo em caso de sucesso. Os campos principais incluem:
+
+<ResponseField name="id" type="string">
+  UUID da assinatura.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status atual da assinatura. Um de: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused` ou `completed`.
+</ResponseField>
+
+<ResponseField name="planId" type="integer">
+  ID do plano no qual esta assinatura está inscrita.
+</ResponseField>
+
+<ResponseField name="customerEmail" type="string">
+  Endereço de e-mail do assinante.
+</ResponseField>
+
+<ResponseField name="currentPeriodStart" type="string">
+  Timestamp ISO 8601 do início do período de faturamento atual.
+</ResponseField>
+
+<ResponseField name="currentPeriodEnd" type="string">
+  Timestamp ISO 8601 do fim do período de faturamento atual (próxima renovação programada).
+</ResponseField>
+
+<ResponseField name="dunningState" type="object">
+  Estado atual de gestão de cobranças, incluindo a contagem de novas tentativas e o timestamp da próxima nova tentativa. Presente quando `status` é `past_due` ou `suspended`.
+</ResponseField>
+
+<ResponseField name="invoices" type="array">
+  Array de objetos de fatura para cada ciclo de faturamento tentado nesta assinatura.
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  Linha do tempo cronológica de eventos de ciclo de vida (p. ex. `created`, `trialing`, `activated`, `past_due`, `payment_method_updated`).
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Pares chave/valor arbitrários anexados na criação ou por atualizações.
+</ResponseField>
+
+## Erros
+
+| Código | Significado |
+| --- | --- |
+| `404` | Nenhuma assinatura encontrada para o `id` dado sob a sua conta de lojista. |
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/sub_abc123def456?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

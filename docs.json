@@ -271,6 +271,28 @@
                 ]
               },
               {
+                "group": "Suscripciones",
+                "pages": [
+                  "es/api-reference/subscriptions/create",
+                  "es/api-reference/subscriptions/list",
+                  "es/api-reference/subscriptions/get",
+                  "es/api-reference/subscriptions/cancel",
+                  "es/api-reference/subscriptions/pause-resume",
+                  "es/api-reference/subscriptions/change-plan",
+                  "es/api-reference/subscriptions/update-payment-method",
+                  "es/api-reference/subscriptions/invoices"
+                ]
+              },
+              {
+                "group": "Planes",
+                "pages": [
+                  "es/api-reference/plans/create",
+                  "es/api-reference/plans/list",
+                  "es/api-reference/plans/update",
+                  "es/api-reference/plans/archive"
+                ]
+              },
+              {
                 "group": "Sesión del SDK",
                 "pages": [
                   "es/api-reference/sdk-session"
@@ -393,6 +415,28 @@
                 "group": "Tokenização",
                 "pages": [
                   "pt/api-reference/store-tokens"
+                ]
+              },
+              {
+                "group": "Assinaturas",
+                "pages": [
+                  "pt/api-reference/subscriptions/create",
+                  "pt/api-reference/subscriptions/list",
+                  "pt/api-reference/subscriptions/get",
+                  "pt/api-reference/subscriptions/cancel",
+                  "pt/api-reference/subscriptions/pause-resume",
+                  "pt/api-reference/subscriptions/change-plan",
+                  "pt/api-reference/subscriptions/update-payment-method",
+                  "pt/api-reference/subscriptions/invoices"
+                ]
+              },
+              {
+                "group": "Planos",
+                "pages": [
+                  "pt/api-reference/plans/create",
+                  "pt/api-reference/plans/list",
+                  "pt/api-reference/plans/update",
+                  "pt/api-reference/plans/archive"
                 ]
               },
               {

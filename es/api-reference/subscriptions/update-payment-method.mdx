@@ -1,0 +1,173 @@
+---
+title: "Actualiza el método de pago de una suscripción"
+sidebarTitle: "Update Card on File"
+description: "Reemplaza la tarjeta de una suscripción. Cambiar la tarjeta es una CIT y puede necesitar 3D Secure — registra una tarjeta que ya CIT'aste, o ejecuta una CIT de valor cero aquí."
+openapi: "POST /subscription/{id}/payment-method"
+translationOf: api-reference/subscriptions/update-payment-method.mdx
+translationSourceHash: ab73b0f34309af6f730ee8e8f8a7274cfef37c591dffe101b06f3ada2b452f8b
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /subscription/{id}/payment-method` reemplaza la tarjeta de una suscripción y su mandato
+de credencial almacenada, de modo que cada futura renovación (una Merchant Initiated Transaction, MIT)
+cite el `networkTransactionId` / `networkReferenceId` correcto.
+
+Cambiar la tarjeta de una suscripción es **siempre una Cardholder Initiated Transaction (CIT)**,
+y una CIT puede requerir 3D Secure. Hay dos formas de suministrar la nueva tarjeta:
+
+<SchemaLangNote lang="es" />
+
+<CardGroup cols={2}>
+  <Card title="Modo record — card.tokenData" icon="shield-check">
+    El token es una tarjeta que **ya completó una CIT** en otro lugar. Tú ejecutas la CIT (con
+    3DS si el emisor lo pide) a través de `/payment/authorization` o `/payment/purchase`, luego
+    adjuntas el token resultante aquí. Sin llamada al gateway, sin 3DS en este endpoint.
+    **Usa esto para cualquier tarjeta que necesite 3D Secure.**
+  </Card>
+  <Card title="Modo CIT — card.nonceData / card.cardData" icon="credit-card">
+    Ejecuta una CIT de valor cero aquí para validar la tarjeta y establecer un mandato fresco, y puede
+    **reactivar una suscripción `suspended`**. Esta CIT **no puede llevar a cabo un desafío de 3D Secure**
+    — una tarjeta que requiere 3DS fallará.
+  </Card>
+</CardGroup>
+
+Cualquiera de los dos modos reinicia la secuencia de reintentos de la bandera y dispara `subscription.payment_method_updated`.
+
+## Modo record (recomendado)
+
+Como la propia CIT de este endpoint no puede hacer un desafío de 3DS, la forma confiable de cambiar una tarjeta
+es ejecutar tú mismo la CIT donde 3DS *sí* está soportado, luego registrarla:
+
+<Steps>
+  <Step title="Ejecuta una CIT con capacidad 3DS">
+    Llama a `/payment/authorization` (una autorización de valor cero o pequeña) o `/payment/purchase` con
+    `card.nonceData.tokenize: true` (o `card.cardData.tokenize: true`) **y** un `shopper.id`.
+    Maneja cualquier `actionRequired` / desafío de 3DS con el SDK JS exactamente como lo harías para un
+    pago normal. En caso de éxito la respuesta devuelve un vault token y
+    `card.networkTransactionId` / `card.networkReferenceId`.
+  </Step>
+  <Step title="Adjunta el token a la suscripción">
+    `POST /subscription/{id}/payment-method` con `card.tokenData.token` establecido en ese vault
+    token. Therius lee el mandato que el token almacenó en su CIT — no necesitas pasar
+    `networkTransactionId` tú mismo. (Pásalo explícitamente solo cuando la tarjeta fue CIT'ada
+    fuera de Therius.)
+  </Step>
+</Steps>
+
+<Note>
+  El modo record **no puede reactivar una suscripción `suspended`** — no ejecuta ningún cobro para
+  confirmar que la nueva tarjeta funciona. Para una suscripción suspendida, usa el modo CIT (abajo), o ejecuta un
+  cobro de recuperación tú mismo primero.
+</Note>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/{id}/payment-method`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción a actualizar.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+<ParamField body="card" type="object" required>
+  La nueva tarjeta. Proporciona **exactamente un** instrumento.
+
+  <Expandable title="instrumentos de card — elige uno">
+    <ParamField body="card.tokenData.token" type="string">
+      **Modo record.** Un vault token `vt_...` para una tarjeta que ya completó una CIT.
+    </ParamField>
+    <ParamField body="card.nonceData.nonce" type="string">
+      **Modo CIT.** Un nonce fresco de un solo uso del SDK JS de Therius.
+    </ParamField>
+    <ParamField body="card.cardData" type="object">
+      **Modo CIT.** Campos de tarjeta sin procesar — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`,
+      `cardholderName` (+ `documentNumber`, `cardAddress` opcionales). Solo servidores que cumplen
+      PCI DSS.
+    </ParamField>
+    <ParamField body="card.networkTransactionId" type="string">
+      **Modo record, opcional.** El Network Transaction ID de la CIT original. Solo se
+      necesita al registrar una tarjeta que fue CIT'ada fuera de Therius — de lo contrario se lee
+      del token.
+    </ParamField>
+    <ParamField body="card.networkReferenceId" type="string">
+      **Modo record, opcional.** El TLID de Mastercard (o el equivalente de la bandera) de la
+      CIT original, junto con `networkTransactionId`. Por defecto es `networkTransactionId`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Respuesta
+
+Devuelve `200 OK` con el objeto de suscripción actualizado.
+
+### Eventos de webhook disparados
+
+| Evento | Cuándo |
+| --- | --- |
+| `subscription.payment_method_updated` | Siempre, en caso de éxito. La carga lleva `mode: "record"` para el modo record. |
+| `subscription.reactivated` | Solo en modo CIT — se dispara adicionalmente cuando la suscripción estaba `suspended` y la nueva CIT + el cobro de recuperación tuvieron éxito. |
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `400` | Falta la tarjeta; modo record en una suscripción `suspended`; el token no lleva ningún mandato de CIT y no se pasó ningún `networkTransactionId`; o la suscripción está `cancelled`. |
+| `402` | Modo CIT — la autorización de la tarjeta fue rechazada. |
+| `404` | Suscripción no encontrada. |
+| `422` | Ningún instrumento de tarjeta / instrumento inválido, o un nonce expirado/usado. |
+
+<RequestExample>
+
+```bash Record mode
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "card": { "tokenData": { "token": "vt_9f2c..." } }
+  }'
+```
+
+```bash CIT mode
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/payment-method \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "card": { "nonceData": { "nonce": "<fresh nonce from JS SDK>" } }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

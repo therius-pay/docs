@@ -1,0 +1,116 @@
+---
+title: "Liste e filtre assinaturas"
+sidebarTitle: "List Subscriptions"
+description: "Recupere uma lista paginada de assinaturas com filtros por status, e-mail, plano, bandeira do cartão e intervalo de data de criação."
+openapi: "GET /subscription"
+translationOf: api-reference/subscriptions/list.mdx
+translationSourceHash: 8cf06b7b2946ef97d02f81f21291158496c72e93f1837a267c96e9189ad583de
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`GET /subscription` devolve uma lista paginada das suas assinaturas. Filtre por status, e-mail ou nome do cliente, plano, bandeira do cartão ou intervalo de data de criação para restringir os resultados. Os resultados são devolvidos em ordem cronológica inversa por data de criação.
+
+<SchemaLangNote lang="pt" />
+
+## Requisição
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `GET /subscription`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+</ParamField>
+
+### Parâmetros de consulta
+
+<ParamField query="merchantCode" type="string" required>
+  O seu identificador de conta de lojista. Obrigatório se a sua chave de API estiver associada a várias contas de lojista.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filtra por status de assinatura. Valores aceitos: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused` ou `completed`.
+</ParamField>
+
+<ParamField query="email" type="string">
+  Correspondência parcial no endereço de e-mail do cliente. Busca de substring sem distinção de maiúsculas.
+</ParamField>
+
+<ParamField query="customer_name" type="string">
+  Correspondência parcial no nome do cliente. Busca de substring sem distinção de maiúsculas.
+</ParamField>
+
+<ParamField query="plan_id" type="string">
+  Filtra os resultados para assinaturas de um ID de plano específico.
+</ParamField>
+
+<ParamField query="card_brand" type="string">
+  Filtra por bandeira do cartão, p. ex. `"visa"`, `"mastercard"`, `"amex"`.
+</ParamField>
+
+<ParamField query="created_from" type="string">
+  Limite inferior de data ISO 8601 para o filtro `createdAt`, p. ex. `"2025-01-01"`. Inclusivo.
+</ParamField>
+
+<ParamField query="created_to" type="string">
+  Limite superior de data ISO 8601 para o filtro `createdAt`, p. ex. `"2025-06-30"`. Inclusivo.
+</ParamField>
+
+<ParamField query="page" default="1" type="integer">
+  Número da página a recuperar, começando em `1`.
+</ParamField>
+
+<ParamField query="per_page" default="20" type="integer">
+  Número de resultados por página. Mínimo `1`, máximo `200`.
+</ParamField>
+
+## Resposta
+
+```json
+{
+  "data": [ ],
+  "total": 142,
+  "page": 1,
+  "per_page": 20
+}
+```
+
+<ResponseField name="data" type="array">
+  Array de objetos de assinatura que correspondem aos filtros aplicados.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Número total de assinaturas que correspondem aos filtros, em todas as páginas.
+</ResponseField>
+
+<ResponseField name="page" type="integer">
+  O número da página atual devolvido.
+</ResponseField>
+
+<ResponseField name="per_page" type="integer">
+  O número de resultados por página aplicado a esta resposta.
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription?merchantCode=MERCHANT_001&status=active&per_page=50" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>
+
+<Tip>
+  Combine `created_from` e `created_to` com `status=past_due` para identificar os assinantes que ficaram inadimplentes dentro de uma janela específica — útil para campanhas de recuperação direcionadas.
+</Tip>

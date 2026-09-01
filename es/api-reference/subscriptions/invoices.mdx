@@ -1,0 +1,149 @@
+---
+title: "Lista y recupera facturas de suscripción"
+sidebarTitle: "View Invoices"
+description: "Lista las facturas de una suscripción o recupera una sola factura por su UUID."
+openapi: "GET /subscription/{id}/invoice"
+translationOf: api-reference/subscriptions/invoices.mdx
+translationSourceHash: f281c054789b179531f27935caeae5fac62ca682dbc73ea49a9a8dcb3a1c683f
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Therius crea una factura por ciclo de facturación. Cada factura registra el intento o los intentos de cobro para ese ciclo, el resultado y el monto final cobrado. Puedes recuperar todas las facturas de una suscripción, o buscar una factura específica directamente por su UUID.
+
+<SchemaLangNote lang="es" />
+
+## Lista las facturas de una suscripción
+
+`GET /subscription/{id}/invoice` devuelve todas las facturas de una suscripción dada en orden cronológico inverso.
+
+### Solicitud
+
+**Endpoint:** `GET /subscription/{id}/invoice`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción cuyas facturas quieres listar.
+</ParamField>
+
+### Parámetros de consulta
+
+<ParamField query="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+### Respuesta
+
+Devuelve un array de objetos de factura para la suscripción.
+
+<ResponseField name="id" type="string">
+  UUID de la factura.
+</ResponseField>
+
+<ResponseField name="subscriptionId" type="string">
+  UUID de la suscripción padre.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Estado de la factura — p. ej. `paid`, `failed`, `pending`.
+</ResponseField>
+
+<ResponseField name="amount" type="integer">
+  Monto cobrado en unidades menores.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  Código de moneda ISO 4217.
+</ResponseField>
+
+<ResponseField name="attemptCount" type="integer">
+  Número de intentos de cobro realizados para esta factura (incluyendo reintentos).
+</ResponseField>
+
+<ResponseField name="paidAt" type="string">
+  Timestamp ISO 8601 de cuándo se pagó la factura con éxito. `null` si aún no se ha pagado.
+</ResponseField>
+
+<ResponseField name="periodStart" type="string">
+  Inicio del período de facturación que cubre esta factura.
+</ResponseField>
+
+<ResponseField name="periodEnd" type="string">
+  Fin del período de facturación que cubre esta factura.
+</ResponseField>
+
+### Ejemplo
+
+```bash
+curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+---
+
+## Recupera una factura específica
+
+`GET /subscription/invoice/{id}` recupera una sola factura por su UUID, independientemente de a qué suscripción pertenezca.
+
+### Solicitud
+
+**Endpoint:** `GET /subscription/invoice/{id}`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la factura a recuperar.
+</ParamField>
+
+### Parámetros de consulta
+
+<ParamField query="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+### Respuesta
+
+Devuelve un solo objeto de factura con los mismos campos descritos arriba.
+
+### Errores
+
+| Código | Significado |
+| --- | --- |
+| `404` | Factura no encontrada bajo tu cuenta de comercio. |
+
+### Ejemplo
+
+```bash
+curl "https://api.therius.io/v1/subscription/invoice/inv_xyz789abc?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

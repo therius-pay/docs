@@ -1,0 +1,80 @@
+---
+title: "Cancela una suscripción"
+sidebarTitle: "Cancel a Subscription"
+description: "Cancela una suscripción de inmediato. Dispara el evento de webhook subscription.cancelled. No se puede deshacer."
+openapi: "POST /subscription/{id}/cancel"
+translationOf: api-reference/subscriptions/cancel.mdx
+translationSourceHash: a826862ab20dc3d11a4dcdcb1b164179959094e03064c12b9b68ec5537a70cb6
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /subscription/{id}/cancel` cancela una suscripción de inmediato. Esta acción dispara el evento de webhook `subscription.cancelled` y no se puede deshacer — la suscripción pasa a estado `cancelled` de forma permanente. Si quieres detener la facturación temporalmente sin perder la suscripción, usa [Pausar y reanudar](/api-reference/subscriptions/pause-resume) en su lugar.
+
+<SchemaLangNote lang="es" />
+
+<Warning>
+  La cancelación es permanente. No hay endpoint de reinstauración. Si necesitas volver a inscribir a un cliente cancelado, crea una nueva suscripción usando `POST /subscription`.
+</Warning>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/{id}/cancel`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción a cancelar.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+## Respuesta
+
+Devuelve `200 OK` con el objeto de suscripción actualizado. El campo `status` será `cancelled` y se establecerá un timestamp `cancelledAt`.
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `400` | La suscripción ya está cancelada. |
+| `404` | Suscripción no encontrada. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/cancel \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{ "merchantCode": "MERCHANT_001" }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>

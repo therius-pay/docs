@@ -1,0 +1,102 @@
+---
+title: "Sube o baja de nivel una suscripción"
+sidebarTitle: "Change Plan"
+description: "Mueve a un suscriptor a un plan diferente de inmediato (con prorrateo) o en el próximo ciclo de facturación."
+openapi: "POST /subscription/{id}/change-plan"
+translationOf: api-reference/subscriptions/change-plan.mdx
+translationSourceHash: a074b9365352f6c394d71a5dd20487a55b331cefff9d574e8d94c2f21d70b186
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Usa `POST /subscription/{id}/change-plan` para mover a un suscriptor a un plan diferente — ya sea subiendo a un nivel de mayor precio o bajando a uno menor. Tú controlas si el cambio surte efecto de inmediato (con el prorrateo cobrado o absorbido hoy) o se programa para el próximo ciclo de facturación.
+
+<SchemaLangNote lang="es" />
+
+<Note>
+  El `amount`, el `interval` y el `intervalCount` de un plan son inmutables una vez que tiene suscriptores activos. Para cambiar el precio o la cadencia, crea un plan nuevo y usa este endpoint para migrar suscriptores a él.
+</Note>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/{id}/change-plan`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="string" required>
+  El UUID de la suscripción a actualizar.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+<ParamField body="planId" type="integer" required>
+  ID del plan de destino al que mover al suscriptor. El plan debe estar activo y disponible en el país del suscriptor.
+</ParamField>
+
+<ParamField body="applyAt" default="next_billing" type="string">
+  Controla cuándo surte efecto el cambio de plan. Valores aceptados:
+
+  - `"now"` — se aplica de inmediato. Para subidas de nivel, la diferencia prorrateada por el resto del período de facturación actual se cobra como una Merchant Initiated Transaction (MIT) de inmediato. Para bajadas de nivel, no se emite reembolso; el precio menor surte efecto desde el próximo ciclo.
+  - `"next_billing"` — el nuevo plan se programa para la próxima fecha de renovación del suscriptor. El período de facturación actual se completa a la tarifa existente.
+</ParamField>
+
+## Respuesta
+
+Devuelve `200 OK` con el objeto de suscripción actualizado. Cuando `applyAt` es `"next_billing"`, la respuesta incluye un objeto `scheduledPlanChange` con el `planId` y el timestamp `effectiveAt`.
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `400` | Plan de destino no encontrado, inactivo o no disponible en el país del suscriptor. |
+| `402` | El cobro de prorrateo inmediato fue rechazado (solo cuando `applyAt: "now"`). |
+| `404` | Suscripción no encontrada. |
+| `422` | Error de validación. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/change-plan \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "planId": 99,
+    "applyAt": "now"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{}
+```
+
+</ResponseExample>
+
+<Tip>
+  Si quieres ofrecer un período introductorio con descuento en el nuevo plan, crea el nuevo plan con `introAmount` e `introBillingCycles` establecidos antes de ejecutar `change-plan`. El suscriptor recibirá el precio introductorio desde su primer ciclo en el nuevo plan.
+</Tip>

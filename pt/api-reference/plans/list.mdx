@@ -1,0 +1,69 @@
+---
+title: "Liste todos os planos de assinatura"
+sidebarTitle: "List Plans"
+description: "Liste todos os planos de faturamento da sua conta de lojista, com filtro de país opcional. Inclui a contagem de assinantes e o estado de arquivamento."
+openapi: "GET /subscription/plan"
+translationOf: api-reference/plans/list.mdx
+translationSourceHash: 010b90e601fcf620629545446f445c911de292b5c047bf44f3eee40e19ed6875
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`GET /subscription/plan` devolve todos os planos de faturamento da sua conta de lojista, incluindo a contagem atual de assinantes e o status de arquivamento de cada plano. Use o filtro `country` para ver apenas os planos disponíveis em um mercado específico — os planos globais (os sem restrições de país) são sempre incluídos nos resultados filtrados.
+
+<SchemaLangNote lang="pt" />
+
+## Requisição
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `GET /subscription/plan`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (produção) ou `Bearer sk_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+</ParamField>
+
+### Parâmetros de consulta
+
+<ParamField query="merchantCode" type="string" required>
+  O seu identificador de conta de lojista. Obrigatório se a sua chave estiver associada a várias contas de lojista.
+</ParamField>
+
+<ParamField query="country" type="string">
+  Código de país ISO 3166-1 alpha-2 para filtrar planos por disponibilidade, p. ex. `"BR"`. Devolve planos onde `availableCountries` inclui o código dado, mais todos os planos disponíveis globalmente. Omita para devolver todos os planos independentemente das restrições de país.
+</ParamField>
+
+## Resposta
+
+Devolve um array de objetos de plano. Cada objeto inclui todos os campos definidos no momento da criação mais os seguintes campos calculados:
+
+<ResponseField name="id" type="integer">
+  O ID inteiro único do plano.
+</ResponseField>
+
+<ResponseField name="subscriberCount" type="integer">
+  Número de assinantes atualmente ativos ou em teste neste plano.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Se o plano aceita novos assinantes. Defina como `false` via [Atualizar plano](/api-reference/plans/update) para desativá-lo de forma suave.
+</ResponseField>
+
+<ResponseField name="deletedAt" type="string">
+  Timestamp ISO 8601 de quando o plano foi arquivado, ou `null` se não estiver arquivado. Os planos arquivados continuam aparecendo nos resultados de lista.
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl "https://api.therius.io/v1/subscription/plan?merchantCode=MERCHANT_001&country=US" \
+  -H "Authorization: Bearer sk_live_your_key_here"
+```
+
+</RequestExample>
+
+<Tip>
+  Os planos arquivados são incluídos na resposta com um `deletedAt` não nulo. Filtre-os no lado do cliente se você quiser apenas os planos atualmente abertos para inscrição.
+</Tip>

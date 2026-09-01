@@ -1,0 +1,190 @@
+---
+title: "Crea y activa una suscripción"
+sidebarTitle: "Create a Subscription"
+description: "Inscribe a un cliente en un plan y cobra el primer ciclo de facturación. Realiza la CIT inicial que registra el mandato recurrente."
+openapi: "POST /subscription"
+translationOf: api-reference/subscriptions/create.mdx
+translationSourceHash: 8f585b23ed11e8e4cb54bed01e78bb79dd9cd1f897e660acfd90923a97c8b294
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`POST /subscription` inscribe a un cliente en un plan y establece el mandato recurrente que
+ancla cada futura Merchant Initiated Transaction (MIT). Inscribir a un cliente es una
+Cardholder Initiated Transaction (CIT), y una CIT puede requerir 3D Secure. Dos modos:
+
+<SchemaLangNote lang="es" />
+
+<CardGroup cols={2}>
+  <Card title="Modo CIT — nonceData / cardData" icon="credit-card">
+    Therius ejecuta la CIT inicial + el primer cobro aquí. El cliente debe estar presente. Esta CIT
+    **no puede llevar a cabo un desafío de 3D Secure** — una tarjeta que requiere 3DS fallará.
+  </Card>
+  <Card title="Modo record — tokenData" icon="shield-check">
+    El token es una tarjeta que **ya completó una CIT** (incluyendo 3DS) a través de
+    `/payment/authorization` o `/payment/purchase`. No se ejecuta una segunda CIT aquí.
+    **Usa esto para cualquier tarjeta que necesite 3D Secure.**
+  </Card>
+</CardGroup>
+
+Suministra la tarjeta como **exactamente un** instrumento — `nonceData`, `cardData` (solo servidores
+que cumplen PCI DSS), o `tokenData`.
+
+<Warning>
+  `cardOnFile` e `instalments` se ignoran aquí — Therius es dueño del mandato. En modo record
+  `networkTransactionId` / `networkReferenceId` se leen del token; pásalos solo para una
+  tarjeta CIT'ada fuera de Therius.
+</Warning>
+
+## Modo record
+
+Ejecuta tú mismo una CIT con capacidad 3DS, luego adjunta el resultado:
+
+<Steps>
+  <Step title="Ejecuta la CIT vía /payment/*">
+    Llama a `/payment/authorization` (monto 0 = verificación de cuenta) o `/payment/purchase`
+    con `card.<x>.tokenize: true` + un `shopper.id`, y maneja cualquier desafío de 3DS con el
+    SDK JS como lo harías para un pago normal. La respuesta devuelve un token `vt_...`.
+  </Step>
+  <Step title="Crea la suscripción">
+    `POST /subscription` con `card.tokenData.token`. Para el ciclo 1:
+    <br />• prueba o `startAt` diferido → no se cobra nada;
+    <br />• cobraste el primer ciclo en tu CIT (`/payment/purchase`) → pasa también
+    `firstPaymentId` (el `id` de pago de la respuesta de esa llamada); Therius marca la primera
+    factura como pagada y la enlaza, sin cobro;
+    <br />• tu CIT fue una verificación de valor cero → omite `firstPaymentId`; Therius cobra
+    el ciclo 1 como una MIT contra el mandato registrado (revierte la suscripción con un `402`
+    si se rechaza).
+    <br />El objeto `firstCycle` de la respuesta informa lo que ocurrió.
+  </Step>
+</Steps>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador único de cuenta de comercio.
+</ParamField>
+
+<ParamField body="planId" type="integer" required>
+  El ID de un plan de facturación activo. El plan determina el monto, la moneda, el intervalo y la configuración de prueba.
+</ParamField>
+
+<ParamField body="customerEmail" type="string">
+  Dirección de correo del cliente. Usada para notificaciones de facturación y comunicaciones de gestión de cobros.
+</ParamField>
+
+<ParamField body="customerName" type="string">
+  Nombre completo del cliente tal como debe aparecer en las facturas.
+</ParamField>
+
+<ParamField body="customerDocument" type="string">
+  ID nacional o número de documento fiscal del cliente. Requerido en algunos países (p. ej. CPF/CNPJ de Brasil). Revisa la configuración `availableCountries` del plan para los requisitos locales.
+</ParamField>
+
+<ParamField body="card" type="object" required>
+  Datos de tarjeta para la CIT inicial. Proporciona **exactamente uno** de los instrumentos de abajo — son alternativas intercambiables, no campos para combinar.
+
+  <Expandable title="instrumentos de card — elige uno">
+    <ParamField body="card.nonceData.nonce" type="string">
+      Un nonce fresco de un solo uso del SDK JS de Therius. Recomendado — ningún dato de tarjeta toca tu servidor. Los nonces son de un solo uso y expiran después de una ventana corta.
+    </ParamField>
+    <ParamField body="card.cardData" type="object">
+      Campos de tarjeta sin procesar — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (y `documentNumber`, `cardAddress` opcionales). Solo si tu servidor cumple PCI DSS para manejar PAN sin procesar.
+    </ParamField>
+    <ParamField body="card.tokenData.token" type="string">
+      **Modo record.** Un vault token `vt_...` para una tarjeta que ya completó su CIT.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="firstPaymentId" type="string">
+  Solo en modo record, y solo cuando hay un primer pago pendiente (se ignora para suscripciones
+  con prueba o diferidas). El `id` de pago devuelto por la llamada a `/payment/authorization` o
+  `/payment/purchase` en la que ejecutaste la CIT para esta tarjeta. Therius valida que sea un
+  pago `captured` o `authorized` en tu cuenta que cobró el **mismo vaulted token** y que está en
+  la **moneda del plan**, luego marca la factura del ciclo 1 como pagada y la enlaza — sin cobro.
+  Cuando se omite, Therius cobra el ciclo 1 como una MIT contra el mandato registrado.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Pares clave/valor arbitrarios que quieres adjuntar a la suscripción. Los valores deben ser strings. Devueltos en todas las respuestas de suscripción y cargas de webhook.
+</ParamField>
+
+<ParamField body="startAt" type="string">
+  Timestamp RFC 3339 para una fecha futura para retrasar el primer cobro, p. ej. `"2025-09-01T00:00:00Z"`. Si se omite, la suscripción se activa y se cobra de inmediato (o al final de una prueba si el plan tiene una).
+</ParamField>
+
+<ParamField body="parentSubscriptionId" type="string">
+  UUID de una suscripción existente para designar como la padre. Usado para modelar jerarquías de suscripción (p. ej. un plan base y complementos).
+</ParamField>
+
+<ParamField body="propagateLifecycle" type="boolean">
+  Cuando es `true`, los eventos de pausar y cancelar en la suscripción padre se propagan automáticamente en cascada a esta suscripción hija. Requiere `parentSubscriptionId`.
+</ParamField>
+
+## Respuesta
+
+Una solicitud exitosa devuelve `201 Created` con el objeto de suscripción completo, incluyendo el `id` de la suscripción, el `status` inicial, las fechas de inicio y fin del período actual, y la primera factura.
+
+### Estado en la creación
+
+| Estado | Cuándo ocurre |
+| --- | --- |
+| `active` | El plan no tiene prueba; el primer cobro tuvo éxito. |
+| `trialing` | El plan tiene un `trialPeriodDays` configurado. |
+| `past_due` | La CIT inicial falló. Raro — normalmente se devuelve un `402` en el rechazo en su lugar. |
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `400` | Plan no encontrado o inactivo; o (modo record) el token no lleva ningún mandato de CIT, o `firstPaymentId` no se resuelve a un pago liquidado que cobró este token. |
+| `402` | El cobro de la CIT inicial fue rechazado (modo CIT), o la MIT del primer ciclo fue rechazada (modo record — la suscripción se revierte). |
+| `409` | `Idempotency-Key` duplicado con un cuerpo de solicitud en conflicto. |
+| `422` | Error de validación — p. ej. no se proporcionó ningún instrumento de tarjeta, un nonce expirado/usado, o un plan inválido. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "planId": 42,
+    "customerEmail": "ada@example.com",
+    "customerName": "Ada Lovelace",
+    "card": { "nonceData": { "nonce": "<fresh nonce from JS SDK>" } }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201 Created
+{}
+```
+
+</ResponseExample>

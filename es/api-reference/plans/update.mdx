@@ -1,0 +1,94 @@
+---
+title: "Actualiza un plan de suscripción"
+sidebarTitle: "Edit a Plan"
+description: "Actualiza el nombre, la descripción, el estado activo o la disponibilidad por país de un plan. El monto y el intervalo no se pueden cambiar."
+openapi: "PATCH /subscription/plan/{id}"
+translationOf: api-reference/plans/update.mdx
+translationSourceHash: 4267421b6cc743bf3115b96d3fa2f7cc91a916e4d643a39efb5c00a02569c2ad
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+`PATCH /subscription/plan/{id}` actualiza los campos mutables de un plan existente. Puedes renombrarlo, actualizar su descripción, alternar su estado activo para dejar de aceptar nuevos suscriptores, o ajustar los países donde está disponible — todo sin afectar a los suscriptores existentes.
+
+<SchemaLangNote lang="es" />
+
+<Note>
+  `amount`, `interval`, `intervalCount` y `currency` son inmutables y no se pueden cambiar vía este endpoint. Para cambiar el precio o la cadencia de facturación, crea un plan nuevo usando `POST /subscription/plan` y migra a los suscriptores usando [change-plan](/api-reference/subscriptions/change-plan).
+</Note>
+
+## Solicitud
+
+**URL base:** `https://api.therius.io/v1`
+
+**Endpoint:** `PATCH /subscription/plan/{id}`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer sk_live_xxx` (producción) o `Bearer sk_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
+</ParamField>
+
+### Parámetros de ruta
+
+<ParamField path="id" type="integer" required>
+  El ID entero del plan a actualizar.
+</ParamField>
+
+### Cuerpo de la solicitud
+
+Incluye solo los campos que quieres cambiar. Los campos omitidos se dejan sin cambios.
+
+<ParamField body="merchantCode" type="string" required>
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Nombre para mostrar actualizado del plan.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Descripción actualizada de lo que incluye el plan.
+</ParamField>
+
+<ParamField body="isActive" type="boolean">
+  Establécelo en `false` para impedir que nuevos suscriptores se inscriban en este plan. Los suscriptores existentes no se ven afectados. Establécelo de nuevo en `true` para volver a habilitar la inscripción.
+</ParamField>
+
+<ParamField body="availableCountries" type="array">
+  Array actualizado de códigos de país ISO 3166-1 alpha-2. Pasa un array vacío `[]` para hacer el plan disponible globalmente. Esto reemplaza la lista existente por completo.
+</ParamField>
+
+## Respuesta
+
+Devuelve `200 OK` con el objeto de plan actualizado completo.
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `404` | Plan no encontrado. |
+| `422` | Error de validación — p. ej. un código de país no reconocido o un intento de mutar un campo inmutable. |
+
+<RequestExample>
+
+```bash cURL
+curl -X PATCH https://api.therius.io/v1/subscription/plan/42 \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "merchantCode": "MERCHANT_001",
+    "name": "Pro Monthly (Revised)",
+    "isActive": false
+  }'
+```
+
+</RequestExample>

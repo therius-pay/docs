@@ -47,7 +47,8 @@ Returns `200 OK` with a confirmation object.
 <RequestExample>
 
 ```bash cURL
-curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?key=sk_live_your_key_here"
+curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 </RequestExample>

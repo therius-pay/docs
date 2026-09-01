@@ -84,7 +84,8 @@ Returns the full subscription object on success. Key fields include:
 <RequestExample>
 
 ```bash cURL
-curl "https://api.therius.io/v1/subscription/sub_abc123def456?key=sk_live_your_key_here"
+curl "https://api.therius.io/v1/subscription/sub_abc123def456?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 </RequestExample>

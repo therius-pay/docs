@@ -52,7 +52,8 @@ Returns an array of plan objects. Each object includes all fields set at creatio
 <RequestExample>
 
 ```bash cURL
-curl "https://api.therius.io/v1/subscription/plan?key=sk_live_your_key_here&country=US"
+curl "https://api.therius.io/v1/subscription/plan?merchantCode=MERCHANT_001&country=US" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 </RequestExample>

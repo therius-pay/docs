@@ -46,7 +46,10 @@ function frontmatter(file) {
 }
 
 const all = walk(ROOT);
-const enPages = all.filter((p) => !LOCALES.some((l) => p.startsWith(l + '/')));
+// `snippets/` holds shared MDX components (e.g. <SchemaLangNote>), not navigable
+// pages — they carry their own per-locale strings and are never translated as files.
+const isPage = (p) => !p.startsWith('snippets/');
+const enPages = all.filter((p) => isPage(p) && !LOCALES.some((l) => p.startsWith(l + '/')));
 const problems = [];
 
 // 1. every translated file points at a valid, unchanged source

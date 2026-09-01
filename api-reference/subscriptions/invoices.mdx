@@ -76,7 +76,8 @@ Returns an array of invoice objects for the subscription.
 ### Example
 
 ```bash
-curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?key=sk_live_your_key_here"
+curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 ---
@@ -120,13 +121,15 @@ Returns a single invoice object with the same fields as described above.
 ### Example
 
 ```bash
-curl "https://api.therius.io/v1/subscription/invoice/inv_xyz789abc?key=sk_live_your_key_here"
+curl "https://api.therius.io/v1/subscription/invoice/inv_xyz789abc?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 <RequestExample>
 
 ```bash cURL
-curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?key=sk_live_your_key_here"
+curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCode=MERCHANT_001" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 </RequestExample>

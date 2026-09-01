@@ -91,7 +91,8 @@ openapi: "GET /subscription"
 <RequestExample>
 
 ```bash cURL
-curl "https://api.therius.io/v1/subscription?key=sk_live_your_key_here&status=active&per_page=50"
+curl "https://api.therius.io/v1/subscription?merchantCode=MERCHANT_001&status=active&per_page=50" \
+  -H "Authorization: Bearer sk_live_your_key_here"
 ```
 
 </RequestExample>
