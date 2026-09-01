@@ -34,11 +34,11 @@ All APM requests share the same top-level structure. The only things that change
 
 ## Redirect vs. Direct-Debit Methods
 
-APMs fall into two broad categories depending on how the customer authorises the payment.
+APMs fall into two broad categories depending on how the customer authorizes the payment.
 
 <CardGroup cols={2}>
   <Card icon="arrow-up-right-from-square" title="Redirect Methods">
-    The customer is redirected to a third-party page (for example, their bank or PayPal) to authorise the payment. Include `apm.returnUrl` and `apm.cancelUrl` in your request. The API responds with `status: "pending_action"` and `actionRequired.url`.
+    The customer is redirected to a third-party page (for example, their bank or PayPal) to authorize the payment. Include `apm.returnUrl` and `apm.cancelUrl` in your request. The API responds with `status: "pending_action"` and `actionRequired.url`.
   </Card>
   <Card icon="building-columns" title="Direct-Debit Methods">
     Bank account details are collected upfront — no redirect. Pass account fields such as `bankAccountNumber` and `bankRoutingNumber` (ACH) or IBAN (SEPA) directly inside the `apm` object.
@@ -147,7 +147,7 @@ When a method returns `status: "pending_action"`, you must send your customer to
     ```
   </Tab>
   <Tab title="iDEAL">
-    iDEAL redirects the customer to their Dutch bank to authorise. Optionally pass `apm.issuerId` to pre-select a bank and skip the bank-selection screen.
+    iDEAL redirects the customer to their Dutch bank to authorize. Optionally pass `apm.issuerId` to pre-select a bank and skip the bank-selection screen.
 
     ```json
     {
@@ -163,7 +163,7 @@ When a method returns `status: "pending_action"`, you must send your customer to
     ```
   </Tab>
   <Tab title="Klarna">
-    Klarna supports pay-later and pay-in-instalments flows. Pass the customer's locale to ensure the correct Klarna product is offered.
+    Klarna supports pay-later and pay-in-installments flows. Pass the customer's locale to ensure the correct Klarna product is offered.
 
     ```json
     {

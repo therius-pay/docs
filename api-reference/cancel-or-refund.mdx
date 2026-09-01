@@ -5,7 +5,7 @@ description: "Automatically cancels if the payment is authorized, or refunds if 
 openapi: "POST /payment/{id}/cancel_or_refund"
 ---
 
-If you don't want to track whether a payment is in the `authorized` or `captured` state in your own system, `POST /payment/{id}/cancel_or_refund` handles it for you. Therius checks the current payment state and automatically cancels the authorization (if uncaptured) or issues a full refund (if already captured). This is especially useful in order reversal workflows where the payment state may vary depending on timing — for example, a customer cancelling an order while fulfillment is in progress.
+If you don't want to track whether a payment is in the `authorized` or `captured` state in your own system, `POST /payment/{id}/cancel_or_refund` handles it for you. Therius checks the current payment state and automatically cancels the authorization (if uncaptured) or issues a full refund (if already captured). This is especially useful in order reversal workflows where the payment state may vary depending on timing — for example, a customer canceling an order while fulfillment is in progress.
 
 ## Identifying the payment
 
@@ -58,7 +58,7 @@ If you don't want to track whether a payment is in the `authorized` or `captured
 <ResponseField name="status" type="string">
   The action taken. One of:
 
-  - `"cancelled"` — the authorization was voided (payment was in `authorized` state).
+  - `"canceled"` — the authorization was voided (payment was in `authorized` state).
   - `"refunded"` — funds were returned to the cardholder (payment was in `captured` state).
   - `"failed"` — the operation could not be completed.
 </ResponseField>
@@ -76,7 +76,7 @@ If you don't want to track whether a payment is in the `authorized` or `captured
 </ResponseField>
 
 <ResponseField name="amount" type="object">
-  The amount cancelled or refunded, in `{ currency, value, exponent }` format.
+  The amount canceled or refunded, in `{ currency, value, exponent }` format.
 </ResponseField>
 
 ## Example
@@ -102,7 +102,7 @@ curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4
 ```json 200 OK
 {
   "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
-  "status": "cancelled",
+  "status": "canceled",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-002",
   "merchantCode": "MERCHANT_001",

@@ -36,7 +36,7 @@ Payment event payloads use this envelope:
 | `payment.captured` | A capture succeeded — including the automatic capture inside `purchase`, and the confirmation of an asynchronous APM or voucher payment. |
 | `payment.refused` | The issuer or acquirer declined the payment. Corresponds to a `declined` status on the synchronous API response — see [Declined Payments](/concepts/declined-payments) for how to read the refusal. |
 | `payment.refunded` | A refund was processed. Fires on each refund; `data.status` is `refunded` only once the payment is fully refunded. |
-| `payment.cancelled` | An authorization was voided before capture. |
+| `payment.canceled` | An authorization was voided before capture. |
 | `payment.chargeback` | A dispute was raised against a settled payment (received from the acquirer's dispute notification). |
 | `payment.capture_failed` | A capture attempt failed. The payment stays `authorized`. |
 | `payment.refund_failed` | A refund attempt failed. The payment stays `captured`. |
@@ -73,7 +73,7 @@ Subscription event payloads use a slightly different envelope — `subscription_
 | `subscription.reactivated` | A `suspended` subscription was recovered (new payment method or successful retry). |
 | `subscription.paused` | The subscription was manually paused. |
 | `subscription.resumed` | A paused subscription resumed. |
-| `subscription.cancelled` | The subscription was permanently cancelled. |
+| `subscription.canceled` | The subscription was permanently canceled. |
 | `subscription.completed` | The subscription reached its fixed number of billing cycles and ended naturally. |
 | `subscription.payment_method_updated` | The stored card on the subscription was replaced. |
 | `subscription.plan_change_scheduled` | A plan change was queued to apply at the next billing date. |

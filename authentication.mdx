@@ -45,7 +45,7 @@ The JS SDK requires a client token JWT, not a raw API key. Here is the flow:
 1. Your browser requests a payment session from your server.
 2. Your server calls `POST /sdk/session` with your private key and receives a short-lived `clientToken` JWT.
 3. Your server passes the `clientToken` to the browser.
-4. The browser initialises the Therius JS SDK with the `clientToken`.
+4. The browser initializes the Therius JS SDK with the `clientToken`.
 
 Your private key never leaves your server. If you ever need to refresh the session (for example, after 30 minutes), your server mints a new token.
 

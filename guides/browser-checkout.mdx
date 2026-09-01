@@ -39,7 +39,7 @@ Therius gives you two ways to collect card details in the browser:
 
   ### Create a Session (Server-Side)
 
-  Before initialising the SDK in the browser, your server must request a **client token** from the Therius API. This token is scoped to a single customer session and expires after 30 minutes. Your private API key never leaves your server.
+  Before initializing the SDK in the browser, your server must request a **client token** from the Therius API. This token is scoped to a single customer session and expires after 30 minutes. Your private API key never leaves your server.
 
   ```bash
   curl -X POST https://api.therius.io/v1/sdk/session \
@@ -92,7 +92,7 @@ Therius gives you two ways to collect card details in the browser:
       })
       ```
 
-      When your customer submits the form, call `sdk.createNonce()` to tokenise the card data. Pass the resulting nonce to your server — never log it or store it in `localStorage`.
+      When your customer submits the form, call `sdk.createNonce()` to tokenize the card data. Pass the resulting nonce to your server — never log it or store it in `localStorage`.
 
       ```javascript
       document.querySelector('#pay-button').addEventListener('click', async () => {

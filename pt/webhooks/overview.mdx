@@ -3,7 +3,7 @@ title: 'Webhooks do Therius: entrega, novas tentativas e verificação de assina
 sidebarTitle: 'Visão geral'
 description: 'Receba eventos de pagamento e de assinatura do Therius por HTTPS. Configure um endpoint, verifique o cabeçalho X-Therius-Signature e trate as novas tentativas de forma idempotente.'
 translationOf: webhooks/overview.mdx
-translationSourceHash: 4dae20f77b36c2124a0e8b23feb9ab66d9c2e8a462f80cdea1f26031a19d85a8
+translationSourceHash: 4002cd01e3f46b287019e9c1d589028c52346b358d0831ddaaac7fcb6c8b3455
 ---
 
 Muitos resultados de pagamento acontecem depois que sua chamada de API original retorna — um APM assíncrono é liquidado, um desafio 3DS é concluído, uma disputa é aberta, ou uma assinatura é renovada conforme programado. Os webhooks são como o Therius avisa o seu servidor sobre esses eventos. Você registra um endpoint HTTPS, assina os tipos de evento que interessam, e o Therius faz um `POST` de uma carga JSON para esse endpoint sempre que um evento correspondente ocorre.

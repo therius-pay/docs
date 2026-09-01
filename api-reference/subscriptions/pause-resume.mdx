@@ -1,18 +1,18 @@
 ---
 title: "Pause and Resume a Subscription"
 sidebarTitle: "Pause & Resume Billing"
-description: "Pause a subscription to stop billing temporarily without cancelling it. Resume billing from a paused or suspended state with a single API call."
+description: "Pause a subscription to stop billing temporarily without canceling it. Resume billing from a paused or suspended state with a single API call."
 openapi: "POST /subscription/{id}/pause"
 ---
 
-Pausing a subscription stops all renewal attempts without cancelling it, preserving the subscription record and all its history. Resuming restores billing and recalculates the next billing date forward from the current date — the customer is not charged for time elapsed while paused.
+Pausing a subscription stops all renewal attempts without canceling it, preserving the subscription record and all its history. Resuming restores billing and recalculates the next billing date forward from the current date — the customer is not charged for time elapsed while paused.
 
 ## Pause a Subscription
 
 `POST /subscription/{id}/pause` suspends billing on an active subscription. It fires the `subscription.paused` webhook event and moves the subscription to `paused` status.
 
 <Note>
-  Only subscriptions in `active`, `trialing`, or `past_due` status can be paused. Attempting to pause a `cancelled`, `completed`, or already `paused` subscription returns a `400` error.
+  Only subscriptions in `active`, `trialing`, or `past_due` status can be paused. Attempting to pause a `canceled`, `completed`, or already `paused` subscription returns a `400` error.
 </Note>
 
 ### Request
@@ -58,9 +58,9 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
 
 ## Resume a Subscription
 
-`POST /subscription/{id}/resume` restores billing on a paused or suspended subscription, with slightly different behaviour depending on the current status.
+`POST /subscription/{id}/resume` restores billing on a paused or suspended subscription, with slightly different behavior depending on the current status.
 
-| Current status | Behaviour on resume |
+| Current status | Behavior on resume |
 | --- | --- |
 | `paused` | Billing restored. Next billing date = today \+ plan interval. |
 | `suspended` | Therius attempts an immediate re-charge (MIT). Returns `402` if declined. |
@@ -105,7 +105,7 @@ On success, Therius fires `subscription.resumed`. If a `suspended` subscription 
 
 | Code | Meaning |
 | --- | --- |
-| `400` | Subscription is not in a resumable state (e.g. already `active` or `cancelled`). |
+| `400` | Subscription is not in a resumable state (e.g. already `active` or `canceled`). |
 | `402` | Resume from `suspended` failed — immediate re-charge was declined. |
 | `404` | Subscription not found. |
 

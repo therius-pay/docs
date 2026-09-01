@@ -3,7 +3,7 @@ title: 'Crea un checkout de navegador seguro para PCI con el SDK JS de Therius'
 sidebarTitle: 'Checkout de navegador'
 description: 'Guía paso a paso para crear un checkout de navegador seguro para PCI con los campos alojados de Therius o el widget drop-in — los números de tarjeta nunca tocan tu servidor.'
 translationOf: guides/browser-checkout.mdx
-translationSourceHash: fa1d8d4ab504cbd82246845674f36870a8de0add1da1f09f969b9401e9353283
+translationSourceHash: 48aa6086355fb95a19f9ab3e782662f5b07cfdcabe56163c6e14f8f2a929473c
 ---
 
 Cuando un cliente escribe un número de tarjeta en tu página de checkout, ese número nunca debe pasar por tu propio servidor. Enrutar datos de tarjeta sin procesar por tu backend amplía drásticamente tu alcance de cumplimiento PCI DSS y crea una responsabilidad directa si tu servidor llega a verse comprometido. El SDK de JavaScript de Therius elimina este riesgo renderizando los campos sensibles dentro de iframes aislados alojados en la infraestructura de Therius. Tu página nunca ve el número de tarjeta sin procesar — en cambio, el SDK devuelve un **nonce** de un solo uso y de corta duración que tu servidor intercambia por un cobro. El nonce es inútil fuera del contexto de tu cuenta de comercio y expira después de 15 minutos.

@@ -8,7 +8,7 @@ Every payment moves through a predictable series of states — from an initial r
 
 ## One-Step Flow: Purchase
 
-Use `POST /payment/purchase` when you can fulfil the order immediately — digital downloads, SaaS subscriptions, and any product you deliver the moment payment completes. A single round-trip reserves the funds and settles them in one go. The response carries `status: "captured"` and an `id` — the payment handle.
+Use `POST /payment/purchase` when you can fulfill the order immediately — digital downloads, SaaS subscriptions, and any product you deliver the moment payment completes. A single round-trip reserves the funds and settles them in one go. The response carries `status: "captured"` and an `id` — the payment handle.
 
 ```json
 {
@@ -21,7 +21,7 @@ Use `POST /payment/purchase` when you can fulfil the order immediately — digit
 
 ## Two-Step Flow: Authorize → Capture
 
-Use `POST /payment/authorization` to reserve funds without settling them. This is the right flow when you need to confirm availability before you fulfil — for example, physical goods that may go out of stock, or hotel reservations where you confirm the room before charging.
+Use `POST /payment/authorization` to reserve funds without settling them. This is the right flow when you need to confirm availability before you fulfill — for example, physical goods that may go out of stock, or hotel reservations where you confirm the room before charging.
 
 ```txt
 POST /payment/authorization  →  status: "authorized", id: "<payment id>"
@@ -65,7 +65,7 @@ If you are not sure whether a payment is in `authorized` or `captured` state, ca
 | `captured` | Funds settled. The payment is complete. |
 | `authorized` | Funds reserved but not yet settled. Capture or cancel next. |
 | `refunded` | A full (or final partial) refund has been issued. |
-| `cancelled` | Authorization voided before capture. Funds released. |
+| `canceled` | Authorization voided before capture. Funds released. |
 | `pending_action` | Waiting for an action from the shopper (e.g., redirect to a bank page for APM). The final outcome arrives by [webhook](/webhooks/overview). |
 | `pending_3ds` | 3DS2 challenge required. Resume with `POST /payment/resume`. |
 | `declined` | Payment was declined by the issuer or acquirer. The response carries a `refusalCode` object — see [Declined Payments](/concepts/declined-payments). |
@@ -78,7 +78,7 @@ stateDiagram-v2
     [*] --> authorized : POST /payment/authorization
     [*] --> captured : POST /payment/purchase
     authorized --> captured : POST /payment/{id}/capture
-    authorized --> cancelled : POST /payment/{id}/cancel
+    authorized --> canceled : POST /payment/{id}/cancel
     captured --> refunded : POST /payment/{id}/refund
     [*] --> pending_3ds : 3DS challenge triggered
     pending_3ds --> authorized : POST /payment/resume

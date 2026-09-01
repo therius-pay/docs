@@ -1,14 +1,14 @@
 ---
 title: "Cancel a Subscription"
 sidebarTitle: "Cancel a Subscription"
-description: "Immediately cancel a subscription. Fires the subscription.cancelled webhook event. Cannot be undone."
+description: "Immediately cancel a subscription. Fires the subscription.canceled webhook event. Cannot be undone."
 openapi: "POST /subscription/{id}/cancel"
 ---
 
-`POST /subscription/{id}/cancel` immediately cancels a subscription. This action fires the `subscription.cancelled` webhook event and cannot be undone — the subscription moves to `cancelled` status permanently. If you want to stop billing temporarily without losing the subscription, use [Pause & Resume](/api-reference/subscriptions/pause-resume) instead.
+`POST /subscription/{id}/cancel` immediately cancels a subscription. This action fires the `subscription.canceled` webhook event and cannot be undone — the subscription moves to `canceled` status permanently. If you want to stop billing temporarily without losing the subscription, use [Pause & Resume](/api-reference/subscriptions/pause-resume) instead.
 
 <Warning>
-  Cancellation is permanent. There is no reinstate endpoint. If you need to re-enroll a cancelled customer, create a new subscription using `POST /subscription`.
+  Cancellation is permanent. There is no reinstate endpoint. If you need to re-enroll a canceled customer, create a new subscription using `POST /subscription`.
 </Warning>
 
 ## Request
@@ -45,13 +45,13 @@ openapi: "POST /subscription/{id}/cancel"
 
 ## Response
 
-Returns `200 OK` with the updated subscription object. The `status` field will be `cancelled` and a `cancelledAt` timestamp will be set.
+Returns `200 OK` with the updated subscription object. The `status` field will be `canceled` and a `cancelledAt` timestamp will be set.
 
 ## Errors
 
 | Code | Meaning |
 | --- | --- |
-| `400` | Subscription is already cancelled. |
+| `400` | Subscription is already canceled. |
 | `404` | Subscription not found. |
 
 <RequestExample>

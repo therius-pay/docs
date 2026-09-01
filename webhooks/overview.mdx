@@ -7,7 +7,7 @@ description: 'Receive payment and subscription events from Therius over HTTPS. C
 Many payment outcomes happen after your original API call returns — an asynchronous APM settles, a 3DS challenge completes, a dispute is opened, or a subscription renews on schedule. Webhooks are how Therius tells your server about these events. You register one HTTPS endpoint, subscribe to the event types you care about, and Therius `POST`s a JSON payload to that endpoint each time a matching event occurs.
 
 <Note>
-  Webhooks are the source of truth for asynchronous outcomes. For voucher and bank-transfer methods especially, do not fulfil an order on the initial `pending` / `pending_action` response — wait for the `payment.captured` webhook.
+  Webhooks are the source of truth for asynchronous outcomes. For voucher and bank-transfer methods especially, do not fulfill an order on the initial `pending` / `pending_action` response — wait for the `payment.captured` webhook.
 </Note>
 
 ## Configure your endpoint

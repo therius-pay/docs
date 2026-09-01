@@ -42,7 +42,7 @@ Therius ships plugins for the major e-commerce platforms so you can accept payme
 **Webhooks are required, not optional.** The checkout call tells you the outcome at the moment of charge, but capture confirmation, refunds, cancellations, and chargebacks all happen *after* that response. Without a configured webhook, orders that were only authorized sit unresolved, and refunds or disputes handled from the Therius Dashboard never reflect on the store order.
 
 1. In the Therius Dashboard, go to **Developers → Webhooks** and add an endpoint. Each plugin's page lists the exact URL for that platform. Create one endpoint in **Sandbox** mode and one in **Production** mode if you use both.
-2. Subscribe to at least: `payment.captured`, `payment.refused`, `payment.refunded`, `payment.cancelled`, `payment.chargeback` (see the full [event list](/webhooks/events)).
+2. Subscribe to at least: `payment.captured`, `payment.refused`, `payment.refunded`, `payment.canceled`, `payment.chargeback` (see the full [event list](/webhooks/events)).
 3. Copy each environment's signing secret into the matching field in the plugin configuration.
 
 Every incoming webhook is verified with `X-Therius-Signature` (`HMAC-SHA256` over the raw body) before anything is applied — unsigned or mis-signed requests are rejected with `401`. Deliveries are retried and can arrive more than once; the plugins deduplicate them.

@@ -3,7 +3,7 @@ title: 'Autenticación de la API de Therius — claves y entornos'
 sidebarTitle: 'Autenticación'
 description: 'Conoce cómo funcionan las claves de API de Therius, cómo enviarlas en las solicitudes, la diferencia entre credenciales de producción y de sandbox, y cómo generar tokens de sesión del SDK.'
 translationOf: authentication.mdx
-translationSourceHash: 6299812d42f8bbe05533ca2ddbcd9d2d9aa9a68a9eb7f30a9bf0dfcdb9cc55a9
+translationSourceHash: a854fc4e8cd783c2a997638a67956b8aa82a780fe170538f209e39aec6c1c46e
 ---
 
 Todos los endpoints de la API de Therius requieren una credencial. Las llamadas de servidor a servidor envían tu clave privada como token `Bearer` en el encabezado `Authorization`. Lo que nunca debes hacer es exponer una clave privada de API en código de frontend ni pasarla por un cliente no confiable — las integraciones en el navegador usan un token de cliente del SDK de corta duración en su lugar (ver más abajo).
