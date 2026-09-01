@@ -52,6 +52,12 @@ const translate = (tree, loc) => {
     if (node && typeof node === 'object') {
       const out = {};
       for (const [k, v] of Object.entries(node)) {
+        // A tab/group-level `openapi` reference makes Mintlify auto-generate a
+        // page per spec operation. Every operation already has a hand-written
+        // .mdx (with `openapi: "METHOD /path"` frontmatter), so the auto-gen set
+        // is a duplicate — and in a locale tree it can't dedupe against the
+        // `es/`/`pt/`-prefixed manual pages. Never carry it into a locale tree.
+        if (k === 'openapi') continue;
         if (k === 'tab' || k === 'group' || k === 'anchor') out[k] = L[v] || v;
         else if (k === 'pages') {
           out[k] = v

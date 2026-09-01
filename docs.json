@@ -134,8 +134,7 @@
                   "api-reference/sdk-session"
                 ]
               }
-            ],
-            "openapi": "openapi.json"
+            ]
           },
           {
             "tab": "JS SDK",
@@ -298,8 +297,7 @@
                   "es/api-reference/sdk-session"
                 ]
               }
-            ],
-            "openapi": "openapi.json"
+            ]
           },
           {
             "tab": "SDK de JS",
@@ -462,8 +460,7 @@
                   "pt/api-reference/sdk-session"
                 ]
               }
-            ],
-            "openapi": "openapi.json"
+            ]
           },
           {
             "tab": "SDK de JS",
