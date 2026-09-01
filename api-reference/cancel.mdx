@@ -5,7 +5,7 @@ description: "Void a payment that is still in the authorized state. Funds are re
 openapi: "POST /payment/{id}/cancel"
 ---
 
-`POST /payment/{id}/cancel` voids an authorization before it is captured, releasing the hold on the cardholder's funds immediately. Use this when an order is canceled or cannot be fulfilled after the authorization was placed. If the payment has already been captured and settled, use [Refund](/api-reference/refund) instead — you cannot cancel a captured payment.
+`POST /payment/{id}/cancel` voids an authorization before it is captured, releasing the hold on the cardholder's funds immediately. Use this when an order is cancelled or cannot be fulfilled after the authorization was placed. If the payment has already been captured and settled, use [Refund](/api-reference/refund) instead — you cannot cancel a captured payment.
 
 ## Identifying the payment
 
@@ -54,7 +54,7 @@ openapi: "POST /payment/{id}/cancel"
 <ResponseField name="status" type="string">
   Result of the cancellation. One of:
 
-  - `"canceled"` — authorization voided and hold released.
+  - `"cancelled"` — authorization voided and hold released.
   - `"failed"` — cancellation could not be processed. The authorization may have already expired or been captured.
 </ResponseField>
 
@@ -97,7 +97,7 @@ curl -X POST https://api.therius.io/v1/payment/9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4
 ```json 200 OK
 {
   "id": "9f8b2c1e-4d5a-6b7c-8d9e-0f1a2b3c4d5e",
-  "status": "canceled",
+  "status": "cancelled",
   "paymentCode": "PC-1234567890",
   "orderCode": "ORDER-20240101-002",
   "merchantCode": "MERCHANT_001",

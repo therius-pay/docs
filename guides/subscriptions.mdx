@@ -18,7 +18,7 @@ Every subscription moves through a defined set of statuses over its lifetime:
 | `past_due` | Last renewal failed; Therius is retrying according to the dunning schedule |
 | `suspended` | All dunning retries exhausted; subscription is inactive until payment method is updated |
 | `paused` | Manually paused; no renewals attempted |
-| `canceled` | Permanently canceled; cannot be reactivated |
+| `cancelled` | Permanently cancelled; cannot be reactivated |
 | `completed` | Reached a fixed number of billing cycles and finished naturally |
 
 ---
@@ -99,7 +99,7 @@ After a subscription is active, use the following endpoints to manage it. All en
   <Card icon="x" title="Cancel">
     `POST /subscription/{id}/cancel`
 
-    Permanently cancels the subscription. Therius fires the `subscription.canceled` webhook event. Canceled subscriptions cannot be reactivated.
+    Permanently cancels the subscription. Therius fires the `subscription.cancelled` webhook event. Cancelled subscriptions cannot be reactivated.
   </Card>
   <Card icon="arrow-right-arrow-left" title="Change Plan">
     `POST /subscription/{id}/change-plan`

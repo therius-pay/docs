@@ -257,7 +257,7 @@
                             "cardOnFile": {
                                 "$ref": "#/components/schemas/CardOnFile"
                             },
-                            "installments": {
+                            "instalments": {
                                 "type": "integer",
                                 "description": "Number of issuer installments (LATAM markets). Defaults to 1."
                             },
@@ -274,7 +274,7 @@
                 ]
             },
             "SubscriptionCard": {
-                "description": "Card input for creating a subscription. Enrolling a customer is a CIT and a CIT may require 3D Secure — pick the mode that fits:\n\n• **CIT mode** (`nonceData` / `cardData`): Therius runs the initial CIT + first charge here. The customer must be present. This CIT cannot carry out a 3D Secure challenge, so a 3DS-required card will fail — use record mode for those.\n\n• **Record mode** (`tokenData`): the token is a card that already completed a CIT — including any 3DS — through `/payment/authorization` or `/payment/purchase` (with `card.<x>.tokenize: true` + `shopper.id`). No second CIT runs. The mandate is read from the token; pass `networkTransactionId` / `networkReferenceId` explicitly only for a card CIT'd outside Therius. For cycle 1: with a trial or deferred start nothing is charged; with `firstPaymentId` set Therius marks the first invoice paid and links that payment; otherwise Therius charges cycle 1 as an MIT against the recorded mandate.\n\nProvide exactly ONE of `cardData`, `nonceData`, or `tokenData`. `cardOnFile` and `installments` are not accepted — Therius owns the mandate.",
+                "description": "Card input for creating a subscription. Enrolling a customer is a CIT and a CIT may require 3D Secure — pick the mode that fits:\n\n• **CIT mode** (`nonceData` / `cardData`): Therius runs the initial CIT + first charge here. The customer must be present. This CIT cannot carry out a 3D Secure challenge, so a 3DS-required card will fail — use record mode for those.\n\n• **Record mode** (`tokenData`): the token is a card that already completed a CIT — including any 3DS — through `/payment/authorization` or `/payment/purchase` (with `card.<x>.tokenize: true` + `shopper.id`). No second CIT runs. The mandate is read from the token; pass `networkTransactionId` / `networkReferenceId` explicitly only for a card CIT'd outside Therius. For cycle 1: with a trial or deferred start nothing is charged; with `firstPaymentId` set Therius marks the first invoice paid and links that payment; otherwise Therius charges cycle 1 as an MIT against the recorded mandate.\n\nProvide exactly ONE of `cardData`, `nonceData`, or `tokenData`. `cardOnFile` and `instalments` are not accepted — Therius owns the mandate.",
                 "allOf": [
                     {
                         "$ref": "#/components/schemas/CardInstrument"
@@ -410,7 +410,7 @@
                             "pending_3ds",
                             "pending_action",
                             "failed",
-                            "canceled",
+                            "cancelled",
                             "refunded"
                         ]
                     },
@@ -513,7 +513,7 @@
                             "past_due",
                             "paused",
                             "suspended",
-                            "canceled"
+                            "cancelled"
                         ]
                     },
                     "shopper": {

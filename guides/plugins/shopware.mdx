@@ -59,7 +59,7 @@ Selecting Therius Payments on the confirm page does not render an inline card fo
    ```
 
    Create one endpoint in **Sandbox** mode and one in **Production** mode if you use both.
-2. Subscribe to: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.canceled`, `payment.chargeback`, `payment.capture_failed`, `payment.cancel_failed`.
+2. Subscribe to: `payment.authorized`, `payment.captured`, `payment.refused`, `payment.refunded`, `payment.refund_failed`, `payment.cancelled`, `payment.chargeback`, `payment.capture_failed`, `payment.cancel_failed`.
 3. Copy each environment's signing secret into the matching **Test Webhook Secret** / **Live Webhook Secret** field in the plugin configuration.
 
 ## Known limitations
