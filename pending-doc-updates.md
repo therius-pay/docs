@@ -37,4 +37,4 @@ _No unprocessed entries. Last processed: 2026-09-01 — "Private API key: header
   updated (hand-curated) — needs the new path + the `lines[]` response field added.
 - Docs likely affected: api-reference/subscriptions.mdx (new endpoint + invoice `lines[]`),
   a new concepts page or a section under the subscriptions/billing docs.
-- GA status: not yet GA — backend only, no dashboard UI, unverified against a live billing cycle.
+- GA status: not yet GA — backend + dashboard UI built, unverified against a live billing cycle.
