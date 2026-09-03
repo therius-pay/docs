@@ -1982,6 +1982,16 @@
                 "tags": [
                     "Subscriptions"
                 ],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "Optional. A replay with the same `(meterCode, Idempotency-Key)` pair returns the original event instead of recording a second one. Use it when your reporting job may retry.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -2011,10 +2021,6 @@
                                         "type": "number",
                                         "description": "Non-negative quantity for this event, in the meter's units.",
                                         "example": 500
-                                    },
-                                    "idempotencyKey": {
-                                        "type": "string",
-                                        "description": "Optional. A replay with the same `(meterCode, idempotencyKey)` returns the original event instead of recording a second one."
                                     },
                                     "occurredAt": {
                                         "type": "string",

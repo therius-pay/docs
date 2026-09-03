@@ -156,16 +156,16 @@ Una franquicia de `includedUnits` se resta antes de tarificar cada período.
 
 ```json
 POST /subscription/usage
+Idempotency-Key: hourly-rollup-2026-09-02T10:00Z
 
 {
   "subscriptionId": "sub_abc123def456",
   "meterCode": "api_requests",
-  "quantity": 500,
-  "idempotencyKey": "hourly-rollup-2026-09-02T10:00Z"
+  "quantity": 500
 }
 ```
 
-Pasa un `idempotencyKey` si tu trabajo de reporte puede reintentar — un `(meterCode, idempotencyKey)` duplicado devuelve el evento original. Un `occurredAt` opcional fija a qué período de facturación cuenta el evento (por defecto, ahora).
+Envía un header `Idempotency-Key` si tu trabajo de reporte puede reintentar — un `(meterCode, Idempotency-Key)` duplicado devuelve el evento original. Un `occurredAt` opcional fija a qué período de facturación cuenta el evento (por defecto, ahora).
 
 En cada renovación Therius agrega los eventos del período, aplica la tarificación y suma el resultado a la factura. Una factura híbrida lleva un array `lines` — una línea para la tarifa base más una por cada complemento medido — y el `amount` de la factura es su suma. Consulta [Ver facturas](/es/api-reference/subscriptions/invoices#line-items).
 

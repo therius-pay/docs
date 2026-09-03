@@ -41,6 +41,10 @@ O período de faturamento para o qual um evento conta é determinado pelo timest
   `application/json`
 </ParamField>
 
+<ParamField header="Idempotency-Key" type="string">
+  Opcional. Uma repetição com o mesmo par `(meterCode, Idempotency-Key)` devolve o evento original em vez de registrar um segundo. Use quando o seu job de reporte puder repetir.
+</ParamField>
+
 ### Corpo da requisição
 
 <ParamField body="merchantCode" type="string">
@@ -59,9 +63,6 @@ O período de faturamento para o qual um evento conta é determinado pelo timest
   Quantidade não negativa para este evento, expressa nas unidades do medidor.
 </ParamField>
 
-<ParamField body="idempotencyKey" type="string">
-  Opcional. Uma repetição com o mesmo par `(meterCode, idempotencyKey)` devolve o evento original em vez de registrar um segundo. Use quando o seu job de reporte puder repetir.
-</ParamField>
 
 <ParamField body="occurredAt" type="string">
   Timestamp RFC 3339 opcional de quando o uso ocorreu. O padrão é a hora em que a requisição é recebida. Determina para qual período de faturamento o evento conta.
@@ -105,11 +106,11 @@ Devolve `200 OK` com o evento registrado. Em uma repetição idempotente, o even
 curl -X POST https://api.therius.io/v1/subscription/usage \
   -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: batch-2026-09-02T10:00Z" \
   -d '{
     "subscriptionId": "sub_abc123def456",
     "meterCode": "api_requests",
-    "quantity": 500,
-    "idempotencyKey": "batch-2026-09-02T10:00Z"
+    "quantity": 500
   }'
 ```
 

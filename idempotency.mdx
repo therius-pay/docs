@@ -18,6 +18,7 @@ All mutating endpoints accept an `Idempotency-Key` request header:
 - `POST /payment/{id}/cancel_or_refund`
 - `POST /payment/resume`
 - `POST /subscription`
+- `POST /subscription/usage` — see the note below; the semantics differ slightly
 
 The value must be a **UUID v4** that you generate per logical operation (one UUID per purchase, one per refund, and so on). Here is how Therius handles the key across retries:
 
@@ -31,6 +32,10 @@ The value must be a **UUID v4** that you generate per logical operation (one UUI
 </Note>
 
 Keys expire after **24 hours**. After expiry, the same UUID can be reused freely, but you should generate a fresh UUID for any new operation regardless.
+
+<Note>
+  `POST /subscription/usage` reads the `Idempotency-Key` header too, but it is deduplicated per `(meterCode, Idempotency-Key)` and never expires: a replay returns the original usage event with `"duplicate": true` rather than a cached HTTP response. The key is optional there — omit it and every call records a new event.
+</Note>
 
 ## Code Examples
 

@@ -20,6 +20,7 @@ Todos los endpoints que modifican datos aceptan un encabezado de solicitud `Idem
 - `POST /payment/{id}/cancel_or_refund`
 - `POST /payment/resume`
 - `POST /subscription`
+- `POST /subscription/usage` — consulta la nota más abajo; la semántica difiere un poco
 
 El valor debe ser un **UUID v4** que generes por operación lógica (un UUID por compra, uno por reembolso, y así). Así maneja Therius la clave durante los reintentos:
 
@@ -33,6 +34,10 @@ El valor debe ser un **UUID v4** que generes por operación lógica (un UUID por
 </Note>
 
 Las claves expiran después de **24 horas**. Tras la expiración, el mismo UUID puede reutilizarse libremente, pero de todos modos deberías generar un UUID nuevo para cualquier operación nueva.
+
+<Note>
+  `POST /subscription/usage` también lee el encabezado `Idempotency-Key`, pero se deduplica por `(meterCode, Idempotency-Key)` y nunca expira: una repetición devuelve el evento de uso original con `"duplicate": true` en vez de una respuesta HTTP en caché. Allí la clave es opcional — si la omites, cada llamada registra un evento nuevo.
+</Note>
 
 ## Ejemplos de código
 

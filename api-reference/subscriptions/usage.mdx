@@ -35,6 +35,10 @@ The billing period an event counts toward is determined by its `occurredAt` time
   `application/json`
 </ParamField>
 
+<ParamField header="Idempotency-Key" type="string">
+  Optional. A replay with the same `(meterCode, Idempotency-Key)` pair returns the original event instead of recording a second one. Use it when your reporting job may retry.
+</ParamField>
+
 ### Request Body
 
 <ParamField body="merchantCode" type="string">
@@ -51,10 +55,6 @@ The billing period an event counts toward is determined by its `occurredAt` time
 
 <ParamField body="quantity" type="number" required>
   Non-negative quantity for this event, expressed in the meter's units.
-</ParamField>
-
-<ParamField body="idempotencyKey" type="string">
-  Optional. A replay with the same `(meterCode, idempotencyKey)` pair returns the original event instead of recording a second one. Use it when your reporting job may retry.
 </ParamField>
 
 <ParamField body="occurredAt" type="string">
@@ -99,11 +99,11 @@ Returns `200 OK` with the recorded event. On an idempotent replay the original e
 curl -X POST https://api.therius.io/v1/subscription/usage \
   -H "Authorization: Bearer prv_production_your_key_here" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: batch-2026-09-02T10:00Z" \
   -d '{
     "subscriptionId": "sub_abc123def456",
     "meterCode": "api_requests",
-    "quantity": 500,
-    "idempotencyKey": "batch-2026-09-02T10:00Z"
+    "quantity": 500
   }'
 ```
 

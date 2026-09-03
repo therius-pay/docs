@@ -154,16 +154,16 @@ An `includedUnits` allowance is subtracted before pricing each period.
 
 ```json
 POST /subscription/usage
+Idempotency-Key: hourly-rollup-2026-09-02T10:00Z
 
 {
   "subscriptionId": "sub_abc123def456",
   "meterCode": "api_requests",
-  "quantity": 500,
-  "idempotencyKey": "hourly-rollup-2026-09-02T10:00Z"
+  "quantity": 500
 }
 ```
 
-Pass an `idempotencyKey` if your reporting job might retry — a duplicate `(meterCode, idempotencyKey)` returns the original event. An optional `occurredAt` sets which billing period the event counts toward (it defaults to now).
+Send an `Idempotency-Key` header if your reporting job might retry — a duplicate `(meterCode, Idempotency-Key)` returns the original event. An optional `occurredAt` sets which billing period the event counts toward (it defaults to now).
 
 At each renewal Therius aggregates the period's events, applies the pricing, and adds the result to the invoice. A hybrid invoice carries a `lines` array — one line for the base fee plus one per metered add-on — and the invoice `amount` is their sum. See [View Invoices](/api-reference/subscriptions/invoices#line-items).
 

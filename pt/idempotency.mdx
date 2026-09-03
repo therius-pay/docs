@@ -20,6 +20,7 @@ Todos os endpoints que alteram dados aceitam um cabeçalho de requisição `Idem
 - `POST /payment/{id}/cancel_or_refund`
 - `POST /payment/resume`
 - `POST /subscription`
+- `POST /subscription/usage` — veja a nota abaixo; a semântica difere um pouco
 
 O valor deve ser um **UUID v4** que você gera por operação lógica (um UUID por compra, um por reembolso, e assim por diante). Veja como o Therius trata a chave nas novas tentativas:
 
@@ -33,6 +34,10 @@ O valor deve ser um **UUID v4** que você gera por operação lógica (um UUID p
 </Note>
 
 As chaves expiram após **24 horas**. Depois da expiração, o mesmo UUID pode ser reutilizado livremente, mas você deve gerar um UUID novo para qualquer operação nova de qualquer forma.
+
+<Note>
+  `POST /subscription/usage` também lê o header `Idempotency-Key`, mas é deduplicado por `(meterCode, Idempotency-Key)` e nunca expira: uma repetição devolve o evento de uso original com `"duplicate": true` em vez de uma resposta HTTP em cache. Ali a chave é opcional — se você omitir, cada chamada registra um novo evento.
+</Note>
 
 ## Exemplos de código
 
