@@ -1,0 +1,124 @@
+---
+title: "Record Metered Usage"
+sidebarTitle: "Record Usage"
+description: "Report a usage event against a subscription so metered charges are added to the next invoice."
+openapi: "POST /subscription/usage"
+---
+
+Use `POST /subscription/usage` to report metered consumption against a subscription. Usage-based billing lets you charge a variable amount on top of the plan's flat fee — for example a base subscription plus a per-request or per-gigabyte charge.
+
+<Note>
+  Usage **meters** and their **per-plan pricing** are configured in the Dashboard under **Subscriptions → Usage Meters**, not through the API. This endpoint only ingests the raw usage events. See [Usage-based &amp; hybrid billing](/guides/subscriptions#usage-based-and-hybrid-billing) for the full model.
+</Note>
+
+## How metered charges reach an invoice
+
+1. You define a meter (e.g. `api_requests`) with an aggregation mode, and price it on a plan.
+2. Throughout the billing period you call `POST /subscription/usage` for each usage event.
+3. At renewal, Therius aggregates that period's events per the meter's aggregation mode, subtracts the plan's included units, applies the pricing scheme, and adds the result to the invoice as its own [line item](/api-reference/subscriptions/invoices#line-items).
+
+The billing period an event counts toward is determined by its `occurredAt` timestamp.
+
+## Request
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/usage`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+### Request Body
+
+<ParamField body="merchantCode" type="string">
+  Your merchant account identifier.
+</ParamField>
+
+<ParamField body="subscriptionId" type="string" required>
+  UUID of the subscription the usage is attributed to. Must belong to your merchant account.
+</ParamField>
+
+<ParamField body="meterCode" type="string" required>
+  The `code` of a usage meter belonging to your merchant account, e.g. `api_requests`.
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Non-negative quantity for this event, expressed in the meter's units.
+</ParamField>
+
+<ParamField body="idempotencyKey" type="string">
+  Optional. A replay with the same `(meterCode, idempotencyKey)` pair returns the original event instead of recording a second one. Use it when your reporting job may retry.
+</ParamField>
+
+<ParamField body="occurredAt" type="string">
+  Optional RFC 3339 timestamp of when the usage occurred. Defaults to the time the request is received. Determines which billing period the event falls into.
+</ParamField>
+
+## Response
+
+Returns `200 OK` with the recorded event. On an idempotent replay the original event is returned with `duplicate: true`.
+
+<ResponseField name="id" type="string">
+  UUID of the usage event.
+</ResponseField>
+
+<ResponseField name="meterCode" type="string">
+  The meter the event was recorded against.
+</ResponseField>
+
+<ResponseField name="quantity" type="number">
+  The recorded quantity.
+</ResponseField>
+
+<ResponseField name="occurredAt" type="string">
+  ISO 8601 timestamp the event was attributed to.
+</ResponseField>
+
+<ResponseField name="duplicate" type="boolean">
+  `true` when this response is an idempotent replay of a previously recorded event.
+</ResponseField>
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `400` | Missing or invalid `subscriptionId`, `meterCode`, `quantity`, or `occurredAt`. |
+| `404` | Subscription or meter not found under your merchant account. |
+| `429` | Rate limit exceeded. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/usage \
+  -H "Authorization: Bearer prv_production_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscriptionId": "sub_abc123def456",
+    "meterCode": "api_requests",
+    "quantity": 500,
+    "idempotencyKey": "batch-2026-09-02T10:00Z"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "3f1c9a2e-8b7d-4e2a-9c31-6a0b5d4e7f88",
+  "meterCode": "api_requests",
+  "quantity": 500,
+  "occurredAt": "2026-09-02T10:00:00Z",
+  "duplicate": false
+}
+```
+
+</ResponseExample>

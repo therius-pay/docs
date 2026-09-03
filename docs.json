@@ -116,7 +116,8 @@
                   "api-reference/subscriptions/pause-resume",
                   "api-reference/subscriptions/change-plan",
                   "api-reference/subscriptions/update-payment-method",
-                  "api-reference/subscriptions/invoices"
+                  "api-reference/subscriptions/invoices",
+                  "api-reference/subscriptions/usage"
                 ]
               },
               {
@@ -279,7 +280,8 @@
                   "es/api-reference/subscriptions/pause-resume",
                   "es/api-reference/subscriptions/change-plan",
                   "es/api-reference/subscriptions/update-payment-method",
-                  "es/api-reference/subscriptions/invoices"
+                  "es/api-reference/subscriptions/invoices",
+                  "es/api-reference/subscriptions/usage"
                 ]
               },
               {
@@ -442,7 +444,8 @@
                   "pt/api-reference/subscriptions/pause-resume",
                   "pt/api-reference/subscriptions/change-plan",
                   "pt/api-reference/subscriptions/update-payment-method",
-                  "pt/api-reference/subscriptions/invoices"
+                  "pt/api-reference/subscriptions/invoices",
+                  "pt/api-reference/subscriptions/usage"
                 ]
               },
               {

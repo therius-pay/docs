@@ -4,7 +4,7 @@ sidebarTitle: "Ver facturas"
 description: "Lista las facturas de una suscripción o recupera una sola factura por su UUID."
 openapi: "GET /subscription/{id}/invoice"
 translationOf: api-reference/subscriptions/invoices.mdx
-translationSourceHash: e01989e30ea5addb0f95ccc4f001cabcbb69d25fd14e3afd8f07bba382fdbdd6
+translationSourceHash: c9aa4f2adfa6d6726e40cc7b50792ae393c25e80e8bfea3e6d585b432289639b
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -78,6 +78,30 @@ Devuelve un array de objetos de factura para la suscripción.
 <ResponseField name="periodEnd" type="string">
   Fin del período de facturación que cubre esta factura.
 </ResponseField>
+
+<ResponseField name="lines" type="array">
+  Detalle de la factura. Presente solo cuando el plan tarifica uno o más [medidores de uso](/es/guides/subscriptions#facturación-por-uso-e-híbrida): una línea para la tarifa base del plan (sin `meterId`) más una línea por cada complemento medido. Ausente o vacío en una factura de tarifa fija — en ese caso `amount` es el cobro completo.
+
+  <Expandable title="objeto de línea">
+    <ResponseField name="description" type="string">
+      Etiqueta legible, p. ej. `"Subscription base fee"` o `"API requests (api_requests)"`.
+    </ResponseField>
+    <ResponseField name="meterId" type="integer">
+      El medidor de uso del que se tarificó esta línea. Se omite en la línea de la tarifa base.
+    </ResponseField>
+    <ResponseField name="quantity" type="number">
+      Cantidad facturable del medidor en el período, después de restar las unidades incluidas del plan.
+    </ResponseField>
+    <ResponseField name="unitAmount" type="integer">
+      Precio por unidad configurado en unidades menores para la tarificación `per_unit`. `0` para tarificación por tramos (`volume` / `graduated`).
+    </ResponseField>
+    <ResponseField name="amount" type="integer">
+      Total de la línea en unidades menores. El `amount` de la factura es la suma de todos los `amount` de línea.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<a id="line-items" />
 
 ### Ejemplo
 

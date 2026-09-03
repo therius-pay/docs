@@ -1,0 +1,130 @@
+---
+title: "Registra uso medido"
+sidebarTitle: "Registrar uso"
+description: "Reporta un evento de uso contra una suscripción para que los cargos medidos se agreguen a la próxima factura."
+openapi: "POST /subscription/usage"
+translationOf: api-reference/subscriptions/usage.mdx
+translationSourceHash: c94ffd89832da2019b75d4ba67941e70859807b940f2183f4d58c574456503c3
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Usa `POST /subscription/usage` para reportar el consumo medido contra una suscripción. La facturación por uso te permite cobrar un monto variable además de la tarifa fija del plan — por ejemplo una suscripción base más un cargo por solicitud o por gigabyte.
+
+<SchemaLangNote lang="es" />
+
+<Note>
+  Los **medidores** de uso y su **tarificación por plan** se configuran en el Dashboard, en **Suscripciones → Medidores de uso**, no por la API. Este endpoint solo ingiere los eventos de uso en bruto. Consulta [Facturación por uso e híbrida](/es/guides/subscriptions#facturación-por-uso-e-híbrida) para el modelo completo.
+</Note>
+
+## Cómo los cargos medidos llegan a una factura
+
+1. Defines un medidor (p. ej. `api_requests`) con un modo de agregación, y lo tarificas en un plan.
+2. A lo largo del período de facturación llamas a `POST /subscription/usage` por cada evento de uso.
+3. En la renovación, Therius agrega los eventos de ese período según el modo de agregación del medidor, resta las unidades incluidas del plan, aplica el esquema de tarificación y suma el resultado a la factura como su propia [línea](/es/api-reference/subscriptions/invoices#line-items).
+
+El período de facturación al que cuenta un evento se determina por su timestamp `occurredAt`.
+
+## Solicitud
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/usage`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+### Cuerpo de la solicitud
+
+<ParamField body="merchantCode" type="string">
+  Tu identificador de cuenta de comercio.
+</ParamField>
+
+<ParamField body="subscriptionId" type="string" required>
+  UUID de la suscripción a la que se atribuye el uso. Debe pertenecer a tu cuenta de comercio.
+</ParamField>
+
+<ParamField body="meterCode" type="string" required>
+  El `code` de un medidor de uso que pertenece a tu cuenta de comercio, p. ej. `api_requests`.
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Cantidad no negativa para este evento, expresada en las unidades del medidor.
+</ParamField>
+
+<ParamField body="idempotencyKey" type="string">
+  Opcional. Una repetición con el mismo par `(meterCode, idempotencyKey)` devuelve el evento original en vez de registrar un segundo. Úsala cuando tu trabajo de reporte pueda reintentar.
+</ParamField>
+
+<ParamField body="occurredAt" type="string">
+  Timestamp RFC 3339 opcional de cuándo ocurrió el uso. Por defecto, la hora en que se recibe la solicitud. Determina a qué período de facturación cuenta el evento.
+</ParamField>
+
+## Respuesta
+
+Devuelve `200 OK` con el evento registrado. En una repetición idempotente se devuelve el evento original con `duplicate: true`.
+
+<ResponseField name="id" type="string">
+  UUID del evento de uso.
+</ResponseField>
+
+<ResponseField name="meterCode" type="string">
+  El medidor contra el que se registró el evento.
+</ResponseField>
+
+<ResponseField name="quantity" type="number">
+  La cantidad registrada.
+</ResponseField>
+
+<ResponseField name="occurredAt" type="string">
+  Timestamp ISO 8601 al que se atribuyó el evento.
+</ResponseField>
+
+<ResponseField name="duplicate" type="boolean">
+  `true` cuando esta respuesta es una repetición idempotente de un evento registrado previamente.
+</ResponseField>
+
+## Errores
+
+| Código | Significado |
+| --- | --- |
+| `400` | `subscriptionId`, `meterCode`, `quantity` u `occurredAt` faltante o inválido. |
+| `404` | Suscripción o medidor no encontrado bajo tu cuenta de comercio. |
+| `429` | Límite de tasa excedido. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/usage \
+  -H "Authorization: Bearer prv_production_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscriptionId": "sub_abc123def456",
+    "meterCode": "api_requests",
+    "quantity": 500,
+    "idempotencyKey": "batch-2026-09-02T10:00Z"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "3f1c9a2e-8b7d-4e2a-9c31-6a0b5d4e7f88",
+  "meterCode": "api_requests",
+  "quantity": 500,
+  "occurredAt": "2026-09-02T10:00:00Z",
+  "duplicate": false
+}
+```
+
+</ResponseExample>

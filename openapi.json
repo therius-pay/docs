@@ -571,6 +571,41 @@
                     "createdAt": {
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "description": "Itemisation of the invoice. Present only when the plan prices one or more usage meters: one line for the base plan fee (no `meterId`) plus one line per metered add-on. Absent or empty for a flat-fee invoice.",
+                        "items": {
+                            "$ref": "#/components/schemas/InvoiceLine"
+                        }
+                    }
+                }
+            },
+            "InvoiceLine": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "example": "API requests (api_requests)"
+                    },
+                    "meterId": {
+                        "type": "integer",
+                        "description": "The usage meter this line was priced from. Omitted on the base plan-fee line."
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "description": "Billable quantity for this meter over the invoice period, after subtracting the plan's included units.",
+                        "example": 12000
+                    },
+                    "unitAmount": {
+                        "type": "integer",
+                        "description": "Configured per-unit price in minor units (per_unit scheme). `0` for tiered (volume/graduated) pricing.",
+                        "example": 1
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "description": "Line total in minor units.",
+                        "example": 12000
                     }
                 }
             }
@@ -1935,6 +1970,98 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/subscription/usage": {
+            "post": {
+                "operationId": "recordSubscriptionUsage",
+                "summary": "Record a metered usage event",
+                "description": "Report a usage event against a subscription for a meter defined on its plan. At each renewal Therius aggregates the period's events per the meter's aggregation mode, prices them, and adds the result to the invoice. Meters and their per-plan pricing are configured in the Dashboard (Subscriptions → Usage Meters); this endpoint only ingests the raw events.",
+                "tags": [
+                    "Subscriptions"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "subscriptionId",
+                                    "meterCode",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "merchantCode": {
+                                        "type": "string",
+                                        "description": "Your merchant account identifier."
+                                    },
+                                    "subscriptionId": {
+                                        "type": "string",
+                                        "description": "UUID of the subscription the usage is attributed to."
+                                    },
+                                    "meterCode": {
+                                        "type": "string",
+                                        "description": "The `code` of a usage meter belonging to your merchant account, e.g. `api_requests`.",
+                                        "example": "api_requests"
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "description": "Non-negative quantity for this event, in the meter's units.",
+                                        "example": 500
+                                    },
+                                    "idempotencyKey": {
+                                        "type": "string",
+                                        "description": "Optional. A replay with the same `(meterCode, idempotencyKey)` returns the original event instead of recording a second one."
+                                    },
+                                    "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "Optional RFC 3339 timestamp of when the usage occurred. Defaults to the time the request is received. Determines which billing period the event falls into."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event recorded, or the original event on an idempotent replay.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "description": "UUID of the usage event."
+                                        },
+                                        "meterCode": {
+                                            "type": "string"
+                                        },
+                                        "quantity": {
+                                            "type": "number"
+                                        },
+                                        "occurredAt": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "duplicate": {
+                                            "type": "boolean",
+                                            "description": "`true` when this response is an idempotent replay of a previously recorded event."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid `subscriptionId`, `meterCode`, `quantity`, or `occurredAt`."
+                    },
+                    "404": {
+                        "description": "Subscription or meter not found under your merchant account."
                     }
                 }
             }

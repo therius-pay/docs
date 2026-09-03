@@ -73,6 +73,30 @@ Returns an array of invoice objects for the subscription.
   End of the billing period this invoice covers.
 </ResponseField>
 
+<ResponseField name="lines" type="array">
+  Itemisation of the invoice. Present only when the plan prices one or more [usage meters](/guides/subscriptions#usage-based-and-hybrid-billing): one line for the base plan fee (no `meterId`) plus one line per metered add-on. Absent or empty for a flat-fee invoice — the `amount` is then the whole charge.
+
+  <Expandable title="line object">
+    <ResponseField name="description" type="string">
+      Human-readable label, e.g. `"Subscription base fee"` or `"API requests (api_requests)"`.
+    </ResponseField>
+    <ResponseField name="meterId" type="integer">
+      The usage meter this line was priced from. Omitted on the base plan-fee line.
+    </ResponseField>
+    <ResponseField name="quantity" type="number">
+      Billable quantity for the meter over the period, after the plan's included units are subtracted.
+    </ResponseField>
+    <ResponseField name="unitAmount" type="integer">
+      Configured per-unit price in minor units for `per_unit` pricing. `0` for tiered (`volume` / `graduated`) pricing.
+    </ResponseField>
+    <ResponseField name="amount" type="integer">
+      Line total in minor units. The invoice `amount` is the sum of all line `amount`s.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<a id="line-items" />
+
 ### Example
 
 ```bash

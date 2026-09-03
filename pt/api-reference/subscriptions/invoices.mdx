@@ -4,7 +4,7 @@ sidebarTitle: "Ver faturas"
 description: "Liste as faturas de uma assinatura ou recupere uma única fatura pelo UUID dela."
 openapi: "GET /subscription/{id}/invoice"
 translationOf: api-reference/subscriptions/invoices.mdx
-translationSourceHash: e01989e30ea5addb0f95ccc4f001cabcbb69d25fd14e3afd8f07bba382fdbdd6
+translationSourceHash: c9aa4f2adfa6d6726e40cc7b50792ae393c25e80e8bfea3e6d585b432289639b
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -78,6 +78,30 @@ Devolve um array de objetos de fatura para a assinatura.
 <ResponseField name="periodEnd" type="string">
   Fim do período de faturamento que esta fatura cobre.
 </ResponseField>
+
+<ResponseField name="lines" type="array">
+  Detalhamento da fatura. Presente apenas quando o plano precifica um ou mais [medidores de uso](/pt/guides/subscriptions#faturamento-por-uso-e-híbrido): uma linha para a tarifa base do plano (sem `meterId`) mais uma linha por complemento medido. Ausente ou vazio em uma fatura de tarifa fixa — nesse caso `amount` é a cobrança inteira.
+
+  <Expandable title="objeto de linha">
+    <ResponseField name="description" type="string">
+      Rótulo legível, ex.: `"Subscription base fee"` ou `"API requests (api_requests)"`.
+    </ResponseField>
+    <ResponseField name="meterId" type="integer">
+      O medidor de uso do qual esta linha foi precificada. Omitido na linha da tarifa base.
+    </ResponseField>
+    <ResponseField name="quantity" type="number">
+      Quantidade faturável do medidor no período, após subtrair as unidades incluídas do plano.
+    </ResponseField>
+    <ResponseField name="unitAmount" type="integer">
+      Preço por unidade configurado em unidades menores para a precificação `per_unit`. `0` para precificação por faixas (`volume` / `graduated`).
+    </ResponseField>
+    <ResponseField name="amount" type="integer">
+      Total da linha em unidades menores. O `amount` da fatura é a soma de todos os `amount` de linha.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<a id="line-items" />
 
 ### Exemplo
 

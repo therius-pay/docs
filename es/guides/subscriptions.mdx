@@ -3,7 +3,7 @@ title: 'Crea facturación recurrente con las suscripciones de Therius'
 sidebarTitle: 'Suscripciones'
 description: 'Crea planes, inscribe clientes en suscripciones, maneja la gestión de cobros y administra cambios de plan, pausas y cancelaciones con la API de suscripciones de Therius.'
 translationOf: guides/subscriptions.mdx
-translationSourceHash: e51871ba964eba16171019d804c09ed3619e455f8bf8b2066ff2211556c9c25c
+translationSourceHash: 2c8fac897bdbfd408e1c7cefbb535bd5b5214089618dd8482bb47c82387bd78e
 ---
 
 Las suscripciones de Therius te dan un motor completo de facturación recurrente listo para usar. Los planes definen el monto de facturación, la moneda y el intervalo. Las suscripciones inscriben a clientes individuales en un plan y almacenan su método de pago de forma segura. A partir de ahí, Therius maneja las renovaciones automáticas según lo programado, la lógica del período de prueba, los reintentos de gestión de cobros cuando un pago falla, y los eventos de ciclo de vida que puedes escuchar vía webhooks — para que te concentres en tu producto en vez de en los casos límite de facturación.
@@ -124,6 +124,50 @@ Después de que una suscripción esté activa, usa los siguientes endpoints para
     Establece el día del mes en el que se cobran las renovaciones. Acepta valores 1–28.
   </Card>
 </CardGroup>
+
+---
+
+## Facturación por uso e híbrida
+
+Además del `amount` fijo de un plan, puedes cobrar por el consumo medido — un híbrido de tarifa base fija y tarifa variable por uso. Hay tres piezas:
+
+**1. Medidores.** Un medidor es un contador con nombre, propio de tu cuenta de comercio, p. ej. `api_requests` o `data_stored_gb`. Cada medidor tiene un modo de agregación que decide cómo se combinan los eventos de un período en una única cantidad facturable:
+
+| Agregación | Cantidad facturable del período |
+| --- | --- |
+| `sum` | Suma del `quantity` de cada evento |
+| `max` | El `quantity` individual más alto reportado |
+| `last` | El `quantity` reportado más recientemente |
+| `count` | Número de eventos reportados |
+
+**2. Tarificación por plan.** Cada medidor se tarifica en un plan con un esquema:
+
+- `per_unit` — un precio fijo por unidad.
+- `volume` — todas las unidades se tarifican a la tarifa del único tramo en el que cae la cantidad total.
+- `graduated` — cada tramo tarifica solo las unidades que caen dentro de su propio rango.
+
+Una franquicia de `includedUnits` se resta antes de tarificar cada período.
+
+<Note>
+  Los medidores y su tarificación por plan se gestionan en el Dashboard, en **Suscripciones → Medidores de uso**. No hay API para configurar medidores ni precios.
+</Note>
+
+**3. Reportar uso.** A lo largo del período de facturación, llama a [`POST /subscription/usage`](/es/api-reference/subscriptions/usage) por cada evento de uso:
+
+```json
+POST /subscription/usage
+
+{
+  "subscriptionId": "sub_abc123def456",
+  "meterCode": "api_requests",
+  "quantity": 500,
+  "idempotencyKey": "hourly-rollup-2026-09-02T10:00Z"
+}
+```
+
+Pasa un `idempotencyKey` si tu trabajo de reporte puede reintentar — un `(meterCode, idempotencyKey)` duplicado devuelve el evento original. Un `occurredAt` opcional fija a qué período de facturación cuenta el evento (por defecto, ahora).
+
+En cada renovación Therius agrega los eventos del período, aplica la tarificación y suma el resultado a la factura. Una factura híbrida lleva un array `lines` — una línea para la tarifa base más una por cada complemento medido — y el `amount` de la factura es su suma. Consulta [Ver facturas](/es/api-reference/subscriptions/invoices#line-items).
 
 ---
 

@@ -125,6 +125,50 @@ After a subscription is active, use the following endpoints to manage it. All en
 
 ---
 
+## Usage-based and hybrid billing
+
+On top of a plan's flat `amount`, you can charge for metered consumption — a hybrid of a fixed base fee and a variable usage fee. There are three pieces:
+
+**1. Meters.** A meter is a named counter scoped to your merchant account, e.g. `api_requests` or `data_stored_gb`. Each meter has an aggregation mode that decides how a period's events collapse into one billable quantity:
+
+| Aggregation | Billable quantity for the period |
+| --- | --- |
+| `sum` | Sum of every event's `quantity` |
+| `max` | Highest single `quantity` reported |
+| `last` | The most recently reported `quantity` |
+| `count` | Number of events reported |
+
+**2. Per-plan pricing.** Each meter is priced on a plan with a scheme:
+
+- `per_unit` — a flat price per unit.
+- `volume` — every unit is priced at the rate of the single bracket the total quantity falls into.
+- `graduated` — each bracket prices only the units that fall within its own range.
+
+An `includedUnits` allowance is subtracted before pricing each period.
+
+<Note>
+  Meters and their per-plan pricing are managed in the Dashboard under **Subscriptions → Usage Meters**. There is no API for meter or price configuration.
+</Note>
+
+**3. Reporting usage.** Throughout the billing period, call [`POST /subscription/usage`](/api-reference/subscriptions/usage) for each usage event:
+
+```json
+POST /subscription/usage
+
+{
+  "subscriptionId": "sub_abc123def456",
+  "meterCode": "api_requests",
+  "quantity": 500,
+  "idempotencyKey": "hourly-rollup-2026-09-02T10:00Z"
+}
+```
+
+Pass an `idempotencyKey` if your reporting job might retry — a duplicate `(meterCode, idempotencyKey)` returns the original event. An optional `occurredAt` sets which billing period the event counts toward (it defaults to now).
+
+At each renewal Therius aggregates the period's events, applies the pricing, and adds the result to the invoice. A hybrid invoice carries a `lines` array — one line for the base fee plus one per metered add-on — and the invoice `amount` is their sum. See [View Invoices](/api-reference/subscriptions/invoices#line-items).
+
+---
+
 ## Dunning
 
 When a scheduled renewal fails — for example due to insufficient funds or an expired card — Therius automatically moves the subscription to `past_due` and begins the dunning sequence. Retries are spaced according to card scheme retry caps and your merchant configuration.

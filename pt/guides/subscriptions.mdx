@@ -3,7 +3,7 @@ title: 'Crie faturamento recorrente com as assinaturas do Therius'
 sidebarTitle: 'Assinaturas'
 description: 'Crie planos, inscreva clientes em assinaturas, trate a gestão de cobranças e gerencie mudanças de plano, pausas e cancelamentos com a API de assinaturas do Therius.'
 translationOf: guides/subscriptions.mdx
-translationSourceHash: e51871ba964eba16171019d804c09ed3619e455f8bf8b2066ff2211556c9c25c
+translationSourceHash: 2c8fac897bdbfd408e1c7cefbb535bd5b5214089618dd8482bb47c82387bd78e
 ---
 
 As assinaturas do Therius oferecem um motor completo de faturamento recorrente pronto para usar. Os planos definem o valor de faturamento, a moeda e o intervalo. As assinaturas inscrevem clientes individuais em um plano e armazenam o método de pagamento deles de forma segura. A partir daí, o Therius trata as renovações automáticas conforme programado, a lógica do período de teste, as novas tentativas de gestão de cobranças quando um pagamento falha, e os eventos de ciclo de vida que você pode escutar via webhooks — para que você foque no seu produto em vez dos casos extremos de faturamento.
@@ -124,6 +124,50 @@ Depois que uma assinatura está ativa, use os endpoints a seguir para gerenciá-
     Define o dia do mês em que as renovações são cobradas. Aceita valores de 1 a 28.
   </Card>
 </CardGroup>
+
+---
+
+## Faturamento por uso e híbrido
+
+Além do `amount` fixo de um plano, você pode cobrar pelo consumo medido — um híbrido de tarifa base fixa e tarifa variável por uso. São três peças:
+
+**1. Medidores.** Um medidor é um contador nomeado, próprio da sua conta de lojista, ex.: `api_requests` ou `data_stored_gb`. Cada medidor tem um modo de agregação que decide como os eventos de um período se combinam em uma única quantidade faturável:
+
+| Agregação | Quantidade faturável do período |
+| --- | --- |
+| `sum` | Soma do `quantity` de cada evento |
+| `max` | O maior `quantity` individual reportado |
+| `last` | O `quantity` reportado mais recentemente |
+| `count` | Número de eventos reportados |
+
+**2. Precificação por plano.** Cada medidor é precificado em um plano com um esquema:
+
+- `per_unit` — um preço fixo por unidade.
+- `volume` — todas as unidades são precificadas pela taxa da única faixa em que a quantidade total cai.
+- `graduated` — cada faixa precifica apenas as unidades que caem dentro do seu próprio intervalo.
+
+Uma franquia de `includedUnits` é subtraída antes de precificar cada período.
+
+<Note>
+  Os medidores e a precificação por plano são gerenciados no Dashboard, em **Assinaturas → Medidores de uso**. Não há API para configurar medidores ou preços.
+</Note>
+
+**3. Reportar uso.** Ao longo do período de faturamento, chame [`POST /subscription/usage`](/pt/api-reference/subscriptions/usage) para cada evento de uso:
+
+```json
+POST /subscription/usage
+
+{
+  "subscriptionId": "sub_abc123def456",
+  "meterCode": "api_requests",
+  "quantity": 500,
+  "idempotencyKey": "hourly-rollup-2026-09-02T10:00Z"
+}
+```
+
+Passe um `idempotencyKey` se o seu job de reporte puder repetir — um `(meterCode, idempotencyKey)` duplicado devolve o evento original. Um `occurredAt` opcional define para qual período de faturamento o evento conta (o padrão é agora).
+
+A cada renovação o Therius agrega os eventos do período, aplica a precificação e soma o resultado à fatura. Uma fatura híbrida carrega um array `lines` — uma linha para a tarifa base mais uma por complemento medido — e o `amount` da fatura é a soma delas. Consulte [Ver faturas](/pt/api-reference/subscriptions/invoices#line-items).
 
 ---
 

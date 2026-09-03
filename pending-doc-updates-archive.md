@@ -199,3 +199,26 @@ Entries moved here by the `technical-writer` skill after processing.
 - `merchantCode` — RESOLVED 2026-08-31 (Daniel): keep it and keep validating it against
   the key exactly as now. It is a deliberate cross-check, not redundant. Docs continue to
   document it as a required body/query field.
+
+---
+
+## 2026-09-02 — Usage-based & hybrid subscription billing (processed by technical-writer)
+- Skill: developer → technical-writer
+- Doc-visible change: `POST /v1/subscription/usage` (report a metered usage event; idempotent
+  on `(meterCode, idempotencyKey)`); subscription invoice responses gain a `lines[]` array
+  itemising the base fee + each metered add-on.
+- Docs edited:
+  - `openapi.json`: new `/subscription/usage` POST operation; new `InvoiceLine` schema;
+    `lines` array added to `Invoice`.
+  - `api-reference/subscriptions/usage.mdx` (new) + `es/` + `pt/`; added to the Subscriptions
+    group in `docs.json` (build-nav wired es/pt).
+  - `api-reference/subscriptions/invoices.mdx` + `es/` + `pt/`: documented `lines[]` (Expandable
+    line object) + a `#line-items` anchor. Translation hashes bumped.
+  - `guides/subscriptions.mdx` + `es/` + `pt/`: new "Usage-based and hybrid billing" section
+    (meters, aggregation modes, per_unit/volume/graduated pricing, includedUnits, reporting
+    flow). Translation hashes bumped.
+- Verified against: `therius-public-api/subscription_usage.go` (`recordUsage`, `loadInvoiceLines`),
+  `main.go` route, `therius-admin/handlers_subscription_meter.go` (Dashboard-only meter/price CRUD).
+- Not done: `npx mint broken-links` (CLI not installed in this workspace); es/pt AI drafts
+  await a native reviewer. GA status: backend + dashboard UI built, unverified against a live
+  billing cycle — the docs say so.

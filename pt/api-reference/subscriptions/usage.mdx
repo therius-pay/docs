@@ -1,0 +1,130 @@
+---
+title: "Registre uso medido"
+sidebarTitle: "Registrar uso"
+description: "Reporte um evento de uso contra uma assinatura para que as cobranças medidas sejam adicionadas à próxima fatura."
+openapi: "POST /subscription/usage"
+translationOf: api-reference/subscriptions/usage.mdx
+translationSourceHash: c94ffd89832da2019b75d4ba67941e70859807b940f2183f4d58c574456503c3
+---
+
+import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
+
+Use `POST /subscription/usage` para reportar o consumo medido contra uma assinatura. O faturamento por uso permite cobrar um valor variável além da tarifa fixa do plano — por exemplo uma assinatura base mais uma cobrança por requisição ou por gigabyte.
+
+<SchemaLangNote lang="pt" />
+
+<Note>
+  Os **medidores** de uso e a sua **precificação por plano** são configurados no Dashboard, em **Assinaturas → Medidores de uso**, não pela API. Este endpoint só ingere os eventos de uso brutos. Consulte [Faturamento por uso e híbrido](/pt/guides/subscriptions#faturamento-por-uso-e-híbrido) para o modelo completo.
+</Note>
+
+## Como as cobranças medidas chegam a uma fatura
+
+1. Você define um medidor (ex.: `api_requests`) com um modo de agregação, e o precifica em um plano.
+2. Ao longo do período de faturamento você chama `POST /subscription/usage` para cada evento de uso.
+3. Na renovação, o Therius agrega os eventos daquele período conforme o modo de agregação do medidor, subtrai as unidades incluídas do plano, aplica o esquema de precificação e soma o resultado à fatura como uma [linha](/pt/api-reference/subscriptions/invoices#line-items) própria.
+
+O período de faturamento para o qual um evento conta é determinado pelo timestamp `occurredAt` dele.
+
+## Requisição
+
+**Base URL:** `https://api.therius.io/v1`
+
+**Endpoint:** `POST /subscription/usage`
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  `application/json`
+</ParamField>
+
+### Corpo da requisição
+
+<ParamField body="merchantCode" type="string">
+  O seu identificador de conta de lojista.
+</ParamField>
+
+<ParamField body="subscriptionId" type="string" required>
+  UUID da assinatura à qual o uso é atribuído. Precisa pertencer à sua conta de lojista.
+</ParamField>
+
+<ParamField body="meterCode" type="string" required>
+  O `code` de um medidor de uso que pertence à sua conta de lojista, ex.: `api_requests`.
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Quantidade não negativa para este evento, expressa nas unidades do medidor.
+</ParamField>
+
+<ParamField body="idempotencyKey" type="string">
+  Opcional. Uma repetição com o mesmo par `(meterCode, idempotencyKey)` devolve o evento original em vez de registrar um segundo. Use quando o seu job de reporte puder repetir.
+</ParamField>
+
+<ParamField body="occurredAt" type="string">
+  Timestamp RFC 3339 opcional de quando o uso ocorreu. O padrão é a hora em que a requisição é recebida. Determina para qual período de faturamento o evento conta.
+</ParamField>
+
+## Resposta
+
+Devolve `200 OK` com o evento registrado. Em uma repetição idempotente, o evento original é devolvido com `duplicate: true`.
+
+<ResponseField name="id" type="string">
+  UUID do evento de uso.
+</ResponseField>
+
+<ResponseField name="meterCode" type="string">
+  O medidor contra o qual o evento foi registrado.
+</ResponseField>
+
+<ResponseField name="quantity" type="number">
+  A quantidade registrada.
+</ResponseField>
+
+<ResponseField name="occurredAt" type="string">
+  Timestamp ISO 8601 ao qual o evento foi atribuído.
+</ResponseField>
+
+<ResponseField name="duplicate" type="boolean">
+  `true` quando esta resposta é uma repetição idempotente de um evento registrado anteriormente.
+</ResponseField>
+
+## Erros
+
+| Código | Significado |
+| --- | --- |
+| `400` | `subscriptionId`, `meterCode`, `quantity` ou `occurredAt` ausente ou inválido. |
+| `404` | Assinatura ou medidor não encontrado sob a sua conta de lojista. |
+| `429` | Limite de taxa excedido. |
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://api.therius.io/v1/subscription/usage \
+  -H "Authorization: Bearer prv_production_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subscriptionId": "sub_abc123def456",
+    "meterCode": "api_requests",
+    "quantity": 500,
+    "idempotencyKey": "batch-2026-09-02T10:00Z"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 OK
+{
+  "id": "3f1c9a2e-8b7d-4e2a-9c31-6a0b5d4e7f88",
+  "meterCode": "api_requests",
+  "quantity": 500,
+  "occurredAt": "2026-09-02T10:00:00Z",
+  "duplicate": false
+}
+```
+
+</ResponseExample>
