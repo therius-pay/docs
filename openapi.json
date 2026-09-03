@@ -60,14 +60,17 @@
                 "properties": {
                     "currency": {
                         "type": "string",
+                        "description": "ISO 4217 currency code. On capture, refund and cancel it must match the currency of the original payment.",
                         "example": "USD"
                     },
                     "value": {
                         "type": "integer",
+                        "description": "Amount in minor units (cents, pence, etc.). `4999` = $49.99 for USD (exponent 2); `5000` = ¥5000 for JPY (exponent 0). On capture it must not exceed the authorized value; on refund the cumulative total across refunds must not exceed the captured amount.",
                         "example": 4999
                     },
                     "exponent": {
                         "type": "integer",
+                        "description": "Number of decimal places for the currency — `2` for USD/EUR, `0` for JPY. Determines where the decimal point sits in `value`.",
                         "example": 2
                     }
                 }
@@ -97,69 +100,86 @@
             },
             "CardData": {
                 "type": "object",
+                "description": "Raw card details. Only if your server is PCI DSS compliant to handle raw PANs — otherwise collect the card with the Therius JS SDK and send `nonceData`.",
                 "properties": {
                     "cardNumber": {
                         "type": "string",
+                        "description": "Full PAN, digits only.",
                         "example": "4111111111111111"
                     },
                     "cardholderName": {
                         "type": "string",
+                        "description": "Name as it appears on the card.",
                         "example": "Ada Lovelace"
                     },
                     "expiryMonth": {
                         "type": "string",
+                        "description": "Two-digit expiry month, e.g. `12`.",
                         "example": "12"
                     },
                     "expiryYear": {
                         "type": "string",
+                        "description": "Four-digit expiry year, e.g. `2030`.",
                         "example": "2030"
                     },
                     "cvv": {
                         "type": "string",
+                        "description": "Card verification value (3 or 4 digits).",
                         "example": "123"
                     },
                     "tokenize": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Set to `true` to save this card as a reusable token. Requires `shopper.id` in the request."
                     },
                     "cardAddress": {
                         "$ref": "#/components/schemas/CardAddress"
                     },
                     "documentNumber": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Cardholder tax/document ID, required by some LATAM acquirers."
                     },
                     "typeOverride": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Override the detected card type, e.g. `debit`."
                     }
                 }
             },
             "NonceData": {
                 "type": "object",
+                "description": "Single-use nonce from the Therius JS SDK — no card data touches your server. Nonces are single-use and expire after a short window.",
                 "properties": {
                     "nonce": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The nonce string returned by the SDK."
                     },
                     "cardholderName": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Cardholder name."
                     },
                     "cardAddress": {
                         "$ref": "#/components/schemas/CardAddress"
                     },
                     "tokenize": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Save the card as a token after payment. Requires `shopper.id` in the request."
                     },
                     "typeOverride": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Override the detected card type."
                     }
                 }
             },
             "TokenData": {
                 "type": "object",
+                "description": "A `vt_...` vault token for a card the shopper previously tokenized.",
                 "properties": {
                     "token": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Token ID returned from a prior tokenization."
                     },
                     "cvv": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "CVV, if re-collection is required by the acquirer."
                     },
                     "cardAddress": {
                         "$ref": "#/components/schemas/CardAddress"
@@ -317,36 +337,46 @@
             },
             "Shopper": {
                 "type": "object",
+                "description": "Shopper information. Required when tokenizing a card (`card.<instrument>.tokenize: true`).",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Your internal shopper ID. Used to associate saved tokens with a customer."
                     },
                     "email": {
                         "type": "string",
-                        "format": "email"
+                        "format": "email",
+                        "description": "Shopper's email address."
                     },
                     "name": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Shopper's full name."
                     }
                 }
             },
             "ActionRequired": {
                 "type": "object",
+                "description": "Present when `status` is `pending_3ds` or `pending_action`. Describes what the cardholder must do next — with the Therius JS SDK, pass the whole object to `sdk.handleAction()`.",
                 "properties": {
                     "type": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Action type, e.g. `redirect`, `barcode`."
                     },
                     "url": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "URL to send the cardholder to for a 3DS challenge or external APM flow."
                     },
                     "paymentCode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Therius payment code tied to this pending action."
                     },
                     "barcode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Barcode value for APMs that require it (e.g. Boleto)."
                     },
                     "params": {
-                        "type": "object"
+                        "type": "object",
+                        "description": "Additional parameters required to complete the action."
                     }
                 }
             },
@@ -364,13 +394,75 @@
                         "description": "Normalized ISO 8583 decline code. Every provider decline is mapped to this set, so handling logic is provider-independent. Full table with meanings on the Declined Payments concept page.",
                         "example": "51",
                         "enum": [
-                            "1", "2", "3", "4", "5", "6", "7", "8", "9", "11",
-                            "12", "13", "14", "15", "16", "17", "19", "20", "21", "22",
-                            "25", "28", "30", "41", "43", "46", "51", "52", "53", "54",
-                            "55", "57", "58", "59", "61", "62", "63", "65", "68", "75",
-                            "76", "77", "78", "80", "81", "82", "83", "85", "91", "92",
-                            "93", "94", "95", "96", "B1", "N0", "N3", "N4", "N7", "P2",
-                            "P5", "P6", "Q1", "R0", "R1", "R3", "XA", "XD", "Z3"
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7",
+                            "8",
+                            "9",
+                            "11",
+                            "12",
+                            "13",
+                            "14",
+                            "15",
+                            "16",
+                            "17",
+                            "19",
+                            "20",
+                            "21",
+                            "22",
+                            "25",
+                            "28",
+                            "30",
+                            "41",
+                            "43",
+                            "46",
+                            "51",
+                            "52",
+                            "53",
+                            "54",
+                            "55",
+                            "57",
+                            "58",
+                            "59",
+                            "61",
+                            "62",
+                            "63",
+                            "65",
+                            "68",
+                            "75",
+                            "76",
+                            "77",
+                            "78",
+                            "80",
+                            "81",
+                            "82",
+                            "83",
+                            "85",
+                            "91",
+                            "92",
+                            "93",
+                            "94",
+                            "95",
+                            "96",
+                            "B1",
+                            "N0",
+                            "N3",
+                            "N4",
+                            "N7",
+                            "P2",
+                            "P5",
+                            "P6",
+                            "Q1",
+                            "R0",
+                            "R1",
+                            "R3",
+                            "XA",
+                            "XD",
+                            "Z3"
                         ]
                     },
                     "originalReason": {
@@ -403,6 +495,7 @@
                     },
                     "status": {
                         "type": "string",
+                        "description": "Outcome of the operation. `captured` — funds settled; `authorized` — funds reserved, call capture to settle; `declined` — issuer declined, see `refusalCode`; `pending_3ds` — cardholder must complete a 3DS challenge, see `actionRequired`; `pending_action` — an external action (redirect, voucher) is required, see `actionRequired`; `failed` — processing error unrelated to the issuer; `cancelled` — authorization voided; `refunded` — captured funds returned.",
                         "enum": [
                             "captured",
                             "authorized",
@@ -416,28 +509,35 @@
                     },
                     "paymentCode": {
                         "type": "string",
+                        "description": "Therius receipt ID, for reconciliation, support and Inquiry. NOT the handle for capture/refund/cancel — use `id` for that.",
                         "example": "PC-1234567890"
                     },
                     "orderCode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Your `orderCode`, echoed back."
                     },
                     "merchantCode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Your `merchantCode`, echoed back."
                     },
                     "amount": {
                         "$ref": "#/components/schemas/Amount"
                     },
                     "card": {
-                        "type": "object"
+                        "type": "object",
+                        "description": "Card details from the response: masked PAN, brand, type, and the network transaction/reference IDs to cite on future MIT charges."
                     },
                     "token": {
                         "type": "object",
+                        "description": "Present when the card was tokenized (`tokenize: true`).",
                         "properties": {
                             "id": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Token ID to use in future `tokenData` charges."
                             },
                             "expirationDate": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Token expiry date."
                             }
                         }
                     },
@@ -453,7 +553,8 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The plan's unique ID."
                     },
                     "name": {
                         "type": "string"
@@ -466,6 +567,7 @@
                     },
                     "interval": {
                         "type": "string",
+                        "description": "Billing interval unit. Immutable after creation.",
                         "enum": [
                             "day",
                             "week",
@@ -474,25 +576,31 @@
                         ]
                     },
                     "intervalCount": {
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "Number of `interval` units between charges — e.g. `interval: month` + `intervalCount: 3` bills quarterly."
                     },
                     "trialDays": {
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "Free-trial length in days before the first charge. `0` for no trial."
                     },
                     "countries": {
                         "type": "array",
+                        "description": "ISO 3166-1 alpha-2 codes this plan is offered in. Empty = available everywhere.",
                         "items": {
                             "type": "string"
                         }
                     },
                     "active": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Whether the plan is accepting new subscribers. Set `false` to soft-deactivate without affecting existing subscriptions."
                     },
                     "archived": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Whether the plan has been archived. Archived plans still appear in list results and keep billing their existing subscribers."
                     },
                     "subscriberCount": {
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "Number of currently active or trialing subscribers on this plan."
                     }
                 }
             },
@@ -500,35 +608,43 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Subscription UUID."
                     },
                     "planId": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "ID of the plan this subscription is enrolled in."
                     },
                     "status": {
                         "type": "string",
+                        "description": "`pending` — awaiting first charge; `trialing` — in a free trial; `active` — billing normally; `past_due` — a renewal failed and dunning is running; `suspended` — dunning exhausted, needs a new CIT to recover; `paused` — billing stopped on request, resumable; `cancelled` — terminated.",
                         "enum": [
-                            "active",
+                            "pending",
                             "trialing",
+                            "active",
                             "past_due",
                             "paused",
                             "suspended",
-                            "cancelled"
+                            "cancelled",
+                            "completed"
                         ]
                     },
                     "shopper": {
                         "$ref": "#/components/schemas/Shopper"
                     },
                     "card": {
-                        "type": "object"
+                        "type": "object",
+                        "description": "Masked details of the card on the mandate."
                     },
                     "currentPeriodStart": {
                         "type": "string",
-                        "format": "date-time"
+                        "format": "date-time",
+                        "description": "Start of the current billing period."
                     },
                     "currentPeriodEnd": {
                         "type": "string",
-                        "format": "date-time"
+                        "format": "date-time",
+                        "description": "End of the current billing period — the next scheduled renewal date."
                     },
                     "createdAt": {
                         "type": "string",
@@ -637,10 +753,12 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "orderCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your internal order reference. Must be unique per merchant — use it to correlate Therius payments with your own records."
                                     },
                                     "amount": {
                                         "$ref": "#/components/schemas/Amount"
@@ -649,28 +767,34 @@
                                         "$ref": "#/components/schemas/Card"
                                     },
                                     "apm": {
-                                        "type": "object"
+                                        "type": "object",
+                                        "description": "Alternative payment method data — use instead of `card` for APMs such as Pix, ACH or Boleto. Structure varies by method."
                                     },
                                     "paymentMethod": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Payment method code. Omit for card payments; for APMs pass the code, e.g. `pix`, `ach`, `boleto`."
                                     },
                                     "shopper": {
                                         "$ref": "#/components/schemas/Shopper"
                                     },
                                     "webhookUrl": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Per-payment webhook URL override (HTTPS only). Therius posts the final payment status here when it changes asynchronously."
                                     },
                                     "connectionCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Pin this payment to a specific gateway connection. Omit to use your routing rules."
                                     },
                                     "ipAddress": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Cardholder's IP address, passed to fraud scoring when available."
                                     },
                                     "metadata": {
                                         "type": "object",
                                         "additionalProperties": {
                                             "type": "string"
-                                        }
+                                        },
+                                        "description": "Arbitrary string key/value pairs, echoed back in webhook payloads."
                                     }
                                 }
                             }
@@ -716,10 +840,12 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "orderCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your internal order reference. Must be unique per merchant — use it to correlate Therius payments with your own records."
                                     },
                                     "amount": {
                                         "$ref": "#/components/schemas/Amount"
@@ -728,28 +854,34 @@
                                         "$ref": "#/components/schemas/Card"
                                     },
                                     "apm": {
-                                        "type": "object"
+                                        "type": "object",
+                                        "description": "Alternative payment method data — use instead of `card` for APMs such as Pix, ACH or Boleto. Structure varies by method."
                                     },
                                     "paymentMethod": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Payment method code. Omit for card payments; for APMs pass the code, e.g. `pix`, `ach`, `boleto`."
                                     },
                                     "shopper": {
                                         "$ref": "#/components/schemas/Shopper"
                                     },
                                     "webhookUrl": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Per-payment webhook URL override (HTTPS only). Therius posts the final payment status here when it changes asynchronously."
                                     },
                                     "connectionCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Pin this payment to a specific gateway connection. Omit to use your routing rules."
                                     },
                                     "ipAddress": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Cardholder's IP address, passed to fraud scoring when available."
                                     },
                                     "metadata": {
                                         "type": "object",
                                         "additionalProperties": {
                                             "type": "string"
-                                        }
+                                        },
+                                        "description": "Arbitrary string key/value pairs, echoed back in webhook payloads."
                                     }
                                 }
                             }
@@ -797,7 +929,8 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "amount": {
                                         "$ref": "#/components/schemas/Amount"
@@ -851,7 +984,8 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "reference": {
                                         "type": "string",
@@ -903,7 +1037,8 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "amount": {
                                         "$ref": "#/components/schemas/Amount"
@@ -957,7 +1092,8 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "reference": {
                                         "type": "string",
@@ -1001,7 +1137,8 @@
                                 ],
                                 "properties": {
                                     "sessionId": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "The `sessionId` from a `pending_3ds` / `pending_action` payment response."
                                     }
                                 }
                             }
@@ -1071,7 +1208,8 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     }
                                 }
                             }
@@ -1121,7 +1259,8 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "shopper": {
                                         "$ref": "#/components/schemas/Shopper"
@@ -1188,13 +1327,16 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Human-readable plan name."
                                     },
                                     "description": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Optional plan description."
                                     },
                                     "amount": {
                                         "$ref": "#/components/schemas/Amount"
@@ -1206,19 +1348,23 @@
                                             "week",
                                             "month",
                                             "year"
-                                        ]
+                                        ],
+                                        "description": "Billing interval unit: `day`, `week`, `month`, or `year`. Immutable after creation."
                                     },
                                     "intervalCount": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "description": "Number of `interval` units between charges."
                                     },
                                     "trialDays": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "description": "Free-trial length in days before the first charge."
                                     },
                                     "countries": {
                                         "type": "array",
                                         "items": {
                                             "type": "string"
-                                        }
+                                        },
+                                        "description": "ISO 3166-1 alpha-2 codes this plan is offered in. Empty = everywhere."
                                     }
                                 }
                             }
@@ -1259,14 +1405,16 @@
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "ISO 3166-1 alpha-2 code to filter plans by availability; global plans are always included."
                     },
                     {
                         "name": "active",
                         "in": "query",
                         "schema": {
                             "type": "boolean"
-                        }
+                        },
+                        "description": "Whether the plan accepts new subscribers."
                     }
                 ],
                 "responses": {
@@ -1323,19 +1471,23 @@
                                         "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
                                     },
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Human-readable plan name."
                                     },
                                     "description": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Optional plan description."
                                     },
                                     "active": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "description": "Whether the plan accepts new subscribers."
                                     },
                                     "countries": {
                                         "type": "array",
                                         "items": {
                                             "type": "string"
-                                        }
+                                        },
+                                        "description": "ISO 3166-1 alpha-2 codes this plan is offered in. Empty = everywhere."
                                     }
                                 }
                             }
@@ -1415,10 +1567,12 @@
                                 ],
                                 "properties": {
                                     "merchantCode": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Your merchant account identifier. Validated against the Bearer key's merchant; required if the key maps to more than one merchant account."
                                     },
                                     "planId": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "ID of an active billing plan. Determines amount, currency, interval and trial."
                                     },
                                     "shopper": {
                                         "$ref": "#/components/schemas/Shopper"
@@ -1434,7 +1588,8 @@
                                         "type": "object",
                                         "additionalProperties": {
                                             "type": "string"
-                                        }
+                                        },
+                                        "description": "Arbitrary string key/value pairs, echoed back in webhook payloads."
                                     }
                                 }
                             }
@@ -1475,28 +1630,32 @@
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Filter by status."
                     },
                     {
                         "name": "email",
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Partial, case-insensitive match on customer email."
                     },
                     {
                         "name": "planId",
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "ID of an active billing plan. Determines amount, currency, interval and trial."
                     },
                     {
                         "name": "cardBrand",
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Filter by card brand, e.g. `visa`, `mastercard`, `amex`."
                     },
                     {
                         "name": "createdAfter",
@@ -1504,7 +1663,8 @@
                         "schema": {
                             "type": "string",
                             "format": "date-time"
-                        }
+                        },
+                        "description": "ISO 8601 lower bound (inclusive) on creation date."
                     },
                     {
                         "name": "createdBefore",
@@ -1512,21 +1672,24 @@
                         "schema": {
                             "type": "string",
                             "format": "date-time"
-                        }
+                        },
+                        "description": "ISO 8601 upper bound (inclusive) on creation date."
                     },
                     {
                         "name": "limit",
                         "in": "query",
                         "schema": {
                             "type": "integer"
-                        }
+                        },
+                        "description": "Page size. Default 20, max 200."
                     },
                     {
                         "name": "cursor",
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Opaque pagination cursor from a previous response's `nextCursor`."
                     }
                 ],
                 "responses": {
@@ -1677,17 +1840,20 @@
                                         "description": "Your merchant account identifier. Validated against the Bearer key's merchant."
                                     },
                                     "planId": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "ID of an active billing plan. Determines amount, currency, interval and trial."
                                     },
                                     "prorate": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "description": "Whether to credit the unused portion of the current period against the new plan."
                                     },
                                     "effective": {
                                         "type": "string",
                                         "enum": [
                                             "immediate",
                                             "next_cycle"
-                                        ]
+                                        ],
+                                        "description": "When the change takes effect — `now` or `period_end`."
                                     }
                                 }
                             }
@@ -1892,21 +2058,24 @@
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Filter by status."
                     },
                     {
                         "name": "limit",
                         "in": "query",
                         "schema": {
                             "type": "integer"
-                        }
+                        },
+                        "description": "Page size. Default 20, max 200."
                     },
                     {
                         "name": "cursor",
                         "in": "query",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Opaque pagination cursor from a previous response's `nextCursor`."
                     }
                 ],
                 "responses": {
