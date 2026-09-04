@@ -22,62 +22,7 @@ When a purchase or authorization returns `status: "pending_3ds"`, the cardholder
   This endpoint handles `pending_3ds` only. It does **not** handle `pending_ddc` (device data collection). For DDC flows, retry the original purchase or authorization request with `threeDsSetup.sessionId` set to the DDC session ID.
 </Warning>
 
-## Request
-
-**Endpoint:** `POST https://api.therius.io/v1/payment/resume`
-
-<ParamField header="Content-Type" type="string" required>
-  Must be `application/json`.
-</ParamField>
-
-<ParamField body="sessionId" type="string" required>
-  The session ID from the `pending_3ds` payment response. This value uniquely identifies the paused payment session and serves as the authentication credential for this endpoint.
-</ParamField>
-
-## Response
-
-The response is a full `paymentResponse` object with the final payment status.
-
-<ResponseField name="status" type="string">
-  Final payment outcome after 3DS. One of:
-
-  - `"captured"` — payment succeeded and funds are settled (for purchase flows).
-  - `"authorized"` — authorization succeeded (for authorization flows).
-  - `"declined"` — the payment was declined post-challenge. Check `refusalCode`.
-  - `"failed"` — processing error.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  Therius receipt ID for this payment. This is the same `paymentCode` that was present on the `pending_3ds` response.
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  Your original `orderCode`.
-</ResponseField>
-
-<ResponseField name="merchantCode" type="string">
-  Your `merchantCode`.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  The processed amount in `{ currency, value, exponent }` format.
-</ResponseField>
-
-<ResponseField name="card" type="object">
-  Card response including masked PAN, brand, type, and network transaction IDs.
-</ResponseField>
-
-<ResponseField name="token" type="object">
-  Present if tokenization was requested. Contains `id` and `expirationDate`.
-</ResponseField>
-
-<ResponseField name="authorizationCode" type="string">
-  Issuer authorization code, present on successful outcomes.
-</ResponseField>
-
-<ResponseField name="refusalCode" type="object">
-  Present on decline. Contains `reason`, `reasonCode`, `originalReason`, `originalReasonCode`, and `recoveryAction`.
-</ResponseField>
+The response is a full [payment response](/api-reference/purchase#response) with the final `status`, `refusalCode` on decline, and everything else — same shape as `purchase`/`authorization`.
 
 ### Resume after a 3DS challenge
 

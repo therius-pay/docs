@@ -7,61 +7,7 @@ openapi: "GET /subscription"
 
 `GET /subscription` returns a paginated list of your subscriptions. Filter by status, customer email or name, plan, card brand, or creation date range to narrow results. Results are returned in reverse-chronological order by creation date.
 
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `GET /subscription`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-### Query Parameters
-
-<ParamField query="merchantCode" type="string" required>
-  Your merchant account identifier. Required if your API key is associated with multiple merchant accounts.
-</ParamField>
-
-<ParamField query="status" type="string">
-  Filter by subscription status. Accepted values: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused`, or `completed`.
-</ParamField>
-
-<ParamField query="email" type="string">
-  Partial match on customer email address. Case-insensitive substring search.
-</ParamField>
-
-<ParamField query="customer_name" type="string">
-  Partial match on customer name. Case-insensitive substring search.
-</ParamField>
-
-<ParamField query="plan_id" type="string">
-  Filter results to subscriptions on a specific plan ID.
-</ParamField>
-
-<ParamField query="card_brand" type="string">
-  Filter by card brand, e.g. `"visa"`, `"mastercard"`, `"amex"`.
-</ParamField>
-
-<ParamField query="created_from" type="string">
-  ISO 8601 date lower bound for the `createdAt` filter, e.g. `"2025-01-01"`. Inclusive.
-</ParamField>
-
-<ParamField query="created_to" type="string">
-  ISO 8601 date upper bound for the `createdAt` filter, e.g. `"2025-06-30"`. Inclusive.
-</ParamField>
-
-<ParamField query="page" default="1" type="integer">
-  Page number to retrieve, starting at `1`.
-</ParamField>
-
-<ParamField query="per_page" default="20" type="integer">
-  Number of results per page. Minimum `1`, maximum `200`.
-</ParamField>
-
-## Response
+Filter and paginate with the query parameters in the panel above (`created_from`/`created_to` are inclusive ISO 8601 date bounds on `createdAt`). Response shape:
 
 ```json
 {
@@ -71,22 +17,6 @@ openapi: "GET /subscription"
   "per_page": 20
 }
 ```
-
-<ResponseField name="data" type="array">
-  Array of subscription objects matching the applied filters.
-</ResponseField>
-
-<ResponseField name="total" type="integer">
-  Total number of subscriptions matching the filters, across all pages.
-</ResponseField>
-
-<ResponseField name="page" type="integer">
-  The current page number returned.
-</ResponseField>
-
-<ResponseField name="per_page" type="integer">
-  The number of results per page applied to this response.
-</ResponseField>
 
 <RequestExample>
 

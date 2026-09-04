@@ -4,7 +4,7 @@ sidebarTitle: "Listar suscripciones"
 description: "Recupera una lista paginada de suscripciones con filtros por estado, correo, plan, bandera de tarjeta y rango de fecha de creación."
 openapi: "GET /subscription"
 translationOf: api-reference/subscriptions/list.mdx
-translationSourceHash: aceb03b62283ad4a423ada78fe8e948d35982204feba629a3d60cbcb15a6f487
+translationSourceHash: e84aa541cd5eea7d4661aab7609cb61a68c59122074aa478feb672f669ffd7fa
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -13,61 +13,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 
 <SchemaLangNote lang="es" />
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `GET /subscription`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-### Parámetros de consulta
-
-<ParamField query="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio. Requerido si tu clave de API está asociada con varias cuentas de comercio.
-</ParamField>
-
-<ParamField query="status" type="string">
-  Filtra por estado de suscripción. Valores aceptados: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused` o `completed`.
-</ParamField>
-
-<ParamField query="email" type="string">
-  Coincidencia parcial en la dirección de correo del cliente. Búsqueda de subcadena sin distinción de mayúsculas.
-</ParamField>
-
-<ParamField query="customer_name" type="string">
-  Coincidencia parcial en el nombre del cliente. Búsqueda de subcadena sin distinción de mayúsculas.
-</ParamField>
-
-<ParamField query="plan_id" type="string">
-  Filtra los resultados a suscripciones de un ID de plan específico.
-</ParamField>
-
-<ParamField query="card_brand" type="string">
-  Filtra por bandera de tarjeta, p. ej. `"visa"`, `"mastercard"`, `"amex"`.
-</ParamField>
-
-<ParamField query="created_from" type="string">
-  Límite inferior de fecha ISO 8601 para el filtro `createdAt`, p. ej. `"2025-01-01"`. Inclusivo.
-</ParamField>
-
-<ParamField query="created_to" type="string">
-  Límite superior de fecha ISO 8601 para el filtro `createdAt`, p. ej. `"2025-06-30"`. Inclusivo.
-</ParamField>
-
-<ParamField query="page" default="1" type="integer">
-  Número de página a recuperar, comenzando en `1`.
-</ParamField>
-
-<ParamField query="per_page" default="20" type="integer">
-  Número de resultados por página. Mínimo `1`, máximo `200`.
-</ParamField>
-
-## Respuesta
+Filtra y pagina con los parámetros de consulta del panel de arriba (`created_from`/`created_to` son límites de fecha ISO 8601 inclusivos sobre `createdAt`). Forma de la respuesta:
 
 ```json
 {
@@ -77,22 +23,6 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
   "per_page": 20
 }
 ```
-
-<ResponseField name="data" type="array">
-  Array de objetos de suscripción que coinciden con los filtros aplicados.
-</ResponseField>
-
-<ResponseField name="total" type="integer">
-  Número total de suscripciones que coinciden con los filtros, en todas las páginas.
-</ResponseField>
-
-<ResponseField name="page" type="integer">
-  El número de página actual devuelto.
-</ResponseField>
-
-<ResponseField name="per_page" type="integer">
-  El número de resultados por página aplicado a esta respuesta.
-</ResponseField>
 
 <RequestExample>
 

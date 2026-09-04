@@ -4,7 +4,7 @@ sidebarTitle: "Pausar y reanudar la facturación"
 description: "Pausa una suscripción para detener la facturación temporalmente sin cancelarla. Reanuda la facturación desde un estado pausado o suspendido con una sola llamada de API."
 openapi: "POST /subscription/{id}/pause"
 translationOf: api-reference/subscriptions/pause-resume.mdx
-translationSourceHash: 16bba5fb84b19e0aba4b9cb51c328fdf23f5c434b3a57354ac43c6119628d852
+translationSourceHash: a79647af74c67c5b16fd946a0b0b2072d9b1815b5712c5ac3529eb7272ec4a08
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -20,36 +20,6 @@ Pausar una suscripción detiene todos los intentos de renovación sin cancelarla
 <Note>
   Solo las suscripciones en estado `active`, `trialing` o `past_due` se pueden pausar. Intentar pausar una suscripción `cancelled`, `completed` o ya `paused` devuelve un error `400`.
 </Note>
-
-### Solicitud
-
-**Endpoint:** `POST /subscription/{id}/pause`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El UUID de la suscripción a pausar.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
 
 ### Ejemplo
 
@@ -76,36 +46,6 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
 </Warning>
 
 En caso de éxito, Therius dispara `subscription.resumed`. Si una suscripción `suspended` se revive con un cobro exitoso, también dispara `subscription.reactivated`.
-
-### Solicitud
-
-**Endpoint:** `POST /subscription/{id}/resume`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El UUID de la suscripción a reanudar.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
 
 ### Errores
 

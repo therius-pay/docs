@@ -1,79 +1,11 @@
 ---
 title: "Retrieve Subscription Details"
 sidebarTitle: "Get a Subscription"
-description: "Retrieve full details for a subscription including its event timeline, invoice history, and current dunning state."
+description: "Retrieve full details for a subscription by its UUID, including its plan and current dunning progress."
 openapi: "GET /subscription/{id}"
 ---
 
-`GET /subscription/{id}` returns the full subscription record for a given UUID, including the event timeline, invoice history, and current dunning state. Use this endpoint to inspect everything about a subscription in a single call — from the original CIT details through every renewal and status change.
-
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `GET /subscription/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription to retrieve.
-</ParamField>
-
-### Query Parameters
-
-<ParamField query="merchantCode" type="string" required>
-  Your merchant account identifier. Required if your key is scoped to multiple merchant accounts.
-</ParamField>
-
-## Response
-
-Returns the full subscription object on success. Key fields include:
-
-<ResponseField name="id" type="string">
-  Subscription UUID.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Current subscription status. One of: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused`, or `completed`.
-</ResponseField>
-
-<ResponseField name="planId" type="integer">
-  ID of the plan this subscription is enrolled in.
-</ResponseField>
-
-<ResponseField name="customerEmail" type="string">
-  Email address of the subscriber.
-</ResponseField>
-
-<ResponseField name="currentPeriodStart" type="string">
-  ISO 8601 timestamp for the start of the current billing period.
-</ResponseField>
-
-<ResponseField name="currentPeriodEnd" type="string">
-  ISO 8601 timestamp for the end of the current billing period (next scheduled renewal).
-</ResponseField>
-
-<ResponseField name="dunningState" type="object">
-  Current dunning state, including retry count and next retry timestamp. Present when `status` is `past_due` or `suspended`.
-</ResponseField>
-
-<ResponseField name="invoices" type="array">
-  Array of invoice objects for every billing cycle attempted on this subscription.
-</ResponseField>
-
-<ResponseField name="events" type="array">
-  Chronological timeline of lifecycle events (e.g. `created`, `trialing`, `activated`, `past_due`, `payment_method_updated`).
-</ResponseField>
-
-<ResponseField name="metadata" type="object">
-  Arbitrary key/value pairs attached at creation or via updates.
-</ResponseField>
+`GET /subscription/{id}` returns the full subscription record for a given UUID (see the response panel above), with its plan embedded under `plan`. Dunning progress is reported via `dunningAttemptCount` on the subscription itself, not a nested object — for the invoice history, call [View Invoices](/api-reference/subscriptions/invoices) with the same subscription `id`; there is no separate lifecycle-event timeline endpoint yet.
 
 ## Errors
 

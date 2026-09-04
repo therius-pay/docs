@@ -4,7 +4,7 @@ sidebarTitle: "Reembolsar um pagamento"
 description: "Reembolse um pagamento capturado total ou parcialmente. Vários reembolsos parciais são permitidos até o valor total capturado."
 openapi: "POST /payment/{id}/refund"
 translationOf: api-reference/refund.mdx
-translationSourceHash: c1c67897d910e20c030611ce72ab1d16b1de9400ba0b3cce1dcbcbf1843a09df
+translationSourceHash: 2f4f533ce04d0cc0efadc2132921c8f9d3f2e495f6f401548df9c78c109928a2
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -16,87 +16,6 @@ Use `POST /payment/{id}/refund` para devolver fundos a um titular de cartão dep
 ## Identificar o pagamento
 
 `{id}` é o `id` de pagamento do Therius devolvido por `POST /payment/authorization` e `POST /payment/purchase`. `orderCode` e `paymentCode` são os seus próprios campos de referência e **não** são aceitos aqui. Um `id` desconhecido ou não pertencente devolve `404`.
-
-## Requisição
-
-**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/refund`
-
-### Parâmetros de caminho
-
-<ParamField path="id" type="string" required>
-  O `id` de pagamento do Therius da resposta de autorização/purchase.
-</ParamField>
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  A sua chave de API secreta como token Bearer: `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox).
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Um UUID que você gera por operação. Obrigatório em produção — repetir com a mesma chave devolve a resposta original sem emitir um reembolso duplicado.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  Deve ser `application/json`.
-</ParamField>
-
-### Corpo da requisição
-
-<ParamField body="merchantCode" type="string" required>
-  O seu identificador de lojista.
-</ParamField>
-
-<ParamField body="reference" type="string">
-  Uma referência interna opcional para esta operação de reembolso (p. ex. o seu número de RMA ou de ticket de suporte).
-</ParamField>
-
-<ParamField body="amount" type="object" required>
-  O valor a reembolsar.
-
-  <Expandable title="campos de amount">
-    <ParamField body="currency" type="string" required>
-      Código de moeda ISO 4217. Deve corresponder à moeda do pagamento capturado original.
-    </ParamField>
-
-    <ParamField body="value" type="integer" required>
-      Valor do reembolso em unidades menores. O total cumulativo de todos os reembolsos contra este pagamento não deve exceder o valor capturado.
-    </ParamField>
-
-    <ParamField body="exponent" type="integer" required>
-      Número de casas decimais da moeda.
-    </ParamField>
-  </Expandable>
-</ParamField>
-
-## Resposta
-
-<ResponseField name="id" type="string">
-  O `id` de pagamento do Therius (o mesmo valor que o segmento de caminho `{id}`).
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Resultado do reembolso. Um de:
-
-  - `"refunded"` — fundos devolvidos com sucesso ao titular do cartão.
-  - `"failed"` — o reembolso não pôde ser processado. Tente de novo com um novo `Idempotency-Key` ou entre em contato com o suporte.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  O ID de recibo do Therius para o pagamento original.
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  O seu `orderCode` original.
-</ResponseField>
-
-<ResponseField name="merchantCode" type="string">
-  O seu `merchantCode`.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  O valor reembolsado nesta operação, em formato `{ currency, value, exponent }`.
-</ResponseField>
 
 ## Exemplos
 

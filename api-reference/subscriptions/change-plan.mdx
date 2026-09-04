@@ -11,48 +11,7 @@ Use `POST /subscription/{id}/change-plan` to move a subscriber to a different pl
   A plan's `amount`, `interval`, and `intervalCount` are immutable once it has active subscribers. To change pricing or cadence, create a new plan and use this endpoint to migrate subscribers to it.
 </Note>
 
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/{id}/change-plan`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription to update.
-</ParamField>
-
-### Request Body
-
-<ParamField body="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
-
-<ParamField body="planId" type="integer" required>
-  ID of the target plan to move the subscriber to. The plan must be active and available in the subscriber's country.
-</ParamField>
-
-<ParamField body="applyAt" default="next_billing" type="string">
-  Controls when the plan change takes effect. Accepted values:
-
-  - `"now"` — applies immediately. For upgrades, the prorated difference for the remainder of the current billing period is charged as a Merchant Initiated Transaction (MIT) right away. For downgrades, no refund is issued; the lower price takes effect from the next cycle.
-  - `"next_billing"` — the new plan is scheduled for the subscriber's next renewal date. The current billing period completes at the existing rate.
-</ParamField>
+`planId` (target plan) is required; `applyAt` (`now` | `next_billing`, defaults to `next_billing`) controls timing — see the parameters panel above.
 
 ## Response
 

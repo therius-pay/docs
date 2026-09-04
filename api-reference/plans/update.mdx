@@ -11,57 +11,7 @@ openapi: "PATCH /subscription/plan/{id}"
   `amount`, `interval`, `intervalCount`, and `currency` are immutable and cannot be changed via this endpoint. To change pricing or billing cadence, create a new plan using `POST /subscription/plan` and migrate subscribers using [change-plan](/api-reference/subscriptions/change-plan).
 </Note>
 
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `PATCH /subscription/plan/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="integer" required>
-  The integer ID of the plan to update.
-</ParamField>
-
-### Request Body
-
-Only include the fields you want to change. Omitted fields are left unchanged.
-
-<ParamField body="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
-
-<ParamField body="name" type="string">
-  Updated display name for the plan.
-</ParamField>
-
-<ParamField body="description" type="string">
-  Updated description of what the plan includes.
-</ParamField>
-
-<ParamField body="isActive" type="boolean">
-  Set to `false` to prevent new subscribers from enrolling in this plan. Existing subscribers are not affected. Set back to `true` to re-enable enrollment.
-</ParamField>
-
-<ParamField body="availableCountries" type="array">
-  Updated array of ISO 3166-1 alpha-2 country codes. Pass an empty array `[]` to make the plan globally available. This replaces the existing list entirely.
-</ParamField>
-
-## Response
+Only include the fields you want to change — omitted fields are left unchanged (see the parameters panel above for the full list; `availableCountries` is a full replacement, not a merge).
 
 Returns `200 OK` with the full updated plan object.
 

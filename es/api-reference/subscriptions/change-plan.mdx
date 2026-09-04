@@ -4,7 +4,7 @@ sidebarTitle: "Cambiar de plan"
 description: "Mueve a un suscriptor a un plan diferente de inmediato (con prorrateo) o en el próximo ciclo de facturación."
 openapi: "POST /subscription/{id}/change-plan"
 translationOf: api-reference/subscriptions/change-plan.mdx
-translationSourceHash: 2edb36b5047655d37911b132153d86f4bf813eb80047fd8e755e0db5b3ee1d2a
+translationSourceHash: 4c9e7f41a933dd200cdfd5324a65ab84b5dcc8e90113589774882eafaaeea509
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -17,48 +17,7 @@ Usa `POST /subscription/{id}/change-plan` para mover a un suscriptor a un plan d
   El `amount`, el `interval` y el `intervalCount` de un plan son inmutables una vez que tiene suscriptores activos. Para cambiar el precio o la cadencia, crea un plan nuevo y usa este endpoint para migrar suscriptores a él.
 </Note>
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/{id}/change-plan`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El UUID de la suscripción a actualizar.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
-
-<ParamField body="planId" type="integer" required>
-  ID del plan de destino al que mover al suscriptor. El plan debe estar activo y disponible en el país del suscriptor.
-</ParamField>
-
-<ParamField body="applyAt" default="next_billing" type="string">
-  Controla cuándo surte efecto el cambio de plan. Valores aceptados:
-
-  - `"now"` — se aplica de inmediato. Para subidas de nivel, la diferencia prorrateada por el resto del período de facturación actual se cobra como una Merchant Initiated Transaction (MIT) de inmediato. Para bajadas de nivel, no se emite reembolso; el precio menor surte efecto desde el próximo ciclo.
-  - `"next_billing"` — el nuevo plan se programa para la próxima fecha de renovación del suscriptor. El período de facturación actual se completa a la tarifa existente.
-</ParamField>
+`planId` (plan de destino) es obligatorio; `applyAt` (`now` | `next_billing`, por defecto `next_billing`) controla el momento — ver el panel de parámetros de arriba.
 
 ## Respuesta
 

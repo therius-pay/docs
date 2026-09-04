@@ -4,7 +4,7 @@ sidebarTitle: "Editar un plan"
 description: "Actualiza el nombre, la descripción, el estado activo o la disponibilidad por país de un plan. El monto y el intervalo no se pueden cambiar."
 openapi: "PATCH /subscription/plan/{id}"
 translationOf: api-reference/plans/update.mdx
-translationSourceHash: 193619a7d4039a0e655f619292ff87425ad08eeb37ef79bbe3fe5ca0ba38d9c7
+translationSourceHash: 3545f452e8635ba0060c3351402372bd02ef5add68125e73ac942d77ba062da9
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -17,57 +17,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
   `amount`, `interval`, `intervalCount` y `currency` son inmutables y no se pueden cambiar vía este endpoint. Para cambiar el precio o la cadencia de facturación, crea un plan nuevo usando `POST /subscription/plan` y migra a los suscriptores usando [change-plan](/api-reference/subscriptions/change-plan).
 </Note>
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `PATCH /subscription/plan/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="integer" required>
-  El ID entero del plan a actualizar.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-Incluye solo los campos que quieres cambiar. Los campos omitidos se dejan sin cambios.
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
-
-<ParamField body="name" type="string">
-  Nombre para mostrar actualizado del plan.
-</ParamField>
-
-<ParamField body="description" type="string">
-  Descripción actualizada de lo que incluye el plan.
-</ParamField>
-
-<ParamField body="isActive" type="boolean">
-  Establécelo en `false` para impedir que nuevos suscriptores se inscriban en este plan. Los suscriptores existentes no se ven afectados. Establécelo de nuevo en `true` para volver a habilitar la inscripción.
-</ParamField>
-
-<ParamField body="availableCountries" type="array">
-  Array actualizado de códigos de país ISO 3166-1 alpha-2. Pasa un array vacío `[]` para hacer el plan disponible globalmente. Esto reemplaza la lista existente por completo.
-</ParamField>
-
-## Respuesta
+Incluye solo los campos que quieres cambiar — los omitidos se dejan sin cambios (ver el panel de parámetros de arriba para la lista completa; `availableCountries` es un reemplazo completo, no una fusión).
 
 Devuelve `200 OK` con el objeto de plan actualizado completo.
 

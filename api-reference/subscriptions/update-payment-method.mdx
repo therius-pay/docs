@@ -55,64 +55,7 @@ is to run the CIT yourself where 3DS *is* supported, then record it:
   recovery charge yourself first.
 </Note>
 
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/{id}/payment-method`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription to update.
-</ParamField>
-
-### Request Body
-
-<ParamField body="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
-
-<ParamField body="card" type="object" required>
-  The new card. Provide **exactly one** instrument.
-
-  <Expandable title="card instruments — choose one">
-    <ParamField body="card.tokenData.token" type="string">
-      **Record mode.** A `vt_...` vault token for a card that already completed a CIT.
-    </ParamField>
-    <ParamField body="card.nonceData.nonce" type="string">
-      **CIT mode.** A fresh single-use nonce from the Therius JS SDK.
-    </ParamField>
-    <ParamField body="card.cardData" type="object">
-      **CIT mode.** Raw card fields — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`,
-      `cardholderName` (+ optional `documentNumber`, `cardAddress`). PCI DSS compliant
-      servers only.
-    </ParamField>
-    <ParamField body="card.networkTransactionId" type="string">
-      **Record mode, optional.** The Network Transaction ID from the original CIT. Only
-      needed when recording a card that was CIT'd outside Therius — otherwise it's read
-      from the token.
-    </ParamField>
-    <ParamField body="card.networkReferenceId" type="string">
-      **Record mode, optional.** The Mastercard TLID (or scheme equivalent) from the
-      original CIT, alongside `networkTransactionId`. Defaults to `networkTransactionId`.
-    </ParamField>
-  </Expandable>
-</ParamField>
+Provide **exactly one** card instrument — see the parameters panel above for the full field list (`tokenData.token` for record mode; `nonceData`/`cardData` for CIT mode; optional `networkTransactionId`/`networkReferenceId` for a card CIT'd outside Therius).
 
 ## Response
 

@@ -4,7 +4,7 @@ sidebarTitle: "Consultar um pagamento"
 description: "Recupere o status atual e os detalhes completos de qualquer pagamento usando o paymentCode dele ou o UUID de pagamento interno."
 openapi: "GET /payment/inquiry/{id}"
 translationOf: api-reference/inquiry.mdx
-translationSourceHash: 98b3549d743ca19a40a234cad3bd80a7da96de5f52d993c75c34b33aa2e5447d
+translationSourceHash: 0493e1f6da95ab7f3c273c643cc7918cf86ef80d7c02d62b6b76b7ed6a4c254d
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -13,85 +13,9 @@ Use `GET /payment/inquiry/{id}` para recuperar o status atual e os detalhes de q
 
 <SchemaLangNote lang="pt" />
 
-## Requisição
-
-**Endpoint:** `GET https://api.therius.io/v1/payment/inquiry/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  A sua chave de API secreta como token Bearer: `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox). Obrigatória para a maioria das requisições.
-</ParamField>
-
-<ParamField header="X-Environment" type="string">
-  Defina como `"sandbox"` ao consultar o ambiente de sandbox sem uma chave de API. Útil para o polling de status no lado do cliente onde você não quer expor a sua chave secreta.
-</ParamField>
-
-### Parâmetros de caminho
-
-<ParamField path="id" type="string" required>
-  O `paymentCode` (p. ex. `"PC-1234567890"`) ou o UUID de pagamento interno. Ambos identificam de forma única um único pagamento.
-</ParamField>
-
-## Resposta
-
-<ResponseField name="id" type="string">
-  UUID de pagamento interno do Therius.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Status atual do pagamento. Valores possíveis: `"authorized"`, `"captured"`, `"declined"`, `"cancelled"`, `"refunded"`, `"pending_3ds"`, `"pending_action"`, `"failed"`.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  O ID de recibo do Therius para este pagamento (p. ex. `"PC-1234567890"`).
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  A sua referência de pedido original.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  O valor do pagamento em formato `{ currency, value, exponent }`.
-</ResponseField>
-
-<ResponseField name="currency" type="string">
-  Código de moeda ISO 4217 (também presente no nível superior por conveniência).
-</ResponseField>
-
-<ResponseField name="merchantId" type="string">
-  O seu identificador de lojista.
-</ResponseField>
-
-<ResponseField name="authorizationCode" type="string">
-  Código de autorização do emissor. Presente em pagamentos `authorized` e `captured`.
-</ResponseField>
-
-<ResponseField name="refusalCode" type="object">
-  Presente em pagamentos `declined`.
-
-  <Expandable title="campos de refusalCode">
-    <ResponseField name="reason" type="string">
-      Motivo de recusa legível.
-    </ResponseField>
-
-    <ResponseField name="reasonCode" type="string">
-      Código de recusa legível por máquina.
-    </ResponseField>
-
-    <ResponseField name="originalReason" type="string">
-      String de motivo bruta do emissor ou adquirente.
-    </ResponseField>
-
-    <ResponseField name="originalReasonCode" type="string">
-      Código de motivo bruto do emissor ou adquirente.
-    </ResponseField>
-
-    <ResponseField name="recoveryAction" type="string">
-      Próximo passo sugerido: `"retry"`, `"switch_method"` ou `"terminal"`.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
+<Note>
+  Diferente das respostas de pagamento/assinatura no resto desta API, `amount` aqui é um inteiro simples nas unidades menores da moeda, com um campo `currency` separado no nível superior — não um objeto `{ currency, value, exponent }`.
+</Note>
 
 ### Buscar um pagamento recusado
 

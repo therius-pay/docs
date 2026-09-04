@@ -11,41 +11,7 @@ openapi: "POST /subscription/{id}/cancel"
   Cancellation is permanent. There is no reinstate endpoint. If you need to re-enroll a cancelled customer, create a new subscription using `POST /subscription`.
 </Warning>
 
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/{id}/cancel`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription to cancel.
-</ParamField>
-
-### Request Body
-
-<ParamField body="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
-
-## Response
-
-Returns `200 OK` with the updated subscription object. The `status` field will be `cancelled` and a `cancelledAt` timestamp will be set.
+Returns `200 OK` with the updated subscription object — `status: "cancelled"` and `cancelledAt` set.
 
 ## Errors
 

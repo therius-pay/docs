@@ -4,7 +4,7 @@ sidebarTitle: "Cancelar ou reembolsar automaticamente"
 description: "Cancela automaticamente se o pagamento estiver autorizado, ou reembolsa se já estiver capturado. Sem precisar rastrear o estado do pagamento."
 openapi: "POST /payment/{id}/cancel_or_refund"
 translationOf: api-reference/cancel-or-refund.mdx
-translationSourceHash: 52074ad76a3e7ff2db4a264b99ed71bc3e36629a21950c7ce03402582ecd2457
+translationSourceHash: c4aa4be79e1cc7e0e1647bff5be7060a042490a8b6a277ff8471769c13b6e4c8
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -17,73 +17,9 @@ Se você não quer rastrear no seu próprio sistema se um pagamento está no est
 
 `{id}` é o `id` de pagamento do Therius devolvido por `POST /payment/authorization` e `POST /payment/purchase`. `orderCode` e `paymentCode` são os seus próprios campos de referência e **não** são aceitos aqui. Um `id` desconhecido ou não pertencente devolve `404`.
 
-## Requisição
-
-**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/cancel_or_refund`
-
-### Parâmetros de caminho
-
-<ParamField path="id" type="string" required>
-  O `id` de pagamento do Therius da resposta de autorização/purchase.
-</ParamField>
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  A sua chave de API secreta como token Bearer: `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox).
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Um UUID que você gera por operação. Obrigatório em produção para prevenir operações duplicadas em uma nova tentativa.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  Deve ser `application/json`.
-</ParamField>
-
-### Corpo da requisição
-
-<ParamField body="merchantCode" type="string" required>
-  O seu identificador de lojista.
-</ParamField>
-
-<ParamField body="reference" type="string">
-  Uma referência interna opcional para esta operação.
-</ParamField>
-
 <Note>
   Este endpoint sempre reverte o pagamento **completo** — anula toda a retenção de autorização, ou reembolsa todo o valor capturado. Para emitir um reembolso *parcial* em um pagamento capturado, chame [Refund](/api-reference/refund) com um `amount` em vez disso.
 </Note>
-
-## Resposta
-
-<ResponseField name="id" type="string">
-  O `id` de pagamento do Therius (o mesmo valor que o segmento de caminho `{id}`).
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  A ação tomada. Um de:
-
-  - `"cancelled"` — a autorização foi anulada (o pagamento estava no estado `authorized`).
-  - `"refunded"` — os fundos foram devolvidos ao titular do cartão (o pagamento estava no estado `captured`).
-  - `"failed"` — a operação não pôde ser concluída.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  O ID de recibo do Therius para o pagamento original.
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  O seu `orderCode` original.
-</ResponseField>
-
-<ResponseField name="merchantCode" type="string">
-  O seu `merchantCode`.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  O valor cancelado ou reembolsado, em formato `{ currency, value, exponent }`.
-</ResponseField>
 
 ## Exemplo
 

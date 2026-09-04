@@ -4,7 +4,7 @@ sidebarTitle: "Consultar un pago"
 description: "Recupera el estado actual y los detalles completos de cualquier pago usando su paymentCode o su UUID de pago interno."
 openapi: "GET /payment/inquiry/{id}"
 translationOf: api-reference/inquiry.mdx
-translationSourceHash: 98b3549d743ca19a40a234cad3bd80a7da96de5f52d993c75c34b33aa2e5447d
+translationSourceHash: 0493e1f6da95ab7f3c273c643cc7918cf86ef80d7c02d62b6b76b7ed6a4c254d
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -13,85 +13,9 @@ Usa `GET /payment/inquiry/{id}` para recuperar el estado actual y los detalles d
 
 <SchemaLangNote lang="es" />
 
-## Solicitud
-
-**Endpoint:** `GET https://api.therius.io/v1/payment/inquiry/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  Tu clave de API secreta como token Bearer: `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox). Requerida para la mayoría de las solicitudes.
-</ParamField>
-
-<ParamField header="X-Environment" type="string">
-  Establece en `"sandbox"` al consultar el entorno de sandbox sin una clave de API. Útil para el sondeo de estado del lado del cliente donde no quieres exponer tu clave secreta.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El `paymentCode` (p. ej. `"PC-1234567890"`) o el UUID de pago interno. Ambos identifican de forma única un solo pago.
-</ParamField>
-
-## Respuesta
-
-<ResponseField name="id" type="string">
-  UUID de pago interno de Therius.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Estado actual del pago. Valores posibles: `"authorized"`, `"captured"`, `"declined"`, `"cancelled"`, `"refunded"`, `"pending_3ds"`, `"pending_action"`, `"failed"`.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  El ID de recibo de Therius para este pago (p. ej. `"PC-1234567890"`).
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  Tu referencia de pedido original.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  El monto del pago en formato `{ currency, value, exponent }`.
-</ResponseField>
-
-<ResponseField name="currency" type="string">
-  Código de moneda ISO 4217 (también presente en el nivel superior por conveniencia).
-</ResponseField>
-
-<ResponseField name="merchantId" type="string">
-  Tu identificador de comercio.
-</ResponseField>
-
-<ResponseField name="authorizationCode" type="string">
-  Código de autorización del emisor. Presente en pagos `authorized` y `captured`.
-</ResponseField>
-
-<ResponseField name="refusalCode" type="object">
-  Presente en pagos `declined`.
-
-  <Expandable title="campos de refusalCode">
-    <ResponseField name="reason" type="string">
-      Razón de rechazo legible.
-    </ResponseField>
-
-    <ResponseField name="reasonCode" type="string">
-      Código de rechazo legible por máquina.
-    </ResponseField>
-
-    <ResponseField name="originalReason" type="string">
-      Cadena de razón sin procesar del emisor o adquirente.
-    </ResponseField>
-
-    <ResponseField name="originalReasonCode" type="string">
-      Código de razón sin procesar del emisor o adquirente.
-    </ResponseField>
-
-    <ResponseField name="recoveryAction" type="string">
-      Próximo paso sugerido: `"retry"`, `"switch_method"` o `"terminal"`.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
+<Note>
+  A diferencia de las respuestas de pago/suscripción del resto de esta API, `amount` aquí es un entero plano en las unidades menores de la moneda, con un campo `currency` separado en el nivel superior — no un objeto `{ currency, value, exponent }`.
+</Note>
 
 ### Buscar un pago rechazado
 

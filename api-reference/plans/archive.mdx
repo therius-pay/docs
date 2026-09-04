@@ -8,30 +8,10 @@ openapi: "DELETE /subscription/plan/{id}"
 `DELETE /subscription/plan/{id}` soft-archives a plan by setting its `deletedAt` timestamp. Existing subscriptions on the archived plan continue billing normally. At each subscriber's next renewal date, Therius will cancel those subscriptions rather than renewing them. No new subscribers can enroll in an archived plan.
 
 <Note>
-  This is a soft-delete — the plan is not permanently removed. It remains visible in list results with its `deletedAt` timestamp populated, so you retain a complete audit trail.
+  This is a soft-delete — the plan row is not permanently removed, so it stays in the database for audit purposes. It is, however, **excluded from `GET /subscription/plan` list results** once archived (that endpoint filters out deleted plans); look it up directly via `GET /subscription/plan/{id}` if you need to inspect an archived plan.
 </Note>
 
-## Request
-
-**Base URL:** `https://api.therius.io/v1`
-
-**Endpoint:** `DELETE /subscription/plan/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="integer" required>
-  The integer ID of the plan to archive.
-</ParamField>
-
-## Response
-
-Returns `200 OK` with a confirmation object.
+Returns `200 OK` with `{ "deleted": true }`.
 
 ## Errors
 
@@ -56,7 +36,7 @@ curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?merchantCode=MERC
 <ResponseExample>
 
 ```json 200 OK
-{ "archived": true }
+{ "deleted": true }
 ```
 
 </ResponseExample>

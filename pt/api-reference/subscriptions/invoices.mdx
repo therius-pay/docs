@@ -4,7 +4,7 @@ sidebarTitle: "Ver faturas"
 description: "Liste as faturas de uma assinatura ou recupere uma única fatura pelo UUID dela."
 openapi: "GET /subscription/{id}/invoice"
 translationOf: api-reference/subscriptions/invoices.mdx
-translationSourceHash: c9aa4f2adfa6d6726e40cc7b50792ae393c25e80e8bfea3e6d585b432289639b
+translationSourceHash: e7dac863161eb4e851bcd9baea0f3bd1e38a282334209329dbdfa5a3744c4a1b
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -15,93 +15,11 @@ O Therius cria uma fatura por ciclo de faturamento. Cada fatura registra a tenta
 
 ## Liste as faturas de uma assinatura
 
-`GET /subscription/{id}/invoice` devolve todas as faturas de uma assinatura dada em ordem cronológica inversa.
-
-### Requisição
-
-**Endpoint:** `GET /subscription/{id}/invoice`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
-</ParamField>
-
-### Parâmetros de caminho
-
-<ParamField path="id" type="string" required>
-  O UUID da assinatura cujas faturas você quer listar.
-</ParamField>
-
-### Parâmetros de consulta
-
-<ParamField query="merchantCode" type="string" required>
-  O seu identificador de conta de lojista.
-</ParamField>
-
-### Resposta
-
-Devolve um array de objetos de fatura para a assinatura.
-
-<ResponseField name="id" type="string">
-  UUID da fatura.
-</ResponseField>
-
-<ResponseField name="subscriptionId" type="string">
-  UUID da assinatura pai.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Status da fatura — p. ex. `paid`, `failed`, `pending`.
-</ResponseField>
-
-<ResponseField name="amount" type="integer">
-  Valor cobrado em unidades menores.
-</ResponseField>
-
-<ResponseField name="currency" type="string">
-  Código de moeda ISO 4217.
-</ResponseField>
-
-<ResponseField name="attemptCount" type="integer">
-  Número de tentativas de cobrança feitas para esta fatura (incluindo novas tentativas).
-</ResponseField>
-
-<ResponseField name="paidAt" type="string">
-  Timestamp ISO 8601 de quando a fatura foi paga com sucesso. `null` se ainda não foi paga.
-</ResponseField>
-
-<ResponseField name="periodStart" type="string">
-  Início do período de faturamento que esta fatura cobre.
-</ResponseField>
-
-<ResponseField name="periodEnd" type="string">
-  Fim do período de faturamento que esta fatura cobre.
-</ResponseField>
-
-<ResponseField name="lines" type="array">
-  Detalhamento da fatura. Presente apenas quando o plano precifica um ou mais [medidores de uso](/pt/guides/subscriptions#faturamento-por-uso-e-híbrido): uma linha para a tarifa base do plano (sem `meterId`) mais uma linha por complemento medido. Ausente ou vazio em uma fatura de tarifa fixa — nesse caso `amount` é a cobrança inteira.
-
-  <Expandable title="objeto de linha">
-    <ResponseField name="description" type="string">
-      Rótulo legível, ex.: `"Subscription base fee"` ou `"API requests (api_requests)"`.
-    </ResponseField>
-    <ResponseField name="meterId" type="integer">
-      O medidor de uso do qual esta linha foi precificada. Omitido na linha da tarifa base.
-    </ResponseField>
-    <ResponseField name="quantity" type="number">
-      Quantidade faturável do medidor no período, após subtrair as unidades incluídas do plano.
-    </ResponseField>
-    <ResponseField name="unitAmount" type="integer">
-      Preço por unidade configurado em unidades menores para a precificação `per_unit`. `0` para precificação por faixas (`volume` / `graduated`).
-    </ResponseField>
-    <ResponseField name="amount" type="integer">
-      Total da linha em unidades menores. O `amount` da fatura é a soma de todos os `amount` de linha.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
+`GET /subscription/{id}/invoice` devolve todas as faturas de uma assinatura dada em ordem cronológica inversa, como um array simples — veja o painel de resposta acima para a forma completa de `Invoice` (`status` é `open`/`paid`/`failed`/`void`; o campo de novas tentativas é `paymentAttemptCount`).
 
 <a id="line-items" />
+
+`lines[]` está presente apenas quando o plano precifica um ou mais [medidores de uso](/pt/guides/subscriptions#faturamento-por-uso-e-híbrido): uma linha para a tarifa base do plano (sem `meterId`) mais uma linha por complemento medido. Ausente ou vazio em uma fatura de tarifa fixa — o `amount` de nível superior é então a cobrança inteira, e o `amount` de cada linha soma a ele.
 
 ### Exemplo
 
@@ -114,17 +32,7 @@ curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCo
 
 ## Recupere uma fatura específica
 
-`GET /subscription/invoice/{id}` recupera uma única fatura pelo UUID dela, independentemente de a qual assinatura ela pertence.
-
-### Requisição
-
-**Endpoint:** `GET /subscription/invoice/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
-</ParamField>
+`GET /subscription/invoice/{id}` recupera uma única fatura pelo UUID dela, independentemente de a qual assinatura ela pertence. Autentica da mesma forma que qualquer outro endpoint (`Authorization: Bearer prv_production_xxx` / `prv_sandbox_xxx`).
 
 ### Parâmetros de caminho
 

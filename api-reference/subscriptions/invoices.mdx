@@ -9,93 +9,11 @@ Therius creates one invoice per billing cycle. Each invoice records the charge a
 
 ## List Invoices for a Subscription
 
-`GET /subscription/{id}/invoice` returns all invoices for a given subscription in reverse-chronological order.
-
-### Request
-
-**Endpoint:** `GET /subscription/{id}/invoice`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription whose invoices you want to list.
-</ParamField>
-
-### Query Parameters
-
-<ParamField query="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
-
-### Response
-
-Returns an array of invoice objects for the subscription.
-
-<ResponseField name="id" type="string">
-  Invoice UUID.
-</ResponseField>
-
-<ResponseField name="subscriptionId" type="string">
-  UUID of the parent subscription.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Invoice status — e.g. `paid`, `failed`, `pending`.
-</ResponseField>
-
-<ResponseField name="amount" type="integer">
-  Charged amount in minor units.
-</ResponseField>
-
-<ResponseField name="currency" type="string">
-  ISO 4217 currency code.
-</ResponseField>
-
-<ResponseField name="attemptCount" type="integer">
-  Number of charge attempts made for this invoice (including retries).
-</ResponseField>
-
-<ResponseField name="paidAt" type="string">
-  ISO 8601 timestamp of when the invoice was successfully paid. `null` if not yet paid.
-</ResponseField>
-
-<ResponseField name="periodStart" type="string">
-  Start of the billing period this invoice covers.
-</ResponseField>
-
-<ResponseField name="periodEnd" type="string">
-  End of the billing period this invoice covers.
-</ResponseField>
-
-<ResponseField name="lines" type="array">
-  Itemisation of the invoice. Present only when the plan prices one or more [usage meters](/guides/subscriptions#usage-based-and-hybrid-billing): one line for the base plan fee (no `meterId`) plus one line per metered add-on. Absent or empty for a flat-fee invoice — the `amount` is then the whole charge.
-
-  <Expandable title="line object">
-    <ResponseField name="description" type="string">
-      Human-readable label, e.g. `"Subscription base fee"` or `"API requests (api_requests)"`.
-    </ResponseField>
-    <ResponseField name="meterId" type="integer">
-      The usage meter this line was priced from. Omitted on the base plan-fee line.
-    </ResponseField>
-    <ResponseField name="quantity" type="number">
-      Billable quantity for the meter over the period, after the plan's included units are subtracted.
-    </ResponseField>
-    <ResponseField name="unitAmount" type="integer">
-      Configured per-unit price in minor units for `per_unit` pricing. `0` for tiered (`volume` / `graduated`) pricing.
-    </ResponseField>
-    <ResponseField name="amount" type="integer">
-      Line total in minor units. The invoice `amount` is the sum of all line `amount`s.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
+`GET /subscription/{id}/invoice` returns all invoices for a given subscription in reverse-chronological order, as a bare array — see the response panel above for the full `Invoice` shape (`status` is `open`/`paid`/`failed`/`void`; the retry count field is `paymentAttemptCount`).
 
 <a id="line-items" />
+
+`lines[]` is present only when the plan prices one or more [usage meters](/guides/subscriptions#usage-based-and-hybrid-billing): one line for the base plan fee (no `meterId`) plus one line per metered add-on. Absent or empty for a flat-fee invoice — the top-level `amount` is then the whole charge, and each line's own `amount` sums to it.
 
 ### Example
 
@@ -108,17 +26,7 @@ curl "https://api.therius.io/v1/subscription/sub_abc123def456/invoice?merchantCo
 
 ## Retrieve a Specific Invoice
 
-`GET /subscription/invoice/{id}` retrieves a single invoice by its UUID, regardless of which subscription it belongs to.
-
-### Request
-
-**Endpoint:** `GET /subscription/invoice/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
+`GET /subscription/invoice/{id}` retrieves a single invoice by its UUID, regardless of which subscription it belongs to. Authenticates the same way as every other endpoint (`Authorization: Bearer prv_production_xxx` / `prv_sandbox_xxx`).
 
 ### Path Parameters
 

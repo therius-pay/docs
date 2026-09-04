@@ -15,36 +15,6 @@ Pausing a subscription stops all renewal attempts without cancelling it, preserv
   Only subscriptions in `active`, `trialing`, or `past_due` status can be paused. Attempting to pause a `cancelled`, `completed`, or already `paused` subscription returns a `400` error.
 </Note>
 
-### Request
-
-**Endpoint:** `POST /subscription/{id}/pause`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription to pause.
-</ParamField>
-
-### Request Body
-
-<ParamField body="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
-
 ### Example
 
 ```bash
@@ -70,36 +40,6 @@ curl -X POST https://api.therius.io/v1/subscription/sub_abc123def456/pause \
 </Warning>
 
 On success, Therius fires `subscription.resumed`. If a `suspended` subscription is revived by a successful charge, it also fires `subscription.reactivated`.
-
-### Request
-
-**Endpoint:** `POST /subscription/{id}/resume`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox) — your merchant private API key.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  A UUID you generate per operation. Retrying with the same key returns the original response instead of repeating the operation. Recommended in production.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The UUID of the subscription to resume.
-</ParamField>
-
-### Request Body
-
-<ParamField body="merchantCode" type="string" required>
-  Your merchant account identifier.
-</ParamField>
 
 ### Errors
 

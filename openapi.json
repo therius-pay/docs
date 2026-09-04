@@ -1458,18 +1458,15 @@
                     "SDK"
                 ],
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "required": [
-                                    "country"
-                                ],
                                 "properties": {
                                     "country": {
                                         "type": "string",
-                                        "description": "ISO 3166-1 alpha-2 code of the shopper country. Required - it creates the checkout session."
+                                        "description": "ISO 3166-1 alpha-2 code of the shopper country. Optional for a bare clientToken; required if you also set `amount`, `currency`, or `orderCode` (those create a bound checkout session)."
                                     },
                                     "amount": {
                                         "type": "integer",

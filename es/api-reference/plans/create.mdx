@@ -4,7 +4,7 @@ sidebarTitle: "Crear un plan"
 description: "Define un plan de facturación recurrente con monto, moneda, intervalo, período de prueba y restricciones geográficas opcionales."
 openapi: "POST /subscription/plan"
 translationOf: api-reference/plans/create.mdx
-translationSourceHash: e7f6cd8a5c643d9faa0f16d798cc93959829f56b34664c3cb2c25d3d4f753746
+translationSourceHash: 728f57c74c2f72806a4724d18f8f9c5e34a979753add2e3c64afa6d28f75069f
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -13,81 +13,7 @@ Los planes definen los términos de facturación de las suscripciones — monto,
 
 <SchemaLangNote lang="es" />
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/plan`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
-
-<ParamField body="name" type="string" required>
-  Nombre para mostrar del plan, p. ej. `"Pro Monthly"`. Se muestra en las facturas y el portal del cliente.
-</ParamField>
-
-<ParamField body="description" type="string">
-  Descripción opcional de lo que incluye el plan. Para referencia interna y visualización de cara al cliente.
-</ParamField>
-
-<ParamField body="amount" type="integer" required>
-  Monto de facturación en unidades menores (p. ej. `999` = \$9.99 para un plan en USD). Inmutable después de que se inscribe el primer suscriptor.
-</ParamField>
-
-<ParamField body="currency" type="string" required>
-  Código de moneda ISO 4217, p. ej. `"USD"`, `"EUR"`, `"BRL"`. Inmutable después de que se inscribe el primer suscriptor.
-</ParamField>
-
-<ParamField body="exponent" type="integer">
-  Número de decimales de la moneda. Por defecto es el estándar ISO para la moneda dada (p. ej. `2` para USD). Anúlalo para monedas con exponentes no estándar.
-</ParamField>
-
-<ParamField body="interval" type="string" required>
-  Unidad de intervalo de facturación. Valores aceptados: `"day"`, `"week"`, `"month"`, `"year"`. Inmutable después de que se inscribe el primer suscriptor.
-</ParamField>
-
-<ParamField body="intervalCount" default="1" type="integer">
-  Número de unidades de intervalo por ciclo de facturación. Por ejemplo, `3` con `"month"` crea un plan trimestral. Inmutable después de que se inscribe el primer suscriptor.
-</ParamField>
-
-<ParamField body="trialPeriodDays" type="integer">
-  Número de días en la prueba gratuita. Los suscriptores comienzan en estado `trialing` y no se les cobra hasta que termina la prueba. Omítelo o establécelo en `0` para sin prueba.
-</ParamField>
-
-<ParamField body="introAmount" type="integer">
-  Monto con descuento en unidades menores para el período introductorio. Se aplica durante los primeros `introBillingCycles` ciclos antes de volver a `amount`.
-</ParamField>
-
-<ParamField body="introBillingCycles" type="integer">
-  Número de ciclos de facturación a los que se aplica el `introAmount`. Requiere que `introAmount` esté establecido.
-</ParamField>
-
-<ParamField body="maxBillingCycles" type="integer">
-  Número máximo de ciclos de facturación antes de que la suscripción pase automáticamente al estado `completed`. Omítelo para una suscripción indefinida.
-</ParamField>
-
-<ParamField body="availableCountries" type="array">
-  Array de códigos de país ISO 3166-1 alpha-2 que restringen dónde se puede usar este plan, p. ej. `["US", "CA", "GB"]`. Omítelo o pasa un array vacío para hacer el plan disponible globalmente.
-</ParamField>
-
-## Respuesta
+`amount`, `currency`, `interval` e `intervalCount` se vuelven inmutables en cuanto el plan tiene suscriptores activos — ver el panel de parámetros de arriba para la lista completa de campos, incluidas las opciones de precio introductorio (`introAmount`/`introBillingCycles`) y `maxBillingCycles`/`availableCountries`.
 
 Devuelve `201 Created` con el objeto de plan completo incluyendo el `id` generado.
 

@@ -4,7 +4,7 @@ sidebarTitle: "Cancelar un pago"
 description: "Anula un pago que aún está en el estado autorizado. Los fondos se liberan de inmediato. No se puede cancelar un pago capturado."
 openapi: "POST /payment/{id}/cancel"
 translationOf: api-reference/cancel.mdx
-translationSourceHash: 76a75002ca46320e63690f96053d729cc092cf07937b55e9bc60487c16404494
+translationSourceHash: 159cb6df12630b3953c0abbb968f2931750a76ca7969b64329de2f037d08895c
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -16,69 +16,6 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 ## Identificar el pago
 
 `{id}` es el `id` de pago de Therius devuelto por `POST /payment/authorization` y `POST /payment/purchase`. `orderCode` y `paymentCode` son tus propios campos de referencia y **no** se aceptan aquí. Un `id` desconocido o no propio devuelve `404`.
-
-## Solicitud
-
-**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/cancel`
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El `id` de pago de Therius de la respuesta de autorización/purchase.
-</ParamField>
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  Tu clave de API secreta como token Bearer: `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox).
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Requerido en producción para prevenir intentos de cancelación duplicados.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  Debe ser `application/json`.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de comercio.
-</ParamField>
-
-<ParamField body="reference" type="string">
-  Una referencia interna opcional para esta cancelación (p. ej. tu ID de cancelación o de tíquet de soporte).
-</ParamField>
-
-## Respuesta
-
-<ResponseField name="id" type="string">
-  El `id` de pago de Therius (el mismo valor que el segmento de ruta `{id}`).
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Resultado de la cancelación. Uno de:
-
-  - `"cancelled"` — autorización anulada y retención liberada.
-  - `"failed"` — la cancelación no se pudo procesar. La autorización puede haber expirado ya o haber sido capturada.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  El ID de recibo de Therius para el pago original.
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  Tu `orderCode` original.
-</ResponseField>
-
-<ResponseField name="merchantCode" type="string">
-  Tu `merchantCode`.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  El monto que estaba retenido y que ahora se libera, en formato `{ currency, value, exponent }`.
-</ResponseField>
 
 ## Ejemplo
 

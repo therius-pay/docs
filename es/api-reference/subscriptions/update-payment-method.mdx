@@ -4,7 +4,7 @@ sidebarTitle: "Actualizar tarjeta archivada"
 description: "Reemplaza la tarjeta de una suscripción. Cambiar la tarjeta es una CIT y puede necesitar 3D Secure — registra una tarjeta que ya CIT'aste, o ejecuta una CIT de valor cero aquí."
 openapi: "POST /subscription/{id}/payment-method"
 translationOf: api-reference/subscriptions/update-payment-method.mdx
-translationSourceHash: 37fcfbaf59b7b3b99a953d834c557ac9a5ea0085463acc5fb8720215c2ac8d7a
+translationSourceHash: 77e95edfea2767a972abfa6ea3ebcaa88a56aa92a97ca379060e245f14c0966b
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -61,64 +61,7 @@ es ejecutar tú mismo la CIT donde 3DS *sí* está soportado, luego registrarla:
   cobro de recuperación tú mismo primero.
 </Note>
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/{id}/payment-method`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El UUID de la suscripción a actualizar.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
-
-<ParamField body="card" type="object" required>
-  La nueva tarjeta. Proporciona **exactamente un** instrumento.
-
-  <Expandable title="instrumentos de card — elige uno">
-    <ParamField body="card.tokenData.token" type="string">
-      **Modo record.** Un vault token `vt_...` para una tarjeta que ya completó una CIT.
-    </ParamField>
-    <ParamField body="card.nonceData.nonce" type="string">
-      **Modo CIT.** Un nonce fresco de un solo uso del SDK JS de Therius.
-    </ParamField>
-    <ParamField body="card.cardData" type="object">
-      **Modo CIT.** Campos de tarjeta sin procesar — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`,
-      `cardholderName` (+ `documentNumber`, `cardAddress` opcionales). Solo servidores que cumplen
-      PCI DSS.
-    </ParamField>
-    <ParamField body="card.networkTransactionId" type="string">
-      **Modo record, opcional.** El Network Transaction ID de la CIT original. Solo se
-      necesita al registrar una tarjeta que fue CIT'ada fuera de Therius — de lo contrario se lee
-      del token.
-    </ParamField>
-    <ParamField body="card.networkReferenceId" type="string">
-      **Modo record, opcional.** El TLID de Mastercard (o el equivalente de la bandera) de la
-      CIT original, junto con `networkTransactionId`. Por defecto es `networkTransactionId`.
-    </ParamField>
-  </Expandable>
-</ParamField>
+Proporciona **exactamente un** instrumento de tarjeta — ver el panel de parámetros de arriba para la lista completa de campos (`tokenData.token` para modo record; `nonceData`/`cardData` para modo CIT; `networkTransactionId`/`networkReferenceId` opcionales para una tarjeta CIT'ada fuera de Therius).
 
 ## Respuesta
 

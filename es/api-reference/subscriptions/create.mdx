@@ -4,7 +4,7 @@ sidebarTitle: "Crear una suscripción"
 description: "Inscribe a un cliente en un plan y cobra el primer ciclo de facturación. Realiza la CIT inicial que registra el mandato recurrente."
 openapi: "POST /subscription"
 translationOf: api-reference/subscriptions/create.mdx
-translationSourceHash: 098935bce3b0612a6bcc93024732b51d30616586e486846110459c598fb74a6b
+translationSourceHash: d5e14646ce44fb09fc1c089fd8c26394231e40e29ce00869c27ba676372d2b1f
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -59,88 +59,7 @@ Ejecuta tú mismo una CIT con capacidad 3DS, luego adjunta el resultado:
   </Step>
 </Steps>
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador único de cuenta de comercio.
-</ParamField>
-
-<ParamField body="planId" type="integer" required>
-  El ID de un plan de facturación activo. El plan determina el monto, la moneda, el intervalo y la configuración de prueba.
-</ParamField>
-
-<ParamField body="customerEmail" type="string">
-  Dirección de correo del cliente. Usada para notificaciones de facturación y comunicaciones de gestión de cobros.
-</ParamField>
-
-<ParamField body="customerName" type="string">
-  Nombre completo del cliente tal como debe aparecer en las facturas.
-</ParamField>
-
-<ParamField body="customerDocument" type="string">
-  ID nacional o número de documento fiscal del cliente. Requerido en algunos países (p. ej. CPF/CNPJ de Brasil). Revisa la configuración `availableCountries` del plan para los requisitos locales.
-</ParamField>
-
-<ParamField body="card" type="object" required>
-  Datos de tarjeta para la CIT inicial. Proporciona **exactamente uno** de los instrumentos de abajo — son alternativas intercambiables, no campos para combinar.
-
-  <Expandable title="instrumentos de card — elige uno">
-    <ParamField body="card.nonceData.nonce" type="string">
-      Un nonce fresco de un solo uso del SDK JS de Therius. Recomendado — ningún dato de tarjeta toca tu servidor. Los nonces son de un solo uso y expiran después de una ventana corta.
-    </ParamField>
-    <ParamField body="card.cardData" type="object">
-      Campos de tarjeta sin procesar — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (y `documentNumber`, `cardAddress` opcionales). Solo si tu servidor cumple PCI DSS para manejar PAN sin procesar.
-    </ParamField>
-    <ParamField body="card.tokenData.token" type="string">
-      **Modo record.** Un vault token `vt_...` para una tarjeta que ya completó su CIT.
-    </ParamField>
-  </Expandable>
-</ParamField>
-
-<ParamField body="firstPaymentId" type="string">
-  Solo en modo record, y solo cuando hay un primer pago pendiente (se ignora para suscripciones
-  con prueba o diferidas). El `id` de pago devuelto por la llamada a `/payment/authorization` o
-  `/payment/purchase` en la que ejecutaste la CIT para esta tarjeta. Therius valida que sea un
-  pago `captured` o `authorized` en tu cuenta que cobró el **mismo vaulted token** y que está en
-  la **moneda del plan**, luego marca la factura del ciclo 1 como pagada y la enlaza — sin cobro.
-  Cuando se omite, Therius cobra el ciclo 1 como una MIT contra el mandato registrado.
-</ParamField>
-
-<ParamField body="metadata" type="object">
-  Pares clave/valor arbitrarios que quieres adjuntar a la suscripción. Los valores deben ser strings. Devueltos en todas las respuestas de suscripción y cargas de webhook.
-</ParamField>
-
-<ParamField body="startAt" type="string">
-  Timestamp RFC 3339 para una fecha futura para retrasar el primer cobro, p. ej. `"2025-09-01T00:00:00Z"`. Si se omite, la suscripción se activa y se cobra de inmediato (o al final de una prueba si el plan tiene una).
-</ParamField>
-
-<ParamField body="parentSubscriptionId" type="string">
-  UUID de una suscripción existente para designar como la padre. Usado para modelar jerarquías de suscripción (p. ej. un plan base y complementos).
-</ParamField>
-
-<ParamField body="propagateLifecycle" type="boolean">
-  Cuando es `true`, los eventos de pausar y cancelar en la suscripción padre se propagan automáticamente en cascada a esta suscripción hija. Requiere `parentSubscriptionId`.
-</ParamField>
+Ver el panel de parámetros de arriba para la lista completa de campos — `planId`, `customerEmail` y un instrumento de tarjeta (`nonceData`/`cardData`/`tokenData` — exactamente uno) son obligatorios; `customerName`/`customerDocument`, `firstPaymentId` (modo record), `startAt`, `parentSubscriptionId`/`propagateLifecycle` y `metadata` son opcionales.
 
 ## Respuesta
 

@@ -4,7 +4,7 @@ sidebarTitle: "Cancelar una suscripción"
 description: "Cancela una suscripción de inmediato. Dispara el evento de webhook subscription.cancelled. No se puede deshacer."
 openapi: "POST /subscription/{id}/cancel"
 translationOf: api-reference/subscriptions/cancel.mdx
-translationSourceHash: 1317fdd509cca8d6dddc2269febd04fb20e2a4e02da564abf3e2d75ae78651a6
+translationSourceHash: 6cda64953e947635a32f6292564f8ca376bbb1fdbc091eeabee3555efc015ef2
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -17,41 +17,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
   La cancelación es permanente. No hay endpoint de reinstauración. Si necesitas volver a inscribir a un cliente cancelado, crea una nueva suscripción usando `POST /subscription`.
 </Warning>
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription/{id}/cancel`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Reintentar con la misma clave devuelve la respuesta original en lugar de repetir la operación. Recomendado en producción.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El UUID de la suscripción a cancelar.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de cuenta de comercio.
-</ParamField>
-
-## Respuesta
-
-Devuelve `200 OK` con el objeto de suscripción actualizado. El campo `status` será `cancelled` y se establecerá un timestamp `cancelledAt`.
+Devuelve `200 OK` con el objeto de suscripción actualizado — `status: "cancelled"` y `cancelledAt` establecido.
 
 ## Errores
 

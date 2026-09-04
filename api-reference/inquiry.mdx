@@ -7,85 +7,9 @@ openapi: "GET /payment/inquiry/{id}"
 
 Use `GET /payment/inquiry/{id}` to retrieve the current status and details of any payment. Pass either the `paymentCode` that Therius returned when the payment was created (e.g. `PC-1234567890`) or the internal payment UUID. This endpoint is useful for polling pending payments, reconciliation, and debugging.
 
-## Request
-
-**Endpoint:** `GET https://api.therius.io/v1/payment/inquiry/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  Your secret API key as a Bearer token: `Bearer prv_production_xxx` (production) or `Bearer prv_sandbox_xxx` (sandbox). Required for most requests.
-</ParamField>
-
-<ParamField header="X-Environment" type="string">
-  Set to `"sandbox"` when querying the sandbox environment without an API key. Useful for client-side status polling where you don't want to expose your secret key.
-</ParamField>
-
-### Path Parameters
-
-<ParamField path="id" type="string" required>
-  The `paymentCode` (e.g. `"PC-1234567890"`) or the internal payment UUID. Both uniquely identify a single payment.
-</ParamField>
-
-## Response
-
-<ResponseField name="id" type="string">
-  Internal Therius payment UUID.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Current payment status. Possible values: `"authorized"`, `"captured"`, `"declined"`, `"cancelled"`, `"refunded"`, `"pending_3ds"`, `"pending_action"`, `"failed"`.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  Therius receipt ID for this payment (e.g. `"PC-1234567890"`).
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  Your original order reference.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  The payment amount in `{ currency, value, exponent }` format.
-</ResponseField>
-
-<ResponseField name="currency" type="string">
-  ISO 4217 currency code (also present at the top level for convenience).
-</ResponseField>
-
-<ResponseField name="merchantId" type="string">
-  Your merchant identifier.
-</ResponseField>
-
-<ResponseField name="authorizationCode" type="string">
-  Issuer authorization code. Present on `authorized` and `captured` payments.
-</ResponseField>
-
-<ResponseField name="refusalCode" type="object">
-  Present on `declined` payments.
-
-  <Expandable title="refusalCode fields">
-    <ResponseField name="reason" type="string">
-      Human-readable decline reason.
-    </ResponseField>
-
-    <ResponseField name="reasonCode" type="string">
-      Machine-readable decline code.
-    </ResponseField>
-
-    <ResponseField name="originalReason" type="string">
-      Raw reason string from the issuer or acquirer.
-    </ResponseField>
-
-    <ResponseField name="originalReasonCode" type="string">
-      Raw reason code from the issuer or acquirer.
-    </ResponseField>
-
-    <ResponseField name="recoveryAction" type="string">
-      Suggested next step: `"retry"`, `"switch_method"`, or `"terminal"`.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
+<Note>
+  Unlike the payment/subscription responses elsewhere in this API, `amount` here is a flat integer in the currency's minor units with a separate top-level `currency` field — not a `{ currency, value, exponent }` object.
+</Note>
 
 ### Look up a declined payment
 

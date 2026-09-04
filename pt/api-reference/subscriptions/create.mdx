@@ -4,7 +4,7 @@ sidebarTitle: "Criar uma assinatura"
 description: "Inscreva um cliente em um plano e cobre o primeiro ciclo de faturamento. Realiza a CIT inicial que registra o mandato recorrente."
 openapi: "POST /subscription"
 translationOf: api-reference/subscriptions/create.mdx
-translationSourceHash: 098935bce3b0612a6bcc93024732b51d30616586e486846110459c598fb74a6b
+translationSourceHash: d5e14646ce44fb09fc1c089fd8c26394231e40e29ce00869c27ba676372d2b1f
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -59,88 +59,7 @@ Execute você mesmo uma CIT com capacidade 3DS, depois anexe o resultado:
   </Step>
 </Steps>
 
-## Requisição
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `POST /subscription`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  `application/json`
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Um UUID que você gera por operação. Repetir com a mesma chave devolve a resposta original em vez de repetir a operação. Recomendado em produção.
-</ParamField>
-
-### Corpo da requisição
-
-<ParamField body="merchantCode" type="string" required>
-  O seu identificador único de conta de lojista.
-</ParamField>
-
-<ParamField body="planId" type="integer" required>
-  O ID de um plano de faturamento ativo. O plano determina o valor, a moeda, o intervalo e a configuração de teste.
-</ParamField>
-
-<ParamField body="customerEmail" type="string">
-  Endereço de e-mail do cliente. Usado para notificações de faturamento e comunicações de gestão de cobranças.
-</ParamField>
-
-<ParamField body="customerName" type="string">
-  Nome completo do cliente como deve aparecer nas faturas.
-</ParamField>
-
-<ParamField body="customerDocument" type="string">
-  ID nacional ou número de documento fiscal do cliente. Obrigatório em alguns países (p. ex. CPF/CNPJ do Brasil). Verifique a configuração `availableCountries` do plano para os requisitos locais.
-</ParamField>
-
-<ParamField body="card" type="object" required>
-  Dados de cartão para a CIT inicial. Forneça **exatamente um** dos instrumentos abaixo — são alternativas intercambiáveis, não campos para combinar.
-
-  <Expandable title="instrumentos de card — escolha um">
-    <ParamField body="card.nonceData.nonce" type="string">
-      Um nonce novo de uso único do SDK JS do Therius. Recomendado — nenhum dado de cartão toca o seu servidor. Os nonces são de uso único e expiram após uma janela curta.
-    </ParamField>
-    <ParamField body="card.cardData" type="object">
-      Campos de cartão brutos — `cardNumber`, `expiryMonth`, `expiryYear`, `cvv`, `cardholderName` (e `documentNumber`, `cardAddress` opcionais). Apenas se o seu servidor estiver em conformidade com PCI DSS para tratar PANs brutos.
-    </ParamField>
-    <ParamField body="card.tokenData.token" type="string">
-      **Modo record.** Um vault token `vt_...` para um cartão que já concluiu a sua CIT.
-    </ParamField>
-  </Expandable>
-</ParamField>
-
-<ParamField body="firstPaymentId" type="string">
-  Somente no modo record, e apenas quando há um primeiro pagamento devido (ignorado para assinaturas
-  com teste ou diferidas). O `id` do pagamento devolvido pela chamada a `/payment/authorization` ou
-  `/payment/purchase` na qual você executou a CIT para este cartão. O Therius valida que é um
-  pagamento `captured` ou `authorized` na sua conta que cobrou o **mesmo vaulted token** e que está na
-  **moeda do plano**, depois marca a fatura do ciclo 1 como paga e a vincula — sem cobrança.
-  Quando omitido, o Therius cobra o ciclo 1 como uma MIT contra o mandato registrado.
-</ParamField>
-
-<ParamField body="metadata" type="object">
-  Pares chave/valor arbitrários que você quer anexar à assinatura. Os valores devem ser strings. Devolvidos em todas as respostas de assinatura e cargas de webhook.
-</ParamField>
-
-<ParamField body="startAt" type="string">
-  Timestamp RFC 3339 para uma data futura para adiar a primeira cobrança, p. ex. `"2025-09-01T00:00:00Z"`. Se omitido, a assinatura é ativada e cobrada de imediato (ou no fim de um teste se o plano tiver um).
-</ParamField>
-
-<ParamField body="parentSubscriptionId" type="string">
-  UUID de uma assinatura existente para designar como a pai. Usado para modelar hierarquias de assinatura (p. ex. um plano base e complementos).
-</ParamField>
-
-<ParamField body="propagateLifecycle" type="boolean">
-  Quando `true`, os eventos de pausar e cancelar na assinatura pai são propagados automaticamente em cascata para esta assinatura filha. Requer `parentSubscriptionId`.
-</ParamField>
+Veja o painel de parâmetros acima para a lista completa de campos — `planId`, `customerEmail` e um instrumento de cartão (`nonceData`/`cardData`/`tokenData` — exatamente um) são obrigatórios; `customerName`/`customerDocument`, `firstPaymentId` (modo record), `startAt`, `parentSubscriptionId`/`propagateLifecycle` e `metadata` são opcionais.
 
 ## Resposta
 

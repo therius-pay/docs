@@ -4,7 +4,7 @@ sidebarTitle: "Reanudar un pago pendiente"
 description: "Reanuda un pago pausado por un desafío 3DS. Pasa el sessionId de la respuesta pending_3ds. No se requiere clave de API."
 openapi: "POST /payment/resume"
 translationOf: api-reference/resume.mdx
-translationSourceHash: 1efe70a95d19646e10701f86507b507e2a68f770fc00fa712ae1ac8ef52289e7
+translationSourceHash: 00b6eb4bbc629d7da51a73849ecf6ef22f15ca53ff6b042b73d9571dbbe4cb7f
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -28,62 +28,7 @@ Cuando un purchase o una autorización devuelve `status: "pending_3ds"`, el titu
   Este endpoint maneja solo `pending_3ds`. **No** maneja `pending_ddc` (recolección de datos del dispositivo). Para flujos DDC, reintenta la solicitud original de purchase o autorización con `threeDsSetup.sessionId` establecido en el ID de sesión de DDC.
 </Warning>
 
-## Solicitud
-
-**Endpoint:** `POST https://api.therius.io/v1/payment/resume`
-
-<ParamField header="Content-Type" type="string" required>
-  Debe ser `application/json`.
-</ParamField>
-
-<ParamField body="sessionId" type="string" required>
-  El ID de sesión de la respuesta de pago `pending_3ds`. Este valor identifica de forma única la sesión de pago pausada y sirve como la credencial de autenticación para este endpoint.
-</ParamField>
-
-## Respuesta
-
-La respuesta es un objeto `paymentResponse` completo con el estado final del pago.
-
-<ResponseField name="status" type="string">
-  Resultado final del pago después de 3DS. Uno de:
-
-  - `"captured"` — el pago tuvo éxito y los fondos están liquidados (para flujos de purchase).
-  - `"authorized"` — la autorización tuvo éxito (para flujos de autorización).
-  - `"declined"` — el pago fue rechazado después del desafío. Revisa `refusalCode`.
-  - `"failed"` — error de procesamiento.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  El ID de recibo de Therius para este pago. Es el mismo `paymentCode` que estaba presente en la respuesta `pending_3ds`.
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  Tu `orderCode` original.
-</ResponseField>
-
-<ResponseField name="merchantCode" type="string">
-  Tu `merchantCode`.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  El monto procesado en formato `{ currency, value, exponent }`.
-</ResponseField>
-
-<ResponseField name="card" type="object">
-  Respuesta de tarjeta incluyendo el PAN enmascarado, la bandera, el tipo y los IDs de transacción de red.
-</ResponseField>
-
-<ResponseField name="token" type="object">
-  Presente si se solicitó tokenización. Contiene `id` y `expirationDate`.
-</ResponseField>
-
-<ResponseField name="authorizationCode" type="string">
-  Código de autorización del emisor, presente en resultados exitosos.
-</ResponseField>
-
-<ResponseField name="refusalCode" type="object">
-  Presente en rechazo. Contiene `reason`, `reasonCode`, `originalReason`, `originalReasonCode` y `recoveryAction`.
-</ResponseField>
+La respuesta es una [respuesta de pago](/api-reference/purchase#response) completa con el `status` final, `refusalCode` en caso de rechazo, y todo lo demás — la misma forma que `purchase`/`authorization`.
 
 ### Reanudar después de un desafío 3DS
 

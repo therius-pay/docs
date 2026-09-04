@@ -4,7 +4,7 @@ sidebarTitle: "Listar assinaturas"
 description: "Recupere uma lista paginada de assinaturas com filtros por status, e-mail, plano, bandeira do cartão e intervalo de data de criação."
 openapi: "GET /subscription"
 translationOf: api-reference/subscriptions/list.mdx
-translationSourceHash: aceb03b62283ad4a423ada78fe8e948d35982204feba629a3d60cbcb15a6f487
+translationSourceHash: e84aa541cd5eea7d4661aab7609cb61a68c59122074aa478feb672f669ffd7fa
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -13,61 +13,7 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 
 <SchemaLangNote lang="pt" />
 
-## Requisição
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `GET /subscription`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (produção) ou `Bearer prv_sandbox_xxx` (sandbox) — a sua chave de API privada de lojista.
-</ParamField>
-
-### Parâmetros de consulta
-
-<ParamField query="merchantCode" type="string" required>
-  O seu identificador de conta de lojista. Obrigatório se a sua chave de API estiver associada a várias contas de lojista.
-</ParamField>
-
-<ParamField query="status" type="string">
-  Filtra por status de assinatura. Valores aceitos: `pending`, `trialing`, `active`, `past_due`, `suspended`, `cancelled`, `paused` ou `completed`.
-</ParamField>
-
-<ParamField query="email" type="string">
-  Correspondência parcial no endereço de e-mail do cliente. Busca de substring sem distinção de maiúsculas.
-</ParamField>
-
-<ParamField query="customer_name" type="string">
-  Correspondência parcial no nome do cliente. Busca de substring sem distinção de maiúsculas.
-</ParamField>
-
-<ParamField query="plan_id" type="string">
-  Filtra os resultados para assinaturas de um ID de plano específico.
-</ParamField>
-
-<ParamField query="card_brand" type="string">
-  Filtra por bandeira do cartão, p. ex. `"visa"`, `"mastercard"`, `"amex"`.
-</ParamField>
-
-<ParamField query="created_from" type="string">
-  Limite inferior de data ISO 8601 para o filtro `createdAt`, p. ex. `"2025-01-01"`. Inclusivo.
-</ParamField>
-
-<ParamField query="created_to" type="string">
-  Limite superior de data ISO 8601 para o filtro `createdAt`, p. ex. `"2025-06-30"`. Inclusivo.
-</ParamField>
-
-<ParamField query="page" default="1" type="integer">
-  Número da página a recuperar, começando em `1`.
-</ParamField>
-
-<ParamField query="per_page" default="20" type="integer">
-  Número de resultados por página. Mínimo `1`, máximo `200`.
-</ParamField>
-
-## Resposta
+Filtre e pagine com os parâmetros de consulta do painel acima (`created_from`/`created_to` são limites de data ISO 8601 inclusivos sobre `createdAt`). Formato da resposta:
 
 ```json
 {
@@ -77,22 +23,6 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
   "per_page": 20
 }
 ```
-
-<ResponseField name="data" type="array">
-  Array de objetos de assinatura que correspondem aos filtros aplicados.
-</ResponseField>
-
-<ResponseField name="total" type="integer">
-  Número total de assinaturas que correspondem aos filtros, em todas as páginas.
-</ResponseField>
-
-<ResponseField name="page" type="integer">
-  O número da página atual devolvido.
-</ResponseField>
-
-<ResponseField name="per_page" type="integer">
-  O número de resultados por página aplicado a esta resposta.
-</ResponseField>
 
 <RequestExample>
 

@@ -4,7 +4,7 @@ sidebarTitle: "Archivar un plan"
 description: "Archiva de forma suave un plan para que ninguna suscripción nueva pueda inscribirse. Los suscriptores existentes continúan hasta su próxima renovación."
 openapi: "DELETE /subscription/plan/{id}"
 translationOf: api-reference/plans/archive.mdx
-translationSourceHash: 98b44665f67e57c596804fbcdb2936be844b64e8b28ce4687c92bd3ac7b8ddd5
+translationSourceHash: 457e7e48c57a11477ebfed887e7f822a2eb9b3c8cc44e67d6c4edfba78a056ae
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -14,30 +14,10 @@ import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
 <SchemaLangNote lang="es" />
 
 <Note>
-  Esto es un borrado suave — el plan no se elimina de forma permanente. Sigue visible en los resultados de lista con su timestamp `deletedAt` poblado, así que conservas un rastro de auditoría completo.
+  Esto es un borrado suave — la fila del plan no se elimina de forma permanente, así que permanece en la base de datos con fines de auditoría. Sin embargo, **se excluye de los resultados de lista de `GET /subscription/plan`** una vez archivado (ese endpoint filtra los planes eliminados); consúltalo directamente vía `GET /subscription/plan/{id}` si necesitas inspeccionar un plan archivado.
 </Note>
 
-## Solicitud
-
-**URL base:** `https://api.therius.io/v1`
-
-**Endpoint:** `DELETE /subscription/plan/{id}`
-
-### Headers
-
-<ParamField header="Authorization" type="string" required>
-  `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox) — tu clave de API privada de comercio.
-</ParamField>
-
-### Parámetros de ruta
-
-<ParamField path="id" type="integer" required>
-  El ID entero del plan a archivar.
-</ParamField>
-
-## Respuesta
-
-Devuelve `200 OK` con un objeto de confirmación.
+Devuelve `200 OK` con `{ "deleted": true }`.
 
 ## Errores
 
@@ -62,7 +42,7 @@ curl -X DELETE "https://api.therius.io/v1/subscription/plan/42?merchantCode=MERC
 <ResponseExample>
 
 ```json 200 OK
-{ "archived": true }
+{ "deleted": true }
 ```
 
 </ResponseExample>

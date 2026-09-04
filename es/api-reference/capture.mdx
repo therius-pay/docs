@@ -4,7 +4,7 @@ sidebarTitle: "Capturar un pago"
 description: "Liquida un pago previamente autorizado. Soporta captura parcial. Debe llamarse dentro de la ventana de autorización del adquirente."
 openapi: "POST /payment/{id}/capture"
 translationOf: api-reference/capture.mdx
-translationSourceHash: 6ba0ac30c7b9d553106f1e4060a679bd06d203d77e2173ba80e3cd28597340f7
+translationSourceHash: 8c93fa7764a94bf705225774eb275737e8ce740063bc0a47c309dea34ca9b26a
 ---
 
 import { SchemaLangNote } from "/snippets/schema-lang-note.mdx";
@@ -18,87 +18,6 @@ Llama a `POST /payment/{id}/capture` para liquidar fondos de un `POST /payment/a
 `{id}` es el `id` de pago de Therius devuelto en la respuesta a `POST /payment/authorization` (y `POST /payment/purchase`). Guárdalo cuando creas el pago. `orderCode` y `paymentCode` son tus propios campos de referencia — **no** se aceptan como forma de direccionar el pago para captura, reembolso o cancelación.
 
 Un `id` que no existe, o que pertenece a otro comercio, devuelve `404`.
-
-## Solicitud
-
-**Endpoint:** `POST https://api.therius.io/v1/payment/{id}/capture`
-
-### Parámetros de ruta
-
-<ParamField path="id" type="string" required>
-  El `id` de pago de Therius de la respuesta de autorización/purchase.
-</ParamField>
-
-### Headers
-
-<ParamField header="Authorization" type="string">
-  Tu clave de API secreta como token Bearer: `Bearer prv_production_xxx` (producción) o `Bearer prv_sandbox_xxx` (sandbox).
-</ParamField>
-
-<ParamField header="Idempotency-Key" type="string">
-  Un UUID que generas por operación. Requerido en producción. Reintentar con la misma clave devuelve la respuesta original sin crear una liquidación duplicada.
-</ParamField>
-
-<ParamField header="Content-Type" type="string" required>
-  Debe ser `application/json`.
-</ParamField>
-
-### Cuerpo de la solicitud
-
-<ParamField body="merchantCode" type="string" required>
-  Tu identificador de comercio.
-</ParamField>
-
-<ParamField body="reference" type="string">
-  Una referencia interna opcional para esta operación de captura.
-</ParamField>
-
-<ParamField body="amount" type="object" required>
-  El monto a capturar. Puede ser menor o igual al monto autorizado.
-
-  <Expandable title="campos de amount">
-    <ParamField body="currency" type="string" required>
-      Código de moneda ISO 4217. Debe coincidir con la moneda de la autorización original.
-    </ParamField>
-
-    <ParamField body="value" type="integer" required>
-      Monto en unidades menores. No debe exceder el valor originalmente autorizado.
-    </ParamField>
-
-    <ParamField body="exponent" type="integer" required>
-      Número de decimales de la moneda.
-    </ParamField>
-  </Expandable>
-</ParamField>
-
-## Respuesta
-
-<ResponseField name="id" type="string">
-  El `id` de pago de Therius (el mismo valor que el segmento de ruta `{id}`).
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Resultado de la captura. Uno de:
-
-  - `"captured"` — fondos liquidados con éxito.
-  - `"failed"` — la captura no se pudo procesar. Revisa `connectionCode` y reintenta o contacta al soporte.
-</ResponseField>
-
-<ResponseField name="paymentCode" type="string">
-  El ID de recibo de Therius para este pago.
-</ResponseField>
-
-<ResponseField name="orderCode" type="string">
-  Tu `orderCode` original.
-</ResponseField>
-
-<ResponseField name="merchantCode" type="string">
-  Tu `merchantCode`.
-</ResponseField>
-
-<ResponseField name="amount" type="object">
-  El monto realmente capturado, en formato `{ currency, value, exponent }`.
-</ResponseField>
 
 ## Ejemplo
 
