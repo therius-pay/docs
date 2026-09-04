@@ -2571,14 +2571,17 @@
                                             "description": "UUID of the usage event."
                                         },
                                         "meterCode": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "description": "The meter the event was recorded against."
                                         },
                                         "quantity": {
-                                            "type": "number"
+                                            "type": "number",
+                                            "description": "The recorded quantity."
                                         },
                                         "occurredAt": {
                                             "type": "string",
-                                            "format": "date-time"
+                                            "format": "date-time",
+                                            "description": "Timestamp the event was attributed to (the billing-period key)."
                                         },
                                         "duplicate": {
                                             "type": "boolean",
@@ -2592,8 +2595,17 @@
                     "400": {
                         "description": "Missing or invalid `subscriptionId`, `meterCode`, `quantity`, or `occurredAt`."
                     },
+                    "401": {
+                        "description": "Missing or invalid API key."
+                    },
+                    "403": {
+                        "description": "Production access is not enabled for this account."
+                    },
                     "404": {
                         "description": "Subscription or meter not found under your merchant account."
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded."
                     }
                 }
             }

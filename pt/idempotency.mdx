@@ -3,7 +3,7 @@ title: 'Idempotência: refaça pagamentos sem duplicatas com segurança'
 sidebarTitle: 'Idempotência'
 description: 'Evite cobranças duplicadas usando o cabeçalho Idempotency-Key em todas as chamadas da API do Therius que alteram dados. Saiba como a idempotência funciona e as boas práticas.'
 translationOf: idempotency.mdx
-translationSourceHash: a1ed3fda74bfcb23c62edca2707d18206d61bca5c8c9556a95a1ef6ac1e71210
+translationSourceHash: 088fb860a6b554edeefc537d73238715bdf959591f8b4ef289e8491e3594c438
 ---
 
 Quando você envia uma requisição de pagamento pela rede, pode encontrar uma situação em que sua conexão cai antes de você receber uma resposta. Nesse ponto você não tem como saber se o servidor processou o pagamento ou não. Se você refizer a requisição sem uma chave de idempotência, corre o risco de cobrar o cliente duas vezes. O cabeçalho `Idempotency-Key` resolve isso: ele permite refazer uma requisição quantas vezes forem necessárias com a garantia de que o Therius a processará exatamente uma vez.
